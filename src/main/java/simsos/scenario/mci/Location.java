@@ -21,7 +21,7 @@ public class Location {
     }
 
     public int moveX(int transX) {
-        return this.x += transX ;
+        return this.x += transX;
     }
 
     public int moveY(int transY) {

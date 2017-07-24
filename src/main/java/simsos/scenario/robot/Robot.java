@@ -1,10 +1,12 @@
 package simsos.scenario.robot;
 
+import simsos.scenario.mci.Policy;
 import simsos.simulation.component.Action;
 import simsos.simulation.component.Agent;
 import simsos.simulation.component.Message;
 import simsos.simulation.component.World;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Random;
@@ -15,6 +17,7 @@ import java.util.Random;
 public class Robot extends Agent{
 
     private String name;
+    private int id;
 
     public int xpos;
     public boolean token;
@@ -94,8 +97,13 @@ public class Robot extends Agent{
     }
 
     @Override
+    public int getId() {
+        return this.id;
+    }
+
+    @Override
     public String getName() {
-        return this.name;
+        return null;
     }
 
     @Override
@@ -110,5 +118,10 @@ public class Robot extends Agent{
         agentProperties.put("token", token);
 
         return agentProperties;
+    }
+
+    @Override
+    public void injectPolicies(ArrayList<Policy> policies) {
+
     }
 }

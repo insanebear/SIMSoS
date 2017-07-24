@@ -1,66 +1,57 @@
 package simsos.scenario.mci;
 
-import org.apache.commons.math3.distribution.NormalDistribution;
 import simsos.simulation.component.Action;
 import simsos.simulation.component.World;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * Created by mgjin on 2017-06-28.
+ *
+ * Edited by Youlim Jung on 2017-07-18.
  */
 public class MCIWorld extends World {
-    public static final Pair<Integer, Integer> MAP_SIZE = new Pair<Integer, Integer>(19, 19);
+//    public static final Pair<Integer, Integer> MAP_SIZE = new Pair<Integer, Integer>(19, 19);
 
     private int[] patientRaisePlan;
     private int patientNumbering = 0;
 
-    public MCIWorld(int nPatient) {
-        ArrayList<Integer> raiseTime = new ArrayList<>();
-        NormalDistribution nd = new NormalDistribution(1, 1); // 30, 15
+    private Environment environment;
 
-        for(int i=0; i< nPatient; i++)
-            raiseTime.add(new Double(nd.sample()).intValue());
-
-        Collections.sort(raiseTime);
-        for(int i =0; i< raiseTime.size(); i++)
-            if (raiseTime.get(i) < 0)
-                raiseTime.set(i, 0);
-
-        this.patientRaisePlan = raiseTime.stream().mapToInt(i -> i).toArray();
+    public MCIWorld(int totalCasualty, int damageFire, int damageCollapse, int mciRadius) {
+        environment = new Environment(totalCasualty, damageFire, damageCollapse, mciRadius);
     }
 
     @Override
     public void reset() {
         super.reset();
-
-        this.patientNumbering = 0;
-        this.agents.removeIf(a -> a instanceof Patient);
+        environment.resetEnvironment();
+        // 이거 리셋 용도가 어디까지 리셋하는거지 ㅋㅋ
+//        this.patientNumbering = 0;
+//        this.agents.removeIf(a -> a instanceof Patient_old);
     }
 
     @Override
     public ArrayList<Action> generateExogenousActions() {
-        ArrayList<Action> patients = new ArrayList<Action>();
-        World world = this;
+        ArrayList<Action> updateEnvironment = new ArrayList<>();
+//        World world = this;
 
-        for (int raiseTime : patientRaisePlan)
-            if (raiseTime == this.time)
-                patients.add(new Action(0) {
+        updateEnvironment.add(new Action(0) {
 
-                    @Override
-                    public void execute() {
-                        patientNumbering++;
-                        Patient p = new Patient(world, "Patient" + patientNumbering);
-                        agents.add(p);
-                    }
+            @Override
+            public void execute() {
+                // update patients' strength
+                environment.updatePatientsList();
+            }
 
-                    @Override
-                    public String getName() {
-                        return "World: Generate a Patient";
-                    }
-                });
+            @Override
+            public String getName() {
+                return "World: Update environment";
+            }
+        });
 
-        return patients;
+        return updateEnvironment;
     }
+
+
 }

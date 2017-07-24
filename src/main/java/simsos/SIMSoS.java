@@ -2,11 +2,13 @@ package simsos;
 
 import mci.Main;
 import simsos.scenario.mci.MCIScenario;
+import simsos.scenario.mci.Policy;
 import simsos.simulation.Simulator;
 import simsos.simulation.component.Scenario;
 import simsos.simulation.component.World;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -26,7 +28,8 @@ public class SIMSoS {
             }
         }
 
-        Scenario scenario = new MCIScenario();
+        ArrayList<Policy> mciPolicies = new ArrayList<>(); // change this into external input
+        Scenario scenario = new MCIScenario(mciPolicies);
         World world = scenario.getWorld();
 
         Simulator.execute(world, 100);

@@ -33,7 +33,6 @@ public class Simulator {
                 actions.clear();
                 for (Agent agent : world.getAgents()) {
                     Action action = agent.step();
-
                     if (action.isImmediate()) {
                         immediateActions.add(action);
                     } else {
