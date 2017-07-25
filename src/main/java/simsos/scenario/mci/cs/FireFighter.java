@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 import static simsos.scenario.mci.Environment.mciMapSize;
+import static simsos.scenario.mci.Environment.stageZone;
 
 /**
  *
@@ -73,7 +74,6 @@ public class FireFighter extends Agent{
                     @Override
                     public void execute() {
                         rescue();
-
                     }
 
                     @Override
@@ -85,7 +85,10 @@ public class FireFighter extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        move();
+                        if(location.getX() == mciMapSize.getLeft())
+                            stage();
+                        else
+                            move();
                     }
 
                     @Override
@@ -137,7 +140,7 @@ public class FireFighter extends Agent{
             // now rescue the first patient
             rescuedPatientId = spotPatientList.get(0);
             spotPatientList.remove(0);
-            Environment.patientsList.get(rescuedPatientId).changeStat();
+            Environment.patientsList.get(rescuedPatientId).changeStat(); // RESCUED
 
             status = Status.TRANSFERRING;
 
@@ -186,15 +189,30 @@ public class FireFighter extends Agent{
                 location.moveX(mciMapSize.getLeft()-currentX);
             else
                 location.moveX(move);
+            System.out.println(getAffiliation()+" "+getName()+" "+getId()+" is at "+location.getX()+", "+location.getY());
         }
     }
 
+    public void stage(){
+        //stage patient on the stage zone.(number is same as fighter's Y cord.)
+        stageZone[location.getY()].add(rescuedPatientId);
+        Environment.patientsList.get(rescuedPatientId).changeStat(); // TRANSFER_WAIT
+
+        System.out.println(getAffiliation()+" "+getName()+" "+getId()+" is at "+location.getX()+", "+location.getY());
+        System.out.println("Patient "+rescuedPatientId+" is staged on "
+                +location.getY()+"th area. Patient is "+Environment.patientsList.get(rescuedPatientId).getStatus());
+
+        rescuedPatientId = -1;  // initialize rescuePatient
+        status = Status.SEARCHING;
+    }
+
     public Directions setDirection(){
+        // 너무 랜덤해서 자꾸 다시 돌아옴. 최소한 조금 전에 왔던 방향으로는 가지 않도록 수정필요
         Random rd = new Random();
+        Directions[] directionArr;
         int currentX = location.getX();
         int currentY = location.getY();
 
-        Directions[] directionArr;
         if(currentX==0 || currentY==0){
             if(currentX==0 && currentY==0){
                 // (0, 0): N or E
@@ -266,10 +284,6 @@ public class FireFighter extends Agent{
         }
     }
 
-
-    public void searchSpot(){
-
-    }
 
     public boolean checkPatient(ArrayList<Integer> spotPatientList){
         if(!spotPatientList.isEmpty())
