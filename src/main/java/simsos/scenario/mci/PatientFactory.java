@@ -30,7 +30,7 @@ public class PatientFactory {
         Random random = new Random();
 
         for(int i=0; i<totalCasualty; i++){
-            int strength = random.nextInt(170)+20;
+            int strength = random.nextInt(90)+40;
             Patient.InjuryType injuryType = injuryList[random.nextInt(injuryList.length)];
 
             int x = ThreadLocalRandom.current().nextInt(5, radius);
@@ -46,10 +46,14 @@ public class PatientFactory {
 
         }
 
-        // patient generation test
+        // patient information
         for(Patient p : patientsList){
-            System.out.println("patient name: "+p.getPatientId());
-            System.out.println("location: "+p.getLocation().getX()+", "+p.getLocation().getY());
+            System.out.println("Patient "+p.getPatientId()+" is at ("
+                    +p.getLocation().getX()+", "+p.getLocation().getY()+")");
+            System.out.println("Injury type: "+p.getInjuryType());
+            System.out.println("Strength: "+p.getStrength()+" Severity: "+p.getSeverity());
+            System.out.println("Status: "+ p.getStatus());
+            System.out.println();
         }
         return patientMap;
     }

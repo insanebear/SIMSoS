@@ -135,7 +135,9 @@ public class Patient {
         }
     }
 
-
+    public InjuryType getInjuryType() {
+        return injuryType;
+    }
 
     public int getPatientId() {
         return patientId;
