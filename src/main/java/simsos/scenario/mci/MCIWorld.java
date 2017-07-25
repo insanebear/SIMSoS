@@ -27,8 +27,6 @@ public class MCIWorld extends World {
         super.reset();
         environment.resetEnvironment();
         // 이거 리셋 용도가 어디까지 리셋하는거지 ㅋㅋ
-//        this.patientNumbering = 0;
-//        this.agents.removeIf(a -> a instanceof Patient_old);
     }
 
     @Override

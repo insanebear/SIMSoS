@@ -12,7 +12,7 @@ public class Environment {
     // 환경 설정
     // 환자 생성
     public static Pair<Integer, Integer> worldMapSize;
-    public static Pair<Integer, Integer> mciMapSize;
+    public static Pair<Integer, Integer> patientMapSize;
     public static Pair<Integer, Integer> stageMapSize;
     public static Pair<Integer, Integer> hospitalMapSize;
     private int totalCasualty;
@@ -21,8 +21,9 @@ public class Environment {
     private int damageFire;
     private int damageCollapse;
 
-    public static ArrayList<Integer>[][] patientMCIMap;
+    public static ArrayList<Integer>[][] patientMap;
     public static ArrayList<Integer>[] stageZone;
+    public static ArrayList<Integer>[][] hospitalMap;
     public static ArrayList<Patient> patientsList;
 
     // backup info
@@ -31,102 +32,51 @@ public class Environment {
     private int bckDamageFire;
     private int bckDamageCollapse;
 
-    public Environment(int totalCasualty, int damageFire, int damageCollapse, int mciRadius) {
+    public Environment(int totalCasualty, int damageFire, int damageCollapse, int radius) {
         // initialize variables
         this.totalCasualty = totalCasualty;
         this.MCILevel = calcMCILevel();
-        this.mciRadius = mciRadius;
+        this.mciRadius = radius;
         this.damageFire = damageFire;
         this.damageCollapse = damageCollapse;
 
         // initialize maps
         setMapSize();
-        stageZone = new ArrayList[mciRadius];
+        patientMap = new ArrayList[radius+1][radius+1];
+        initMap(patientMap);
+        stageZone = new ArrayList[radius+1];
         initStageZone();
+        hospitalMap = new ArrayList[radius+1][radius+1];
+        initMap(hospitalMap);
 
         // generate patients
         patientsList = new ArrayList<>();
-        PatientFactory patientFactory = new PatientFactory(totalCasualty, mciRadius);
-        patientMCIMap = patientFactory.generatePatient(mciRadius, patientsList);
+        PatientFactory patientFactory = new PatientFactory(totalCasualty);
+        patientFactory.generatePatient(patientMap, patientsList);
 
         // backup info to reset
         backupEnvironment();
 
     }
+
     private void setMapSize(){
         worldMapSize = new Pair<Integer, Integer>(mciRadius+10, mciRadius+10);
-        mciMapSize = new Pair<Integer, Integer>(mciRadius, mciRadius);
+        patientMapSize = new Pair<Integer, Integer>(mciRadius, mciRadius);
+        hospitalMapSize = new Pair<Integer, Integer>(mciRadius, mciRadius);
     }
 
-    public int calcMCILevel(){
-        int resMCILevel=0;
-
+    private int calcMCILevel(){
         if(totalCasualty<10)
-            resMCILevel = 1;
+            return 1;
         else if(totalCasualty>=10 && totalCasualty<20)
-            resMCILevel = 2;
+            return 2;
         else if(totalCasualty>=20 && totalCasualty<100)
-            resMCILevel = 3;
+            return 3;
         else if(totalCasualty>=100 && totalCasualty<1000)
-            resMCILevel = 4;
+            return 4;
         else
-            resMCILevel = 5;
-
-        return resMCILevel;
+            return 5;
     }
-
-    public ArrayList[][] getPatientMCIMap() {
-        return patientMCIMap;
-    }
-
-    public int getTotalCasualty() {
-        return totalCasualty;
-    }
-
-    public void setTotalCasualty(int totalCasualty) {
-        this.totalCasualty = totalCasualty;
-    }
-
-    public int getMCILevel() {
-        return MCILevel;
-    }
-
-    public void setMCILevel(int MCILevel) {
-        this.MCILevel = MCILevel;
-    }
-
-    public int getMciRadius() {
-        return mciRadius;
-    }
-
-    public void setMciRadius(int mciRadius) {
-        this.mciRadius = mciRadius;
-    }
-
-    public int getDamageFire() {
-        return damageFire;
-    }
-
-    public void setDamageFire(int damageFire) {
-        this.damageFire = damageFire;
-    }
-
-    public int getDamageCollapse() {
-        return damageCollapse;
-    }
-
-    public void setDamageCollapse(int damageCollapse) {
-        this.damageCollapse = damageCollapse;
-    }
-
-    public ArrayList<Patient> getPatientsList() {
-        return patientsList;
-    }
-
-    public void setPatientsList(ArrayList<Patient> patientsList) {
-        this.patientsList = patientsList;
-    }
-
 
     public void updatePatientsList(){
         for(Patient patient : patientsList){
@@ -134,6 +84,7 @@ public class Environment {
         }
     }
     public void backupEnvironment(){
+        // backup 없애고 initial value (CONSTANT?로 쓸 수 있게 수정하자)
         bckCasualty = this.totalCasualty;
         bckMCILevel = this.MCILevel;
         bckDamageFire = this.damageFire;
@@ -145,10 +96,17 @@ public class Environment {
         this.damageFire = bckDamageFire;
         this.damageCollapse = bckDamageCollapse;
     }
-    public void initStageZone(){
+    private void initStageZone(){
         for(int i=0; i<stageZone.length; i++){
             stageZone[i] = new ArrayList<>();
         }
     }
+
+    private void initMap(ArrayList<Integer>[][] map){
+        for(int i=0; i<map.length; i++)
+            for(int j=0 ; j<map.length; j++)
+                map[i][j] = new ArrayList<>();
+    }
+
 
 }

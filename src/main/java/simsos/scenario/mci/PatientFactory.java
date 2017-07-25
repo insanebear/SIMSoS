@@ -17,17 +17,17 @@ public class PatientFactory {
 
     private Patient.InjuryType[] injuryList;
 
-    public PatientFactory(int totalCasualty, int radius) {
+    public PatientFactory(int totalCasualty) {
         this.patientsList = new ArrayList<>();
         this.totalCasualty = totalCasualty;
         this.injuryList = Patient.InjuryType.values();
 
-        patientMap = new ArrayList[radius+1][radius+1];
-        initalizeMap();
+
     }
 
-    public ArrayList<Integer>[][] generatePatient(int radius, ArrayList<Patient> patientsList){
+    public void generatePatient(ArrayList<Integer>[][] patientMap, ArrayList<Patient> patientsList){
         Random random = new Random();
+        int radius = patientMap.length;
 
         for(int i=0; i<totalCasualty; i++){
             int strength = random.nextInt(90)+40;
@@ -55,12 +55,6 @@ public class PatientFactory {
             System.out.println("Status: "+ p.getStatus());
             System.out.println();
         }
-        return patientMap;
     }
 
-    public void initalizeMap(){
-        for(int i=0; i<patientMap.length; i++)
-            for(int j=0 ; j<patientMap.length; j++)
-                patientMap[i][j] = new ArrayList<>();
-    }
 }

@@ -44,9 +44,11 @@ public class Simulator {
                 progress(immediateActions);
             } while (immediateActions.size() > 0);
 
+            Collections.shuffle(actions);
+
             ArrayList<Action> exoActions = world.generateExogenousActions();
             actions.addAll(exoActions);
-            Collections.shuffle(actions);
+
             progress(actions);
 
             ArrayList<Action> msgActions = world.getMessageQueue();

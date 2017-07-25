@@ -14,33 +14,20 @@ import java.util.*;
 public class SoSManager extends Agent {
     private String name;
     private int id;
-//    private int bedCapacity = 0;
-//
-//    private static class RescueProcess {
-//        private enum Stage {Listed, BedSecured, UtilityCollected, PTSSecured, Complete};
-//
-//        private String patient;
-//        private Patient_old.Severity patientSeverity;
-//        private Location patientLocation;
-//        private Stage stage = Stage.Listed;
-//
-//        private String hospital;
-//        private Location hospitalLocation;
-//        private String pts;
-//
-//        private ArrayList<Pair<String, Integer>> utilities = new ArrayList<Pair<String, Integer>>();
-//
-//        public RescueProcess(String patient) {
-//            this.patient = patient;
-//        }
-//    }
-//
-//    private HashMap<String, RescueProcess> rescueRequestQueue;
+
+    ArrayList<FireDepartment> fireDepartments;
+    ArrayList<PTSCenter> ptsCenters;
+    ArrayList<Hospital> hospitals;
 
     public SoSManager(World world, String name) {
         super(world);
 
         this.name = name;
+
+        fireDepartments = new ArrayList<>();
+        ptsCenters = new ArrayList<>();
+        hospitals = new ArrayList<>();
+
         this.reset();
     }
 
@@ -78,5 +65,17 @@ public class SoSManager extends Agent {
     @Override
     public void injectPolicies(ArrayList<Policy> policies) {
 
+    }
+
+    public void setFireDepartments(FireDepartment fd){
+        fireDepartments.add(fd);
+    }
+
+    public void setPtsCenters(PTSCenter pts){
+        ptsCenters.add(pts);
+    }
+
+    public void setHospitals(Hospital hospital){
+        hospitals.add(hospital);
     }
 }

@@ -4,6 +4,8 @@ import simsos.scenario.mci.cs.*;
 import simsos.simulation.component.Scenario;
 
 import java.util.ArrayList;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by mgjin on 2017-06-28.
@@ -22,6 +24,7 @@ public class MCIScenario extends Scenario {
 
 
     public MCIScenario(ArrayList<Policy> mciPolicies) {
+        Random rd = new Random();
         this.world = new MCIWorld(100, 300, 200, 19);
 
         // categorize policies
@@ -40,11 +43,14 @@ public class MCIScenario extends Scenario {
         ptsCenters = new PTSCenter[3];
         hospitals = new Hospital[3];
 
-        this.world.addAgent(new SoSManager(this.world, "SoSManager"));
+        // SoS Manager
+        SoSManager manager = new SoSManager(this.world, "SoSManager");
+        this.world.addAgent(manager);
 
+        // Fire Department
         for(int i=0; i<3; i++){
             FireDepartment fd = new FireDepartment(this.world, i, "Fire Department", fdPolicies);
-
+            manager.setFireDepartments(fd);
             for(int j=0; j<fd.getAllocFighters(); j++){
                 FireFighter ff = new FireFighter(null, j, "Fire Fighter", "FD"+i ,2);
                 this.world.addAgent(ff);
@@ -52,12 +58,25 @@ public class MCIScenario extends Scenario {
             }
         }
 
+        // PTS Center
         for(int i=0; i<3; i++){
-//            this.world.addAgent(new PTSCenter(this.world, i, "PTSCenter", ptsPolicies));
+            PTSCenter pts = new PTSCenter(this.world, i, "PTS Center", ptsPolicies);
+            manager.setPtsCenters(pts);
+            for(int j=0; j<pts.getAllocGndAmbul(); j++){
+                GndAmbulance gndAmbul = new GndAmbulance(null, j, "Gnd Ambulance", "PTS"+i ,2);
+                this.world.addAgent(gndAmbul);
+                pts.setWorkGndAmbuls(j, gndAmbul);
+            }
         }
 
         for(int i=0; i<3; i++){
-//            this.world.addAgent(new Hospital(this.world, i,"Hospital", hPolicies));
+            int generalRoom = ThreadLocalRandom.current().nextInt(7, 15);
+            int intensiveRoom = ThreadLocalRandom.current().nextInt(3, 8);
+            int operatingRoom = ThreadLocalRandom.current().nextInt(4, 7);
+
+            Hospital hospital = new Hospital(this.world, i, "Hospital", hPolicies,
+                    generalRoom, intensiveRoom, operatingRoom);
+            manager.setHospitals(hospital);
         }
 
         this.checker = null;

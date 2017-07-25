@@ -13,56 +13,43 @@ import java.util.Random;
 
 /**
  * Created by mgjin on 2017-06-28.
+ *
+ * Edited by Youlim Jung on 2017-07-25.
  */
 public class Hospital extends Agent {
     private String name;
     private int hospitalId;
     private Location location;
-
-    private int capacity;
-//    private ArrayList<Patient_old> inpatients;
+    private int totGeneral;
+    private int totIntensive;
+    private int totOperating;
+    private int occupGeneral;
+    private int occupIntensive;
+    private int occupOperating;
 
     private Action treatment;
 
-    public Hospital(World world, int hospitalId, String name, ArrayList<Policy> mciPolicies) {
+    public Hospital(World world, int hospitalId, String name, ArrayList<Policy> mciPolicies,
+                    int general, int intensive, int operating) {
         super(world);
         this.name = name;
         this.hospitalId = hospitalId;
+        this.totGeneral = general;
+        this.totIntensive = intensive;
+        this.totOperating = operating;
+
         this.reset();
     }
 
     @Override
     public Action step() {
-//        if (this.inpatients.size() > 0)
-//            return this.treatment;
-//        else
-//            return Action.getNullAction(1, this.getId() + ": No treatment");
+
         return Action.getNullAction(1, this.getName() + ": No treatment");
     }
 
     @Override
     public void reset() {
-//        Random rd = new Random();
-//
-//        this.location = new Location(MCIWorld.MAP_SIZE.getLeft() / 2, MCIWorld.MAP_SIZE.getRight() / 2);
-//
-//        this.capacity = 30 + (rd.nextInt(20) - 10); // 30 +- 10
-//        this.inpatients = new ArrayList<Patient_old>();
-//
-//        this.treatment = new Action(1) {
-//
-//            @Override
-//            public void execute() {
-//                for (Patient_old patientOld : inpatients) {
-//                    //give a treatment message to patientOld
-//                }
-//            }
-//
-//            @Override
-//            public String getId() {
-//                return Hospital.this.getId() + ": Treatment";
-//            }
-//        };
+
     }
 
     @Override
@@ -72,7 +59,7 @@ public class Hospital extends Agent {
 
     @Override
     public String getName() {
-        return null;
+        return this.name;
     }
 
     @Override

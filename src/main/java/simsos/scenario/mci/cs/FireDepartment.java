@@ -42,9 +42,6 @@ public class FireDepartment extends Agent {
         */
 
         workFighterList = new FireFighter[allocFighters];
-//        for(int i = 0; i<this.allocFighters; i++){
-//            workFighterList[i] = new FireFighter(null, i, 2); // agent 안에 agent넣을랬더니 문제가 생겼다
-//        }
     }
 
     @Override

@@ -10,7 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-import static simsos.scenario.mci.Environment.mciMapSize;
+import static simsos.scenario.mci.Environment.patientMapSize;
+import static simsos.scenario.mci.Environment.patientsList;
 import static simsos.scenario.mci.Environment.stageZone;
 
 /**
@@ -58,7 +59,7 @@ public class FireFighter extends Agent{
                     public void execute() {
                         move();
                         System.out.println(getAffiliation()+" Fighter "+getId()+" is at "+ location.getX()+", "+location.getY());
-                        spotPatientList = Environment.patientMCIMap[location.getX()][location.getY()];
+                        spotPatientList = Environment.patientMap[location.getX()][location.getY()];
                         if(spotPatientList.size()>0)
                             status = Status.RESCUING;
                     }
@@ -85,7 +86,7 @@ public class FireFighter extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        if(location.getX() == mciMapSize.getLeft())
+                        if(location.getX() == patientMapSize.getLeft())
                             stage();
                         else
                             move();
@@ -140,7 +141,8 @@ public class FireFighter extends Agent{
             // now rescue the first patient
             rescuedPatientId = spotPatientList.get(0);
             spotPatientList.remove(0);
-            Environment.patientsList.get(rescuedPatientId).changeStat(); // RESCUED
+            System.out.println("Patient Status:"+patientsList.get(rescuedPatientId).getStatus());
+            patientsList.get(rescuedPatientId).changeStat(); // RESCUED
 
             status = Status.TRANSFERRING;
 
@@ -159,8 +161,8 @@ public class FireFighter extends Agent{
             Directions direction = setDirection();
             switch(direction){
                 case EAST:
-                    if(currentX+move > mciMapSize.getLeft())
-                        location.moveX(mciMapSize.getLeft()-currentX);
+                    if(currentX+move > patientMapSize.getLeft())
+                        location.moveX(patientMapSize.getLeft()-currentX);
                     else
                         location.moveX(move);
                     break;
@@ -171,8 +173,8 @@ public class FireFighter extends Agent{
                         location.moveX(-move);
                     break;
                 case NORTH:
-                    if(currentY+move > mciMapSize.getRight())
-                        location.moveY(mciMapSize.getRight()-currentY);
+                    if(currentY+move > patientMapSize.getRight())
+                        location.moveY(patientMapSize.getRight()-currentY);
                     else
                         location.moveY(move);
                     break;
@@ -185,8 +187,8 @@ public class FireFighter extends Agent{
             }
         }else{
             // transferring
-            if(currentX+move > mciMapSize.getLeft())
-                location.moveX(mciMapSize.getLeft()-currentX);
+            if(currentX+move > patientMapSize.getLeft())
+                location.moveX(patientMapSize.getLeft()-currentX);
             else
                 location.moveX(move);
             System.out.println(getAffiliation()+" "+getName()+" "+getId()+" is at "+location.getX()+", "+location.getY());
@@ -221,14 +223,14 @@ public class FireFighter extends Agent{
                 directionArr[1] = Directions.EAST;
 
                 return directionArr[rd.nextInt(2)];
-            }else if(currentX==0 && currentY==mciMapSize.getRight()){
+            }else if(currentX==0 && currentY== patientMapSize.getRight()){
                 // (0, limit): S or E
                 directionArr = new Directions[2];
                 directionArr[0] = Directions.SOUTH;
                 directionArr[1] = Directions.EAST;
 
                 return directionArr[rd.nextInt(2)];
-            }else if(currentX==mciMapSize.getLeft() && currentY==0){
+            }else if(currentX== patientMapSize.getLeft() && currentY==0){
                 // (limit, 0): N or W
                 directionArr = new Directions[2];
                 directionArr[0] = Directions.NORTH;
@@ -255,7 +257,7 @@ public class FireFighter extends Agent{
                 }
             }
         }else{
-            if(currentX==mciMapSize.getLeft() && currentY==mciMapSize.getRight()){
+            if(currentX== patientMapSize.getLeft() && currentY== patientMapSize.getRight()){
                 // (limit, limit): S or W
                 directionArr = new Directions[2];
                 directionArr[0] = Directions.SOUTH;
@@ -263,7 +265,7 @@ public class FireFighter extends Agent{
 
                 return directionArr[rd.nextInt(2)];
             }else{
-                if(currentX==mciMapSize.getLeft()){
+                if(currentX== patientMapSize.getLeft()){
                     // (limit, 1~limit-1): N, S, or W
                     directionArr = new Directions[3];
                     directionArr[0] = Directions.NORTH;
@@ -283,7 +285,6 @@ public class FireFighter extends Agent{
             }
         }
     }
-
 
     public boolean checkPatient(ArrayList<Integer> spotPatientList){
         if(!spotPatientList.isEmpty())
