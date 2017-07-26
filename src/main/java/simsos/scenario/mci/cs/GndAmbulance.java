@@ -41,7 +41,7 @@ public class GndAmbulance extends Agent{
         this.name = name;
         this.affiliation = affiliation;
         this.gAmbId = gAmbId;
-        this.location = new Location(rd.nextInt(patientMapSize.getLeft()),0);
+        this.location = new Location(rd.nextInt(patientMapSize.getRight()), 0);
         this.loadPatientId = -1;
         this.status = Status.WAITING;
         this.moveLimit = moveLimit;
@@ -55,8 +55,11 @@ public class GndAmbulance extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        if(checkPatient(location.getY()) && loadPatientId == -1){
-                            spotPatientList = stageZone[location.getY()];
+                        System.out.println(Arrays.toString(stageZone));
+                        if(stageZone[location.getX()].size()>0 && loadPatientId == -1){
+                            System.out.println("loadPatientId: "+loadPatientId);
+                            System.out.println("length: "+stageZone[location.getX()].size());
+                            spotPatientList = stageZone[location.getX()];
                             status = Status.LOADING;
                             System.out.println(getAffiliation()+" "+getName()+" "+getId()+"is "+getStatus()+". Ready to loading");
                         }
@@ -71,14 +74,26 @@ public class GndAmbulance extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        System.out.println(spotPatientList);
-                        loadPatientId = spotPatientList.get(0);
-                        spotPatientList.remove(0);
-                        System.out.println("Patient "+loadPatientId+" is ready to be transferred.");
-                        patientsList.get(loadPatientId).changeStat(); // TRANSFERRING
+                        //TODO change to searching a patient whose status is not DEAD.
+                        //TODO improve PTS loading algorithm
+                        System.out.println(Arrays.toString(stageZone));
+                        if(spotPatientList.size()>0){
+                            loadPatientId = spotPatientList.get(0);
+                            spotPatientList.remove(0);
+                            System.out.println("Patient "+loadPatientId+" is ready to be transferred.");
 
-                        status = Status.READY_TO_TRANSFER;
-                        System.out.println(getAffiliation()+" "+getName()+" "+getId()+"is "+getStatus()+". Start transferring.");
+                            patientsList.get(loadPatientId).changeStat(); // LOADED
+
+                            status = Status.READY_TO_TRANSFER;
+                            System.out.println(getAffiliation()+" "+getName()+" "+getId()+"is "+getStatus()+". Start transferring.");
+                        }else{
+                            status = Status.WAITING;
+                            if(location.getX()+1 < hospitalMapSize.getLeft())
+                                location.moveX(1);
+                            else
+                                location.moveX(-hospitalMapSize.getLeft()+1);
+                        }
+
                     }
 
                     @Override
@@ -109,6 +124,7 @@ public class GndAmbulance extends Agent{
                         if(destHospital != null){
                             status = Status.TRANSFERRING;
                             destination = destHospital.getLocation();
+                            p.changeStat(); // TRANSFERRING
                         }
                         else
                             System.out.println(getAffiliation()+" "+getName()+" "+getId()+"do not get a destination hospital.");
@@ -138,13 +154,16 @@ public class GndAmbulance extends Agent{
                     @Override
                     public void execute() {
                         Random rd = new Random();
+                        Patient p = patientsList.get(loadPatientId);
+
+                        p.changeStat(); // SURGERY_WAIT
 
                         destHospital.setPatient(pRoomType, loadPatientId);
-                        destHospital = null;
 
-                        destination = new Location(0,  rd.nextInt(hospitalMapSize.getRight()));
-                        loadPatientId = -1;
                         status = Status.BACK_TO_SCENE;
+                        loadPatientId = -1;
+                        destHospital = null;
+                        destination = new Location(0,  rd.nextInt(hospitalMapSize.getRight()));
                     }
 
                     @Override
@@ -198,10 +217,6 @@ public class GndAmbulance extends Agent{
     @Override
     public void injectPolicies(ArrayList<Policy> policies) {
 
-    }
-
-    private boolean checkPatient(int idx){
-        return stageZone[idx].size() > 0;
     }
 
     public String getAffiliation() {

@@ -34,7 +34,7 @@ public class SIMSoS {
         Scenario scenario = new MCIScenario(mciPolicies);
         World world = scenario.getWorld();
 
-        Simulator.execute(world, 1000);
+        Simulator.execute(world, 100);
 
         for(Patient p: Environment.patientsList){
             System.out.println("Patient "+p.getPatientId()+" "+p.getStatus());

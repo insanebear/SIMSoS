@@ -1,5 +1,7 @@
 package simsos.scenario.mci;
 
+import java.util.Random;
+
 /**
  *
  * Created by Youlim Jung on 17/07/2017.
@@ -7,7 +9,7 @@ package simsos.scenario.mci;
  */
 public class Patient {
     private enum Status {
-        RESCUE_WAIT, RESCUED, TRANSFER_WAIT, TRANSFERRING,
+        RESCUE_WAIT, RESCUED, TRANSFER_WAIT, LOADED, TRANSFERRING,
         SURGERY_WAIT, SURGERY, RECOVERY, CURED, DEAD
     }
 
@@ -21,9 +23,9 @@ public class Patient {
     private InjuryType injuryType;
     private Location location;      // within MCI radius
     private Status status = Status.RESCUE_WAIT;
-    public static final int FRAC_DEC_RATE = 2;
-    public static final int BURN_DEC_RATE = 4;
-    public static final int BLEED_DEC_RATE = 6;
+    public final int FRAC_DEC_RATE = 4;
+    public final int BURN_DEC_RATE = 6;
+    public final int BLEED_DEC_RATE = 8;
 
 
     public Patient(int patientId, int strength, InjuryType injuryType, Location location) {
@@ -74,24 +76,44 @@ public class Patient {
                 else
                     strength -= BLEED_DEC_RATE;
                 break;
+            case LOADED:
             case TRANSFERRING:
+                Random rd = new Random();
+                if(rd.nextBoolean()){
+                    int firstAid = 1;
+                    if (injuryType == InjuryType.FRACTURED)
+                        strength -= (FRAC_DEC_RATE - firstAid);
+                    else if (injuryType == InjuryType.BURN)
+                        strength -= (BURN_DEC_RATE - firstAid);
+                    else
+                        strength -= (BLEED_DEC_RATE - firstAid);
+                }
+                break;
             case SURGERY_WAIT:
-                int firstAid = 1;
-                if (injuryType == InjuryType.FRACTURED)
-                    strength -= (FRAC_DEC_RATE - firstAid);
-                else if (injuryType == InjuryType.BURN)
-                    strength -= (BURN_DEC_RATE - firstAid);
+                rd = new Random();
+                int treatment;
+
+                if(rd.nextBoolean())
+                    treatment=1;
                 else
-                    strength -= (BLEED_DEC_RATE - firstAid);
+                    treatment=3;
+
+                if (injuryType == InjuryType.FRACTURED)
+                    strength -= (FRAC_DEC_RATE - treatment);
+                else if (injuryType == InjuryType.BURN)
+                    strength -= (BURN_DEC_RATE - treatment);
+                else
+                    strength -= (BLEED_DEC_RATE - treatment);
+
                 break;
 
             // increase strength
             case SURGERY:
-                int surgeryCured = 20;
+                int surgeryCured = 30;
                 strength += surgeryCured;
                 break;
             case RECOVERY:
-                int recoveryRate = 5;
+                int recoveryRate = 8;
                 strength += recoveryRate;
                 break;
         }
@@ -116,6 +138,9 @@ public class Patient {
                     status = Status.TRANSFER_WAIT;
                     break;
                 case TRANSFER_WAIT:
+                    status = Status.LOADED;
+                    break;
+                case LOADED:
                     status = Status.TRANSFERRING;
                     break;
                 case TRANSFERRING:

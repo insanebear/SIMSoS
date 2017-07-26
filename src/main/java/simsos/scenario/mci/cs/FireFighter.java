@@ -86,7 +86,7 @@ public class FireFighter extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        if(location.getX() == patientMapSize.getLeft())
+                        if(location.getY() == patientMapSize.getRight())
                             stage();
                         else
                             move();
@@ -137,13 +137,13 @@ public class FireFighter extends Agent{
 
     public void rescue(){
         if(checkPatient(spotPatientList) && rescuedPatientId == -1){
-            // later, policy can be applied
+            //TODO policy can be applied
             // now rescue the first patient
             rescuedPatientId = spotPatientList.get(0);
             spotPatientList.remove(0);
             System.out.println("Patient Status:"+patientsList.get(rescuedPatientId).getStatus());
-            patientsList.get(rescuedPatientId).changeStat(); // RESCUED
 
+            patientsList.get(rescuedPatientId).changeStat(); // RESCUED
             status = Status.TRANSFERRING;
 
             System.out.println("Patient "+rescuedPatientId+" rescued. " +
@@ -152,6 +152,7 @@ public class FireFighter extends Agent{
     }
 
     public void move(){
+        //TODO abandon moving to previous direction.
         Random rd = new Random();
         int move = rd.nextInt(moveLimit)+1;
         int currentX = location.getX();
@@ -187,22 +188,22 @@ public class FireFighter extends Agent{
             }
         }else{
             // transferring
-            if(currentX+move > patientMapSize.getLeft())
-                location.moveX(patientMapSize.getLeft()-currentX);
+            if(currentY+move > patientMapSize.getLeft())
+                location.moveY(patientMapSize.getLeft()-currentY);
             else
-                location.moveX(move);
-            System.out.println(getAffiliation()+" "+getName()+" "+getId()+" is at "+location.getX()+", "+location.getY());
+                location.moveY(move);
         }
     }
 
     public void stage(){
-        //stage patient on the stage zone.(number is same as fighter's Y cord.)
-        stageZone[location.getY()].add(rescuedPatientId);
+        //stage patient on the stage zone.(number is same as fighter's X cord.)
+        stageZone[location.getX()].add(rescuedPatientId);
+
         Environment.patientsList.get(rescuedPatientId).changeStat(); // TRANSFER_WAIT
 
         System.out.println(getAffiliation()+" "+getName()+" "+getId()+" is at "+location.getX()+", "+location.getY());
         System.out.println("Patient "+rescuedPatientId+" is staged on "
-                +location.getY()+"th area. Patient is "+Environment.patientsList.get(rescuedPatientId).getStatus());
+                +location.getX()+"th area. Patient is "+Environment.patientsList.get(rescuedPatientId).getStatus());
 
         rescuedPatientId = -1;  // initialize rescuePatient
         status = Status.SEARCHING;

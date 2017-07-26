@@ -8,13 +8,10 @@ import java.util.ArrayList;
  *
  */
 public class Environment {
-    // 맵 생성
-    // 환경 설정
-    // 환자 생성
     public static Pair<Integer, Integer> worldMapSize;
     public static Pair<Integer, Integer> patientMapSize;
-    public static Pair<Integer, Integer> stageMapSize;
     public static Pair<Integer, Integer> hospitalMapSize;
+
     private int totalCasualty;
     private int MCILevel;
     private int mciRadius;
@@ -83,8 +80,9 @@ public class Environment {
             patient.updateStrength();
         }
     }
+
     public void backupEnvironment(){
-        // backup 없애고 initial value (CONSTANT?로 쓸 수 있게 수정하자)
+        //TODO backup 없애고 initial value (CONSTANT?로 쓸 수 있게 수정하자)
         bckCasualty = this.totalCasualty;
         bckMCILevel = this.MCILevel;
         bckDamageFire = this.damageFire;

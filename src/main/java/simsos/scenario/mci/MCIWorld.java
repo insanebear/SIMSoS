@@ -26,6 +26,7 @@ public class MCIWorld extends World {
     public void reset() {
         super.reset();
         environment.resetEnvironment();
+        //TODO implement reset method in MCIworld
         // 이거 리셋 용도가 어디까지 리셋하는거지 ㅋㅋ
     }
 

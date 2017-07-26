@@ -59,7 +59,7 @@ public class MCIScenario extends Scenario {
                 fd.setWorkFighterList(j, ff);
             }
         }
-        System.out.println(world.getAgents());
+
         // PTS Center
         for(int i=0; i<3; i++){
             PTSCenter pts = new PTSCenter(this.world, i, "PTS Center", ptsPolicies);
@@ -70,7 +70,7 @@ public class MCIScenario extends Scenario {
                 pts.setWorkGndAmbuls(j, gndAmbul);
             }
         }
-        System.out.println(world.getAgents());
+
         for(int i=0; i<3; i++){
             int generalRoom = ThreadLocalRandom.current().nextInt(7, 15);
             int intensiveRoom = ThreadLocalRandom.current().nextInt(3, 8);
