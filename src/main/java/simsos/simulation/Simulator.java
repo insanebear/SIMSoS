@@ -5,15 +5,21 @@ import simsos.simulation.component.Agent;
 import simsos.simulation.component.Snapshot;
 import simsos.simulation.component.World;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 
 /**
  * Created by mgjin on 2017-06-21.
+ *
+ * Edited by Youlim Jung on 2017-07-26.
  */
 public class Simulator {
-    public static ArrayList<Snapshot> execute(World world, int endOfTime) {
+    public static ArrayList<Snapshot> execute(World world, int endOfTime) throws IOException {
+        BufferedWriter out = new BufferedWriter(new FileWriter("Simul_result.txt"));    //
         ArrayList<Snapshot> simulationLog = new ArrayList<Snapshot>();
 
         boolean stoppingCondition = false;
@@ -41,7 +47,7 @@ public class Simulator {
                 }
 
                 Collections.shuffle(immediateActions);
-                progress(immediateActions);
+                progress(out, immediateActions);
             } while (immediateActions.size() > 0);
 
             Collections.shuffle(actions);
@@ -49,10 +55,10 @@ public class Simulator {
             ArrayList<Action> exoActions = world.generateExogenousActions();
             actions.addAll(exoActions);
 
-            progress(actions);
+            progress(out, actions);
 
             ArrayList<Action> msgActions = world.getMessageQueue();
-            progress(msgActions);
+            progress(out, msgActions);
 
             world.progress(1);
             simulationLog.add(world.getCurrentSnapshot());
@@ -64,9 +70,14 @@ public class Simulator {
         return simulationLog;
     }
 
-    private static void progress(ArrayList<Action> actions) {
+    private static void progress(BufferedWriter out, ArrayList<Action> actions) throws IOException {
         for (Action action : actions) {
-            System.out.println(action.getName());
+            String actionSpec = action.getName();
+            if(!actionSpec.equals("PTS Waiting")){
+                out.write(actionSpec);  //
+                out.newLine();  //
+                System.out.println(actionSpec);
+            }
             action.execute();
         }
     }

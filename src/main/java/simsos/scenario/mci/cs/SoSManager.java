@@ -17,7 +17,7 @@ public class SoSManager extends Agent {
 
     ArrayList<FireDepartment> fireDepartments;
     ArrayList<PTSCenter> ptsCenters;
-    ArrayList<Hospital> hospitals;
+    public static ArrayList<Hospital> hospitals;
 
     public SoSManager(World world, String name) {
         super(world);

@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static simsos.scenario.mci.Environment.hospitalMapSize;
+
 /**
  * Created by mgjin on 2017-06-28.
  *
@@ -25,7 +27,7 @@ public class MCIScenario extends Scenario {
 
     public MCIScenario(ArrayList<Policy> mciPolicies) {
         Random rd = new Random();
-        this.world = new MCIWorld(100, 300, 200, 19);
+        this.world = new MCIWorld(100, 300, 200, 10);
 
         // categorize policies
         this.wholePolicies = mciPolicies;
@@ -57,7 +59,7 @@ public class MCIScenario extends Scenario {
                 fd.setWorkFighterList(j, ff);
             }
         }
-
+        System.out.println(world.getAgents());
         // PTS Center
         for(int i=0; i<3; i++){
             PTSCenter pts = new PTSCenter(this.world, i, "PTS Center", ptsPolicies);
@@ -68,14 +70,16 @@ public class MCIScenario extends Scenario {
                 pts.setWorkGndAmbuls(j, gndAmbul);
             }
         }
-
+        System.out.println(world.getAgents());
         for(int i=0; i<3; i++){
             int generalRoom = ThreadLocalRandom.current().nextInt(7, 15);
             int intensiveRoom = ThreadLocalRandom.current().nextInt(3, 8);
             int operatingRoom = ThreadLocalRandom.current().nextInt(4, 7);
+            int locX = ThreadLocalRandom.current().nextInt(4, hospitalMapSize.getRight());
+            int locY = rd.nextInt(hospitalMapSize.getRight());
 
             Hospital hospital = new Hospital(this.world, i, "Hospital", hPolicies,
-                    generalRoom, intensiveRoom, operatingRoom);
+                    generalRoom, intensiveRoom, operatingRoom, new Location(locX, locY));
             manager.setHospitals(hospital);
         }
 

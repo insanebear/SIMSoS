@@ -21,7 +21,6 @@ public class Patient {
     private InjuryType injuryType;
     private Location location;      // within MCI radius
     private Status status = Status.RESCUE_WAIT;
-
     public static final int FRAC_DEC_RATE = 2;
     public static final int BURN_DEC_RATE = 4;
     public static final int BLEED_DEC_RATE = 6;

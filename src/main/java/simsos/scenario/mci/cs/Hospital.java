@@ -23,20 +23,29 @@ public class Hospital extends Agent {
     private int totGeneral;
     private int totIntensive;
     private int totOperating;
-    private int occupGeneral;
-    private int occupIntensive;
-    private int occupOperating;
+
+    private ArrayList<Integer> generalList;
+    private ArrayList<Integer> intensiveList;
+    private ArrayList<Integer> operatingList;
 
     private Action treatment;
 
     public Hospital(World world, int hospitalId, String name, ArrayList<Policy> mciPolicies,
-                    int general, int intensive, int operating) {
+                    int general, int intensive, int operating, Location location) {
         super(world);
         this.name = name;
         this.hospitalId = hospitalId;
         this.totGeneral = general;
         this.totIntensive = intensive;
         this.totOperating = operating;
+
+        this.location = location;
+
+        generalList = new ArrayList<>();
+        intensiveList = new ArrayList<>();
+        operatingList = new ArrayList<>();
+
+        System.out.println(getName()+" "+getId()+" is at "+location.getX()+", "+location.getY());
 
         this.reset();
     }
@@ -75,5 +84,44 @@ public class Hospital extends Agent {
     @Override
     public void injectPolicies(ArrayList<Policy> policies) {
 
+    }
+
+    public int getTotGeneral() {
+        return totGeneral;
+    }
+
+    public int getTotIntensive() {
+        return totIntensive;
+    }
+
+    public int getTotOperating() {
+        return totOperating;
+    }
+
+    public ArrayList<Integer> getGeneralList() {
+        return generalList;
+    }
+
+    public ArrayList<Integer> getIntensiveList() {
+        return intensiveList;
+    }
+
+    public ArrayList<Integer> getOperatingList() {
+        return operatingList;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public void setPatient(String roomType, int patientId){
+        switch (roomType){
+            case "General":
+                generalList.add(patientId);
+            case "Intensive":
+                intensiveList.add(patientId);
+            case "Operating":
+                operatingList.add(patientId);
+        }
     }
 }

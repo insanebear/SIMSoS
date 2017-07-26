@@ -1,7 +1,9 @@
 package simsos;
 
 import mci.Main;
+import simsos.scenario.mci.Environment;
 import simsos.scenario.mci.MCIScenario;
+import simsos.scenario.mci.Patient;
 import simsos.scenario.mci.Policy;
 import simsos.simulation.Simulator;
 import simsos.simulation.component.Scenario;
@@ -15,7 +17,7 @@ import java.util.Arrays;
  * Created by mgjin on 2017-06-12.
  */
 public class SIMSoS {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         if (args.length > 0 && args[0].equals("old")) {
             String[] passedArgs = Arrays.copyOfRange(args, 1, args.length);
             try {
@@ -32,6 +34,10 @@ public class SIMSoS {
         Scenario scenario = new MCIScenario(mciPolicies);
         World world = scenario.getWorld();
 
-        Simulator.execute(world, 100);
+        Simulator.execute(world, 1000);
+
+        for(Patient p: Environment.patientsList){
+            System.out.println("Patient "+p.getPatientId()+" "+p.getStatus());
+        }
     }
 }
