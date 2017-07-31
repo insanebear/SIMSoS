@@ -145,58 +145,7 @@ public class FireFighter extends Agent{
             case DONE:
                 return Action.getNullAction(1, this.getName() + ": do nothing.");
         }
-        return Action.getNullAction(1, this.getName() + ": do nothing.");
-
-/***----------***/
-//        switch(status){
-//            case SEARCHING:
-//                return new Action(1) {
-//                    // duration 어떻게하지
-//                    @Override
-//                    public void execute() {
-//                        move();
-//                        System.out.println(getAffiliation()+" Fighter "+getId()+" is at "+ location.getX()+", "+location.getY());
-//                        spotPatientList = Environment.patientMap[location.getX()][location.getY()];
-//                        if(spotPatientList.size()>0)
-//                            status = Status.RESCUING;
-//                    }
-//
-//                    @Override
-//                    public String getName() {
-//                        return "Searching";
-//                    }
-//                };
-//            case RESCUING:
-//                //while( location.length > 0 ) At least one patient exists at the location
-//                return new Action(1){
-//                    // duration 어떻게하지
-//                    @Override
-//                    public void execute() {
-//                        rescue();
-//                    }
-//
-//                    @Override
-//                    public String getName() {
-//                        return "Rescuing";
-//                    }
-//                };
-//            case TRANSFERRING:
-//                return new Action(1) {
-//                    @Override
-//                    public void execute() {
-//                        if(location.getY() == patientMapSize.getRight())
-//                            stage();
-//                        else
-//                            move();
-//                    }
-//
-//                    @Override
-//                    public String getName() {
-//                        return "Transferring";
-//                    }
-//                };
-//        }
-//        return Action.getNullAction(0, this.getName()+": do nothing.");
+        return Action.getNullAction(1, this.getName() + ": ??");
     }
 
     @Override
