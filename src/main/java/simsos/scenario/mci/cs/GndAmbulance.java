@@ -55,7 +55,7 @@ public class GndAmbulance extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        System.out.println(Arrays.toString(stageZone));
+
                         if(stageZone[location.getX()].size()>0 && loadPatientId == -1){
                             System.out.println("loadPatientId: "+loadPatientId);
                             System.out.println("length: "+stageZone[location.getX()].size());
@@ -76,7 +76,7 @@ public class GndAmbulance extends Agent{
                     public void execute() {
                         //TODO change to searching a patient whose status is not DEAD.
                         //TODO improve PTS loading algorithm
-                        System.out.println(Arrays.toString(stageZone));
+//                        System.out.println(Arrays.toString(stageZone));
                         if(spotPatientList.size()>0){
                             loadPatientId = spotPatientList.get(0);
                             spotPatientList.remove(0);

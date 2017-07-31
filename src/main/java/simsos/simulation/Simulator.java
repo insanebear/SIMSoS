@@ -9,8 +9,11 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+
+import static simsos.scenario.mci.Environment.stageZone;
 
 /**
  * Created by mgjin on 2017-06-21.
@@ -65,6 +68,8 @@ public class Simulator {
             // Verdict - evaluateProperties();
             if (world.getTime() >= endOfTime)
                 stoppingCondition = true;
+
+            System.out.println("STAGE ZONE STATUS: "+Arrays.toString(stageZone));
         }
 
         return simulationLog;

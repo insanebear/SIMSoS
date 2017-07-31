@@ -33,10 +33,10 @@ public class PatientFactory {
             int strength = random.nextInt(90)+40;
             Patient.InjuryType injuryType = injuryList[random.nextInt(injuryList.length)];
 
-            int x = ThreadLocalRandom.current().nextInt(5, radius);
-            int y = ThreadLocalRandom.current().nextInt(5, radius);
-//          int x = random.nextInt(radius);
-//          int y = random.nextInt(radius);
+//            int x = ThreadLocalRandom.current().nextInt(5, radius);
+//            int y = ThreadLocalRandom.current().nextInt(5, radius);
+            int x = random.nextInt(radius);
+            int y = random.nextInt(radius);
             Location location = new Location(x, y);
 
             Patient p = new Patient(i, strength, injuryType, location);

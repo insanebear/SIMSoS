@@ -8,7 +8,7 @@ import java.util.Random;
  *
  */
 public class Patient {
-    private enum Status {
+    public enum Status {
         RESCUE_WAIT, RESCUED, TRANSFER_WAIT, LOADED, TRANSFERRING,
         SURGERY_WAIT, SURGERY, RECOVERY, CURED, DEAD
     }

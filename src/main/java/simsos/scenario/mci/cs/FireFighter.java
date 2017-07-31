@@ -6,13 +6,14 @@ import simsos.simulation.component.Agent;
 import simsos.simulation.component.Message;
 import simsos.simulation.component.World;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
-import static simsos.scenario.mci.Environment.patientMapSize;
-import static simsos.scenario.mci.Environment.patientsList;
-import static simsos.scenario.mci.Environment.stageZone;
+import static simsos.scenario.mci.Environment.*;
 
 /**
  *
@@ -21,7 +22,7 @@ import static simsos.scenario.mci.Environment.stageZone;
  */
 public class FireFighter extends Agent{
     private enum Status{
-        SEARCHING, RESCUING, TRANSFERRING
+        SEARCHING, RESCUING, TRANSFERRING, DONE
     }
     private enum Directions{
         WEST, SOUTH, EAST, NORTH
@@ -37,6 +38,11 @@ public class FireFighter extends Agent{
     private Status status;
     private int moveLimit;
 
+    private Location destination;
+
+    private ArrayList<Location> visitedSpot;
+    private int reachTime;
+
 
     public FireFighter(World world, int fighterId, String name, String affiliation, int moveLimit) {
         super(world);
@@ -47,49 +53,88 @@ public class FireFighter extends Agent{
         this.rescuedPatientId = -1;     // no patient rescued
         this.status = Status.SEARCHING;
         this.moveLimit = moveLimit;
+
+//        this.destination = new Location(new Random().nextInt(patientMapSize.getLeft()),new Random().nextInt(patientMapSize.getRight()));
+        this.visitedSpot = new ArrayList<>();
+        this.destination = setDestination();
+        this.reachTime = setReachTime(); // distribution 으로 랜덤설정할수도있겠구나
     }
 
     @Override
     public Action step() {
-        switch(status){
+        switch (status) {
             case SEARCHING:
                 return new Action(1) {
-                    // duration 어떻게하지
                     @Override
                     public void execute() {
-                        move();
-                        System.out.println(getAffiliation()+" Fighter "+getId()+" is at "+ location.getX()+", "+location.getY());
-                        spotPatientList = Environment.patientMap[location.getX()][location.getY()];
-                        if(spotPatientList.size()>0)
+                        if (reachTime == 0) {
                             status = Status.RESCUING;
+                        } else {
+                            reachTime--;
+                        }
                     }
-
                     @Override
                     public String getName() {
                         return "Searching";
                     }
                 };
+
             case RESCUING:
-                return new Action(1){
-                    // duration 어떻게하지
+                return new Action(1) {
                     @Override
                     public void execute() {
-                        rescue();
-                    }
+                        spotPatientList = patientMap[destination.getX()][destination.getY()];
+                        if (checkPatient(spotPatientList)) {
+                            rescuedPatientId = spotPatientList.get(0); //TODO rescue priority
+                            spotPatientList.remove(0);
 
+                            patientsList.get(rescuedPatientId).changeStat(); // RESCUED
+                            status = Status.TRANSFERRING;
+
+                            //TODO location scheduling?
+                            destination = new Location(new Random().nextInt(patientMapSize.getLeft()), patientMapSize.getRight());
+                            reachTime = setReachTime();
+
+                            System.out.println("Patient " + rescuedPatientId + " rescued. Ready to transfer.");
+                        } else {
+                            destination = setDestination();
+                            reachTime = setReachTime();
+                            System.out.println("Patient not found");
+                            if(destination==null)
+                                status = Status.DONE;
+                            else
+                                status = Status.SEARCHING;
+                        }
+                    }
                     @Override
                     public String getName() {
-                        return "Rescuing";
+                        return "Trying to rescue";
                     }
                 };
+
             case TRANSFERRING:
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        if(location.getY() == patientMapSize.getRight())
-                            stage();
-                        else
-                            move();
+                        if (reachTime == 0) {
+                            stageZone[destination.getX()].add(rescuedPatientId);
+                            Environment.patientsList.get(rescuedPatientId).changeStat(); // TRANSFER_WAIT
+
+                            System.out.println(getAffiliation() + " " + getName() + " " + getId() + " is at " + location.getX() + ", " + location.getY());
+                            System.out.println("Patient " + rescuedPatientId + " is staged on "
+                                    + location.getX() + "th area. Patient is " + Environment.patientsList.get(rescuedPatientId).getStatus());
+
+                            rescuedPatientId = -1;  // initialize rescuePatient
+                            destination = setDestination();
+                            reachTime = setReachTime();
+
+                            if(destination==null)
+                                status = Status.DONE;
+                            else
+                                status = Status.SEARCHING;
+                        } else {
+                            reachTime--;
+                        }
                     }
 
                     @Override
@@ -97,8 +142,61 @@ public class FireFighter extends Agent{
                         return "Transferring";
                     }
                 };
+            case DONE:
+                return Action.getNullAction(1, this.getName() + ": do nothing.");
         }
-        return Action.getNullAction(0, this.getName()+": do nothing.");
+        return Action.getNullAction(1, this.getName() + ": do nothing.");
+
+/***----------***/
+//        switch(status){
+//            case SEARCHING:
+//                return new Action(1) {
+//                    // duration 어떻게하지
+//                    @Override
+//                    public void execute() {
+//                        move();
+//                        System.out.println(getAffiliation()+" Fighter "+getId()+" is at "+ location.getX()+", "+location.getY());
+//                        spotPatientList = Environment.patientMap[location.getX()][location.getY()];
+//                        if(spotPatientList.size()>0)
+//                            status = Status.RESCUING;
+//                    }
+//
+//                    @Override
+//                    public String getName() {
+//                        return "Searching";
+//                    }
+//                };
+//            case RESCUING:
+//                //while( location.length > 0 ) At least one patient exists at the location
+//                return new Action(1){
+//                    // duration 어떻게하지
+//                    @Override
+//                    public void execute() {
+//                        rescue();
+//                    }
+//
+//                    @Override
+//                    public String getName() {
+//                        return "Rescuing";
+//                    }
+//                };
+//            case TRANSFERRING:
+//                return new Action(1) {
+//                    @Override
+//                    public void execute() {
+//                        if(location.getY() == patientMapSize.getRight())
+//                            stage();
+//                        else
+//                            move();
+//                    }
+//
+//                    @Override
+//                    public String getName() {
+//                        return "Transferring";
+//                    }
+//                };
+//        }
+//        return Action.getNullAction(0, this.getName()+": do nothing.");
     }
 
     @Override
@@ -292,5 +390,31 @@ public class FireFighter extends Agent{
             return true;
         else
             return false;
+    }
+
+    public Location setDestination(){ //TODO revised -_-
+        Random rd = new Random();
+        int idx = rd.nextInt(patientsList.size());
+        Location destination = null;
+        int endCond = 0;
+
+
+        while(endCond <= patientsList.size()){
+            Patient p = patientsList.get(idx);
+            if (p.getStatus()== Patient.Status.RESCUE_WAIT){
+                return p.getLocation();
+            }
+            idx = rd.nextInt(patientsList.size());
+            endCond++;
+        }
+        return null;
+    }
+
+    public int setReachTime(){
+        return ThreadLocalRandom.current().nextInt(3, 10);
+    }
+
+    public void setVisitedSpot(Location loc){
+        this.visitedSpot.add(loc);
     }
 }
