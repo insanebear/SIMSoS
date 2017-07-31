@@ -65,9 +65,7 @@ public class GndAmbulance extends Agent{
                     @Override
                     public void execute() {
                         if(waitTime>0){
-                            System.out.println("왜 아무것도 없어??? "+stageZone[location.getX()]);
                             if(stageZone[location.getX()].size()>0 && loadPatientId == -1) {
-                                System.out.println("이제 태우는거야?");
                                 status = Status.LOADING;
                             }
                             else
@@ -123,20 +121,13 @@ public class GndAmbulance extends Agent{
                     @Override
                     public void execute() {
                         Patient p = patientsList.get(loadPatientId);
-                        if(p.getSeverity()<5)
+                        //TODO review policy in severity
+                        if(p.getSeverity()<7)
                             pRoomType = "General";
-                        else if(p.getSeverity()>=5 && p.getSeverity()<8)
-                            pRoomType = "Intensive";
                         else
-                            pRoomType = "Operating";
+                            pRoomType = "Intensive";
 
                         destHospital = checkHospital(pRoomType);
-
-                        if(destHospital==null && pRoomType.equals("Operating")){
-                            pRoomType = "Intensive";
-                            destHospital = checkHospital(pRoomType);
-                            // check immediately again due to severity.
-                        }
 
                         if(destHospital != null){
                             status = Status.TRANSFERRING;
@@ -147,7 +138,7 @@ public class GndAmbulance extends Agent{
                             p.changeStat(); // TRANSFERRING
                         }
                         else
-                            System.out.println(getAffiliation()+" "+getName()+" "+getId()+"do not get a destination hospital.");
+                            System.out.println(getAffiliation()+" "+getName()+" "+getId()+" did not get a destination hospital.");
                     }
 
                     @Override
@@ -255,29 +246,6 @@ public class GndAmbulance extends Agent{
         return status;
     }
 
-    public void move(){
-        Random rd = new Random();
-        int distX = destination.getX()-location.getX();
-        int distY = destination.getY()-location.getY();
-        boolean goX = rd.nextBoolean();
-
-        if(distY==0 || goX){
-            if(Math.abs(distX)>moveLimit)
-                location.moveX(rd.nextInt(moveLimit));
-            else if(distX<0 && Math.abs(distX)<moveLimit)
-                location.moveX(-rd.nextInt(Math.abs(distX)));
-            else if(distX>0 && Math.abs(distX)<moveLimit)
-                location.moveX(rd.nextInt(distX));
-        }else{
-            if(Math.abs(distY)>moveLimit)
-                location.moveY(rd.nextInt(moveLimit));
-            else if(distY<0 && Math.abs(distY)<moveLimit)
-                location.moveY(-rd.nextInt(Math.abs(distY)));
-            else if(distY>0 && Math.abs(distY)<moveLimit)
-                location.moveY(rd.nextInt(distY));
-        }
-    }
-
     private Hospital checkHospital(String roomType){
         int avail;
         ArrayList<Hospital> sortedHospitals = sortHospitalByDist();
@@ -291,11 +259,6 @@ public class GndAmbulance extends Agent{
 
                 case "Intensive":
                     avail = h.getTotIntensive()-h.getIntensiveList().size();
-                    if(avail > 0)
-                        return h;
-
-                case "Operating":
-                    avail = h.getTotOperating()-h.getOperatingList().size();
                     if(avail > 0)
                         return h;
             }

@@ -74,12 +74,13 @@ public class MCIScenario extends Scenario {
         for(int i=0; i<3; i++){
             int generalRoom = ThreadLocalRandom.current().nextInt(7, 15);
             int intensiveRoom = ThreadLocalRandom.current().nextInt(3, 8);
-            int operatingRoom = ThreadLocalRandom.current().nextInt(4, 7);
+            int operatingRoom = ThreadLocalRandom.current().nextInt(8, 20);
             int locX = ThreadLocalRandom.current().nextInt(4, hospitalMapSize.getRight());
             int locY = rd.nextInt(hospitalMapSize.getRight());
 
             Hospital hospital = new Hospital(this.world, i, "Hospital", hPolicies,
                     generalRoom, intensiveRoom, operatingRoom, new Location(locX, locY));
+            this.world.addAgent(hospital); // hospital acts by itself
             manager.setHospitals(hospital);
         }
 

@@ -69,26 +69,40 @@ public class Hospital extends Agent {
 
     @Override
     public Action step() {
+        switch(status){
+            case WAITING:
+                return new Action(1) {
+                    @Override
+                    public void execute() {
+                        if(generalList.size()>0 || intensiveList.size()>0 ||operatingList.size()>0){
+                            status = Status.TREATING;
+                        }
+                    }
 
-        if(status == Status.WAITING)
-            return Action.getNullAction(1, this.getName() + ": No patient");
-        else
-            return new Action(1) {
-                @Override
-                public void execute() {
-                    operatePatient();
-                    movePatient();
+                    @Override
+                    public String getName() {
+                        return "Hospital waiting";
+                    }
+                };
 
-                    if(isEmpty(generalList) && isEmpty(intensiveList) && isEmpty(operatingList))
-                        status = Status.WAITING;
-                }
+            case TREATING:
+                return new Action(1) {
+                    @Override
+                    public void execute() {
+                        operatePatient();
+                        movePatient();
 
-                @Override
-                public String getName() {
-                    return this.getName()+""+getId()+" is working on.";
-                }
-            };
+                        if(generalList.isEmpty() && intensiveList.isEmpty() && operatingList.isEmpty())
+                            status = Status.WAITING;
+                    }
 
+                    @Override
+                    public String getName() {
+                        return "Hospital working.";
+                    }
+                };
+        }
+        return Action.getNullAction(1, this.getName() + ": No patient");
     }
 
     @Override
@@ -182,24 +196,43 @@ public class Hospital extends Agent {
     }
 
     private void movePatient(){
-        for(Integer pId : intensiveList){
-            if(patientsList.get(pId).getStrength()>=80) {
-                generalList.add(pId);
-                intensiveList.remove(pId);
+        // check intensive care room
+        ArrayList<Integer> removeList = new ArrayList<>();
+
+        if(!intensiveList.isEmpty()){
+            for(Integer pId : intensiveList){
+                if(patientsList.get(pId).getStatus() == Patient.Status.DEAD){
+                    removeList.add(pId); // list up on removeList
+                    availIntensive++;
+                }
+                if(patientsList.get(pId).getStrength()>=80) {
+                    generalList.add(pId);
+                    availGeneral--;
+                    removeList.add(pId);// list up on removeList
+                    availIntensive++;
+                }
             }
         }
 
-        for(Integer pId : generalList){
-            if(patientsList.get(pId).getStrength()>=170)
-                patientsList.get(pId).changeStat(); // CURED
-                generalList.remove(pId);
+        intensiveList.removeAll(removeList); // remove patient from intensiveList
+        removeList.clear();
+
+    // check general room
+        if(!generalList.isEmpty()){
+            for(Integer pId : generalList){
+                if(patientsList.get(pId).getStatus() == Patient.Status.DEAD){
+                    removeList.add(pId); // list up on removeList
+                    availGeneral++;
+                }
+                if(patientsList.get(pId).getStrength()>=170) {
+                    patientsList.get(pId).changeStat(); // CURED
+                    removeList.add(pId); // list up on removeList
+                    availGeneral++;
+                }
+            }
         }
-
-    }
-
-    private boolean isEmpty(ArrayList<Integer> list){
-        if (list.size() == 0) return true;
-        else return false;
+        generalList.removeAll(removeList);
+        removeList.clear();
     }
 
     public void reserveRoom(String roomType){
@@ -208,8 +241,6 @@ public class Hospital extends Agent {
                 availGeneral--;
             case "Intensive":
                 availIntensive--;
-            case "Operating":
-                availOperating--;
         }
     }
 
