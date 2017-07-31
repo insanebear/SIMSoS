@@ -31,6 +31,11 @@ public class Hospital extends Agent {
     private ArrayList<Integer> intensiveList;
     private ArrayList<Integer> operatingList;
 
+    private int availGeneral;
+    private int availIntensive;
+    private int availOperating;
+
+
     private Status status;
     private Action treatment;
 
@@ -44,6 +49,10 @@ public class Hospital extends Agent {
         this.totGeneral = general;
         this.totIntensive = intensive;
         this.totOperating = operating;
+
+        this.availGeneral = this.totGeneral;
+        this.availIntensive = this.totIntensive;
+        this.availOperating = this.totOperating;
 
         this.location = location;
 
@@ -191,5 +200,28 @@ public class Hospital extends Agent {
     private boolean isEmpty(ArrayList<Integer> list){
         if (list.size() == 0) return true;
         else return false;
+    }
+
+    public void reserveRoom(String roomType){
+        switch (roomType){
+            case "General":
+                availGeneral--;
+            case "Intensive":
+                availIntensive--;
+            case "Operating":
+                availOperating--;
+        }
+    }
+
+    public int getAvailGeneral() {
+        return availGeneral;
+    }
+
+    public int getAvailIntensive() {
+        return availIntensive;
+    }
+
+    public int getAvailOperating() {
+        return availOperating;
     }
 }

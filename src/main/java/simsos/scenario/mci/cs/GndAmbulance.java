@@ -9,6 +9,7 @@ import simsos.simulation.component.Message;
 import simsos.simulation.component.World;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static simsos.scenario.mci.Environment.*;
 
@@ -24,7 +25,7 @@ public class GndAmbulance extends Agent{
 
     private String affiliation;
     private String name;
-    private Location location;
+    private Location location; // for waiting, loading
     private int gAmbId;
     private int loadPatientId;
     private ArrayList<Integer> spotPatientList;
@@ -32,8 +33,13 @@ public class GndAmbulance extends Agent{
     private int moveLimit;
 
     private Hospital destHospital;
-    private Location destination;
+    private Location destination; // for transferring
     private String pRoomType;
+
+    //
+    private int reachTime;
+    private int waitTime;
+    private int defaultWait;
 
     public GndAmbulance(World world, int gAmbId, String name, String affiliation, int moveLimit) {
         super(world);
@@ -41,11 +47,14 @@ public class GndAmbulance extends Agent{
         this.name = name;
         this.affiliation = affiliation;
         this.gAmbId = gAmbId;
-        this.location = new Location(rd.nextInt(patientMapSize.getRight()), 0);
+        this.location = new Location(rd.nextInt(patientMapSize.getLeft()), 0);
         this.loadPatientId = -1;
         this.status = Status.WAITING;
         this.moveLimit = moveLimit;
-
+        //
+        this.reachTime = setReachTime();
+        this.defaultWait = 1; //TODO review the policy which can manage waiting time.
+        setWaitTime(defaultWait);
     }
 
     @Override
@@ -55,16 +64,22 @@ public class GndAmbulance extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-
-                        if(stageZone[location.getX()].size()>0 && loadPatientId == -1){
-                            System.out.println("loadPatientId: "+loadPatientId);
-                            System.out.println("length: "+stageZone[location.getX()].size());
-                            spotPatientList = stageZone[location.getX()];
-                            status = Status.LOADING;
-                            System.out.println(getAffiliation()+" "+getName()+" "+getId()+"is "+getStatus()+". Ready to loading");
+                        if(waitTime>0){
+                            System.out.println("왜 아무것도 없어??? "+stageZone[location.getX()]);
+                            if(stageZone[location.getX()].size()>0 && loadPatientId == -1) {
+                                System.out.println("이제 태우는거야?");
+                                status = Status.LOADING;
+                            }
+                            else
+                                waitTime--;
+                        }else{ //TODO review the policy which can manage waiting time.
+                            if(location.getX()+1 < hospitalMapSize.getLeft())
+                                location.moveX(1);
+                            else
+                                location.moveX(-hospitalMapSize.getLeft()+1);
+                            setWaitTime(defaultWait);
                         }
                     }
-
                     @Override
                     public String getName() {
                         return "PTS Waiting";
@@ -75,9 +90,9 @@ public class GndAmbulance extends Agent{
                     @Override
                     public void execute() {
                         //TODO change to searching a patient whose status is not DEAD.
-                        //TODO improve PTS loading algorithm
-//                        System.out.println(Arrays.toString(stageZone));
-                        if(spotPatientList.size()>0){
+                        spotPatientList = stageZone[location.getX()];
+                        System.out.println("Ambulance location: "+location.getX()+", "+location.getY());
+                        if(spotPatientList.size()>0){ // double check if there is a patient
                             loadPatientId = spotPatientList.get(0);
                             spotPatientList.remove(0);
                             System.out.println("Patient "+loadPatientId+" is ready to be transferred.");
@@ -86,16 +101,18 @@ public class GndAmbulance extends Agent{
 
                             status = Status.READY_TO_TRANSFER;
                             System.out.println(getAffiliation()+" "+getName()+" "+getId()+"is "+getStatus()+". Start transferring.");
-                        }else{
+                        }else{ // Another waiting ambulance took a patient!
                             status = Status.WAITING;
+
                             if(location.getX()+1 < hospitalMapSize.getLeft())
                                 location.moveX(1);
                             else
                                 location.moveX(-hospitalMapSize.getLeft()+1);
+
+                            System.out.println("Ambulance waits patients on changed place.");
+                            System.out.println("Changed location: "+location.getX()+", "+location.getY());
                         }
-
                     }
-
                     @Override
                     public String getName() {
                         return "PTS Loading";
@@ -123,7 +140,10 @@ public class GndAmbulance extends Agent{
 
                         if(destHospital != null){
                             status = Status.TRANSFERRING;
+                            destHospital.reserveRoom(pRoomType);
+
                             destination = destHospital.getLocation();
+                            reachTime = setReachTime();
                             p.changeStat(); // TRANSFERRING
                         }
                         else
@@ -139,9 +159,11 @@ public class GndAmbulance extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        move();
-                        if(location.equals(destination))
+                        if(reachTime == 0){
+                            location = destination;
                             status = Status.DELIVERING;
+                        }else
+                            reachTime--;
                     }
 
                     @Override
@@ -163,7 +185,7 @@ public class GndAmbulance extends Agent{
                         status = Status.BACK_TO_SCENE;
                         loadPatientId = -1;
                         destHospital = null;
-                        destination = new Location(0,  rd.nextInt(hospitalMapSize.getRight()));
+                        destination = setLocation();
                     }
 
                     @Override
@@ -175,9 +197,11 @@ public class GndAmbulance extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        move();
-                        if(location.equals(destination))
+                        if(reachTime == 0){
+                            location = destination;
                             status = Status.WAITING;
+                        }else
+                            reachTime--;
                     }
 
                     @Override
@@ -291,6 +315,22 @@ public class GndAmbulance extends Agent{
         });
 
         return tempList;
+    }
+
+    private int setReachTime(){
+        //TODO review
+        // This can be revised to get a certain distribution from outside if policy is applied.
+        return ThreadLocalRandom.current().nextInt(3, 10);
+    }
+
+    private Location setLocation(){ //stage location
+        Random rd = new Random();
+
+        return new Location(rd.nextInt(stageZone.length),0);
+    }
+
+    private void setWaitTime(int time){
+        this.waitTime = time;
     }
 
 }
