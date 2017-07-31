@@ -150,7 +150,7 @@ public class GndAmbulance extends Agent{
                     }
                 };
             case DELIVERING:
-                return new Action(0) {
+                return new Action(1) {
                     @Override
                     public void execute() {
                         Random rd = new Random();
@@ -236,8 +236,6 @@ public class GndAmbulance extends Agent{
         int distX = destination.getX()-location.getX();
         int distY = destination.getY()-location.getY();
         boolean goX = rd.nextBoolean();
-        System.out.println("distX:"+distX);
-        System.out.println("distY:"+distY);
 
         if(distY==0 || goX){
             if(Math.abs(distX)>moveLimit)

@@ -27,6 +27,8 @@ public class Patient {
     public final int BURN_DEC_RATE = 6;
     public final int BLEED_DEC_RATE = 8;
 
+    private boolean isSurgeried;
+
 
     public Patient(int patientId, int strength, InjuryType injuryType, Location location) {
         this.patientId = patientId;
@@ -34,6 +36,7 @@ public class Patient {
         this.severity = calcSeverity();
         this.injuryType = injuryType;
         this.location = location;
+        this.isSurgeried = false;
     }
 
     public int calcSeverity() {
@@ -109,7 +112,7 @@ public class Patient {
 
             // increase strength
             case SURGERY:
-                int surgeryCured = 30;
+                int surgeryCured = 60;
                 strength += surgeryCured;
                 break;
             case RECOVERY:
@@ -197,5 +200,13 @@ public class Patient {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public void doSurgery() {
+        this.isSurgeried = true;
+    }
+
+    public boolean isSurgeried() {
+        return isSurgeried;
     }
 }
