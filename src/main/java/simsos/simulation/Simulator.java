@@ -78,7 +78,7 @@ public class Simulator {
     private static void progress(BufferedWriter out, ArrayList<Action> actions) throws IOException {
         for (Action action : actions) {
             String actionSpec = action.getName();
-            if(!actionSpec.equals("PTS Waiting")){
+            if(!actionSpec.equals("PTS Waiting") || !actionSpec.equals("Hospital waiting")){
                 out.write(actionSpec);  //
                 out.newLine();  //
                 System.out.println(actionSpec);

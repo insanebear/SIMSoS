@@ -35,7 +35,7 @@ public class Universality implements CheckerInterface{
 
     @Override
     public String getDescription() {
-        return "Globally, it is always the case that \"Every PTS exists within the range between " + this.minRange + " and " + this.maxRange + "\" holds [time(P)] with a probability () than p.";
+        return "Globally, it is always the case that \"Every PTSCenter exists within the range between " + this.minRange + " and " + this.maxRange + "\" holds [time(P)] with a probability () than p.";
     }
 
     @Override
@@ -60,7 +60,7 @@ public class Universality implements CheckerInterface{
         for(Map.Entry <Integer,DebugTick> t: traceMap.entrySet()){
             for(Map.Entry<String, DebugProperty> debugTick: t.getValue().getDebugInfoMap().entrySet()){
                 String name = debugTick.getKey();
-                if(name.contains("PTS")){
+                if(name.contains("PTSCenter")){
                     int pos = (Integer) debugTick.getValue().getProperty("position");
                     if(pos < this.minRange || pos > maxRange)
                         return 0;

@@ -4,7 +4,7 @@ import kr.ac.kaist.se.simulator.BaseAction;
 
 /**
  * SeverityPTS.java
- * Severity patient first PTS class
+ * Severity patient first PTSCenter class
 
  * Author: Junho Kim <jhkim@se.kaist.ac.kr>
 

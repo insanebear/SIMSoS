@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 /**
  * BasePTS.java
- * Basic PTS class
+ * Basic PTSCenter class
 
  * Author: Junho Kim <jhkim@se.kaist.ac.kr>
 
@@ -31,10 +31,10 @@ public abstract class BasePTS extends BaseConstituent implements ConstituentInte
 
     private int curPos;
     private String name;
-    private int PTS_STATUS; // 0: IDLE, 1: Go to Patient, 2: Return to Hospital
+    private int PTS_STATUS; // 0: IDLE, 1: Go to Patient_old, 2: Return to Hospital
 
     public BasePTS(){
-        this.name = "PTS" + String.valueOf(BasePTS.num++);
+        this.name = "PTSCenter" + String.valueOf(BasePTS.num++);
         this.curPos = 50;
         this.PTS_STATUS = 0;
     }
@@ -42,13 +42,13 @@ public abstract class BasePTS extends BaseConstituent implements ConstituentInte
     /**
      * normal Action method
      * Rescue the patient
-     * The elapsedTime will never exceed the maximum distance of this PTS.
+     * The elapsedTime will never exceed the maximum distance of this PTSCenter.
      * @param elapsedTime
      */
     @Override
     public void normalAction(int elapsedTime) {
         RescueAction currentAction = (RescueAction) this.getCurrentAction();
-        if(this.PTS_STATUS == 1){ // Go to Patient
+        if(this.PTS_STATUS == 1){ // Go to Patient_old
             if(currentAction.getRaisedLoc() < 50){
                 int distance = this.curPos - currentAction.getRaisedLoc();
                 if(elapsedTime > distance){
@@ -93,7 +93,7 @@ public abstract class BasePTS extends BaseConstituent implements ConstituentInte
             if(this.curPos == 50){// 병원 도착
                 RescueAction.PatientStatus pStat = currentAction.getPatientStatus();
                 if(pStat != RescueAction.PatientStatus.Dead){
-//                    System.out.println(this + " PTS saved a patient!");
+//                    System.out.println(this + " PTSCenter saved a patient!");
                     this.updateCostBenefit(0, 1, 1);
                     readyForPatient();
                 }
@@ -103,7 +103,7 @@ public abstract class BasePTS extends BaseConstituent implements ConstituentInte
     }
 
     /**
-     * Move the PTS moveVal value in GeoMap
+     * Move the PTSCenter moveVal value in GeoMap
      * @param moveVal
      */
     private void movePTS(int moveVal){
@@ -135,7 +135,7 @@ public abstract class BasePTS extends BaseConstituent implements ConstituentInte
             if (action != null && action.getStatus() == BaseAction.Status.RAISED) { // 내가 먹을 수 있어!
                 this.setCurrentAction(action);
                 action.addPerformer(this);
-//                System.out.println("Pick Patient"+action.getName() + " at" + action.getRaisedLoc());
+//                System.out.println("Pick Patient_old"+action.getId() + " at" + action.getRaisedLoc());
                 this.gotoPatient();
             }else{ // 이미 다른애가 가져감
 //                if(action != null) System.out.println("[LOG] " + this + " takes nothing." );

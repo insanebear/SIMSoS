@@ -4,7 +4,7 @@ import kr.ac.kaist.se.simulator.BaseAction;
 
 /**
  * NearestPTS.java
- * Nearest patient first PTS class
+ * Nearest patient first PTSCenter class
 
  * Author: Junho Kim <jhkim@se.kaist.ac.kr>
 

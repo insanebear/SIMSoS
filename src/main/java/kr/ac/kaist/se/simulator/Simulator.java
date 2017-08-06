@@ -101,12 +101,12 @@ public final class Simulator {
                 if (a.getActionType() == BaseAction.TYPE.IMMEDIATE) { // This action is immediate
                     // Immediate action: making a decision
                     // insert to immediateAction set
-//                    System.out.println(cs.getName() + ", Immediate");
+//                    System.out.println(cs.getId() + ", Immediate");
                     immediateActions.add(a);
                 } else {
                     // insert to normal action set
                     // Normal actions
-//                    System.out.println(cs.getName() + ", Normal (Procedure)");
+//                    System.out.println(cs.getId() + ", Normal (Procedure)");
                     actions.add(a);
                 }
             }
@@ -209,7 +209,7 @@ public final class Simulator {
                 if (a.getActionType() == BaseAction.TYPE.IMMEDIATE) {
                     BaseAction selectedAction = a.getPerformer().immediateAction(); // Select action
                     if (selectedAction != null)
-//                        System.out.println(a.getPerformer().getName() + ", Normal (Progress)");
+//                        System.out.println(a.getPerformer().getId() + ", Normal (Progress)");
                         actions.add(selectedAction);
                 }
             }

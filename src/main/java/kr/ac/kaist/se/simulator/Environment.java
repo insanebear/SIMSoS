@@ -70,7 +70,7 @@ public final class Environment {
 //                    for(int i = 0; i < numRaisingActions; i++){
 //                        String actionName = possibleActionList.get(i);
 //                        for(BaseAction a : this.actionList){
-//                            if(a.getName().equalsIgnoreCase(actionName)){
+//                            if(a.getId().equalsIgnoreCase(actionName)){
 //                                a.setStatus(BaseAction.Status.RAISED);
 //                                selectedActionList.add(a);
 //                                break;

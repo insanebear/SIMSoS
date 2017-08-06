@@ -61,7 +61,7 @@ public class Absence implements CheckerInterface{
         for(Map.Entry <Integer,DebugTick> t: traceMap.entrySet()){
             for(Map.Entry<String, DebugProperty> debugTick: t.getValue().getDebugInfoMap().entrySet()){
                 String name = debugTick.getKey();
-                if(name.contains("Patient")){
+                if(name.contains("Patient_old")){
                     String stat = (String) debugTick.getValue().getProperty("stat");
                     if(patientStatusMap.containsKey(name)){
                         String beforeStat = patientStatusMap.get(name);

@@ -85,6 +85,7 @@ public class MCIScenario extends Scenario {
         }
 
         this.checker = null;
+//        this.checker = new GoalChecker();
     }
     private void categorizePolicy(){
         for(Policy policy: wholePolicies){

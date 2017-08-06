@@ -74,7 +74,7 @@ public class Constituent extends BaseConstituent implements ConstituentInterface
         this.updateCostBenefit(cost, currentAction.getBenefit(), (currentAction.getSoSBenefit() - 1) );
         this.setStatus(Status.IDLE);
         currentAction.removeFromList(this);
-//        System.out.println(this.name + " - " + currentAction.getName());
+//        System.out.println(this.name + " - " + currentAction.getId());
         if(this.getRemainBudget() < this.getRequiredMinimumBudget())
             this.setStatus(Status.END);
 

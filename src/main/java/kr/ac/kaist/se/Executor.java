@@ -131,7 +131,7 @@ public class Executor {
 
                     while (!sprt.checkStopCondition()) {
 
-                        // Initialize Patient map
+                        // Initialize Patient_old map
                         sim.getScenario().init();
 
                         // 매번 다른 distribution 이 필요함
@@ -272,7 +272,7 @@ public class Executor {
 
                     while (!sprt.checkStopCondition()) {
 
-                        // Initialize Patient map
+                        // Initialize Patient_old map
                         sim.getScenario().init();
 
                         // 매번 다른 distribution 이 필요함
@@ -368,7 +368,7 @@ public class Executor {
             String outputName = caseName + "_result/" + pre + caseName + String.format("%.3f", alpha_beta) + "_debug.csv";
             CSVWriter cw = new CSVWriter(new OutputStreamWriter(new FileOutputStream(outputName), "UTF-8"), ',', '"');
 
-            // Initialize Patient map
+            // Initialize Patient_old map
             sim.getScenario().init();
 
             // 매번 다른 distribution 이 필요함

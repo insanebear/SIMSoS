@@ -13,8 +13,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import com.fasterxml.jackson.*;
+
 /**
  * Created by mgjin on 2017-06-12.
+ *
+ * Edited by Youlim Jung on 2017-08-05.
  */
 public class SIMSoS {
     public static void main(String[] args) throws IOException {
@@ -36,8 +40,17 @@ public class SIMSoS {
 
         Simulator.execute(world, 100);
 
+        int alivePatient = 0;
+        int deadPatient = 0;
+
         for(Patient p: Environment.patientsList){
+            if(p.getStatus() == Patient.Status.DEAD)
+                deadPatient++;
+            if(p.getStatus() == Patient.Status.CURED)
+                alivePatient++;
             System.out.println("Patient "+p.getPatientId()+" "+p.getStatus());
         }
+        System.out.println("Alived patient: "+ alivePatient);
+        System.out.println("Dead patient: "+ deadPatient);
     }
 }

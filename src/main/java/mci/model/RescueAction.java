@@ -96,7 +96,7 @@ public class RescueAction extends BaseAction {
         }
         if(this.getPerformer().getClass() == Hospital.class) // Ignore the heal action of the hospital
             return "";
-        String ret_str = "Patient#" + this.getName();
+        String ret_str = "Patient_old#" + this.getName();
         ret_str += "/";
         ret_str += String.valueOf(this.curPos);
         ret_str += "/";
@@ -113,7 +113,7 @@ public class RescueAction extends BaseAction {
         if(this.getPerformer().getClass() == Hospital.class) // Ignore the heal action of the hospital
             return null;
         DebugProperty prop = new DebugProperty();
-        prop.putProperty("name", ("Patient#" + this.getName()));
+        prop.putProperty("name", ("Patient_old#" + this.getName()));
         prop.putProperty("curPos", this.curPos);
         prop.putProperty("stat", RescueAction.getPatientStatusString(this.pStat));
         return prop;
@@ -174,7 +174,7 @@ public class RescueAction extends BaseAction {
             }else if(this.curPos < 50){
                 return 50 - this.curPos;
             }
-        }else if(mode == 1){// 아직 도착도 안함.. PTS 거리만큼 빼줘야함.
+        }else if(mode == 1){// 아직 도착도 안함.. PTSCenter 거리만큼 빼줘야함.
             int curPerformerPos = pts.getCurPos();
             if(this.curPos > 50){
                 int remainToPatient = this.curPos - curPerformerPos;

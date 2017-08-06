@@ -8,10 +8,10 @@ for each in l:
     print(divided_items)
     if len(patients_info) > 0:
         for p in patients_info:
-            patient = p.split('/')
-            life = patient[2]
-            total_patients.add(patient[0])
+            patientOld = p.split('/')
+            life = patientOld[2]
+            total_patients.add(patientOld[0])
             if int(life) < 10:
-                print(patient[0], life)
+                print(patientOld[0], life)
     # print(divided_items[5:])
 print(len(total_patients))
