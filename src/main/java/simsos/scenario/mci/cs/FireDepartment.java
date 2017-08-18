@@ -1,6 +1,6 @@
 package simsos.scenario.mci.cs;
 
-import simsos.scenario.mci.Policy;
+import simsos.scenario.mci.policy.Policy;
 import simsos.simulation.component.Action;
 import simsos.simulation.component.Agent;
 import simsos.simulation.component.Message;
@@ -17,24 +17,25 @@ import java.util.HashMap;
 public class FireDepartment extends Agent {
     private String name;
     private int fireDeptId;
-//    private int[] rescuePriority;
     private int allocTrucks;
     private int allocExcavotors;
     private int allocFighters;
 
+    private double conformRate; // indicates how much CS will follow policies
+
+    private ArrayList<Policy> rescuePolicies;
 
     private FireFighter[] workFighterList;
 
-    public FireDepartment(World world, int fireDeptId, String name, ArrayList<Policy> policies) {
+    public FireDepartment(World world, int fireDeptId, String name, double conformRate) {
         super(world);
         this.name = name;
         this.fireDeptId = fireDeptId;
+        this.conformRate = conformRate;
         this.reset();
 
-        this.allocFighters = 10;    // 지금은 고정
+        this.allocFighters = 50;    //NOTE 지금은 고정
 
-        if(policies!= null)
-            injectPolicies(policies);
 
         /* policy가 injected되면 얘네는 작동 전에 construction부터 조정하겠지
         * 최초 fd 생성 때 total resource랑 비교해서 제한에 위배되지 않는다면
@@ -68,7 +69,7 @@ public class FireDepartment extends Agent {
 
     @Override
     public String getName() {
-        return null;
+        return "Fire department";
     }
 
     @Override
@@ -77,13 +78,13 @@ public class FireDepartment extends Agent {
     }
 
     @Override
-    public HashMap<String, Object> getProperties() {
-        return new HashMap<String, Object>();
+    public boolean makeDecision() {
+        return false;
     }
 
     @Override
-    public void injectPolicies(ArrayList<Policy> policies) {
-
+    public HashMap<String, Object> getProperties() {
+        return new HashMap<String, Object>();
     }
 
     public int getAllocFighters() {

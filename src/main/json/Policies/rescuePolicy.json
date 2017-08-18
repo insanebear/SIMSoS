@@ -1,0 +1,21 @@
+[
+    "RESCUE",
+    [
+      {
+        "variable": "MCILevel",
+        "operator": ">=",
+        "value": "4"
+      },
+      {
+        "variable": "totalDamage",
+        "operator": ">=",
+        "value": "400"
+      }
+    ],
+    {
+      "actType": "priority",
+      "target": "criteria",
+      "operator": "=",
+      "value": "Severity"
+    }
+]

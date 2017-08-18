@@ -1,0 +1,27 @@
+[
+
+  {
+    "policyType": "RESCUE",
+
+    "condition": [
+      {
+        "variable": "MCILevel",
+        "operator": ">=",
+        "value": "4"
+      },
+      {
+        "variable": "totalDamage",
+        "operator": ">=",
+        "value": "400"
+      }
+    ],
+
+    "action": {
+      "actType": "priority",
+      "target": "criteria",
+      "operator": "=",
+      "value": "Severity"
+    }
+  }
+
+]

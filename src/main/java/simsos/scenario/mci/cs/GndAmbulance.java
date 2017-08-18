@@ -2,7 +2,6 @@ package simsos.scenario.mci.cs;
 
 import simsos.scenario.mci.Location;
 import simsos.scenario.mci.Patient;
-import simsos.scenario.mci.Policy;
 import simsos.simulation.component.Action;
 import simsos.simulation.component.Agent;
 import simsos.simulation.component.Message;
@@ -19,7 +18,7 @@ import static simsos.scenario.mci.Environment.*;
  *
  */
 public class GndAmbulance extends Agent{
-    private enum Status {WAITING, LOADING, READY_TO_TRANSFER, TRANSFERRING, DELIVERING, BACK_TO_SCENE}
+    private enum Status {WAITING, LOADING, READY_TO_TRANSPORT, TRANSPORTING, DELIVERING, BACK_TO_SCENE}
 
     private Patient.InjuryType patientType;
 
@@ -30,10 +29,11 @@ public class GndAmbulance extends Agent{
     private int loadPatientId;
     private ArrayList<Integer> spotPatientList;
     private Status status;
-    private int moveLimit;
+
+    private double conformRate; // indicates how much CS will follow policies
 
     private Hospital destHospital;
-    private Location destination; // for transferring
+    private Location destination; // for transporting
     private String pRoomType;
 
     //
@@ -41,7 +41,7 @@ public class GndAmbulance extends Agent{
     private int waitTime;
     private int defaultWait;
 
-    public GndAmbulance(World world, int gAmbId, String name, String affiliation, int moveLimit) {
+    public GndAmbulance(World world, int gAmbId, String name, String affiliation, double conformRate) {
         super(world);
         Random rd = new Random();
         this.name = name;
@@ -50,7 +50,7 @@ public class GndAmbulance extends Agent{
         this.location = new Location(rd.nextInt(patientMapSize.getLeft()), 0);
         this.loadPatientId = -1;
         this.status = Status.WAITING;
-        this.moveLimit = moveLimit;
+        this.conformRate = conformRate;
         //
         this.reachTime = setReachTime();
         this.defaultWait = 1; //TODO review the policy which can manage waiting time.
@@ -93,12 +93,12 @@ public class GndAmbulance extends Agent{
                         if(spotPatientList.size()>0){ // double check if there is a patient
                             loadPatientId = spotPatientList.get(0);
                             spotPatientList.remove(0);
-                            System.out.println("Patient "+loadPatientId+" is ready to be transferred.");
+                            System.out.println("Patient "+loadPatientId+" is ready to be transported.");
 
                             patientsList.get(loadPatientId).changeStat(); // LOADED
 
-                            status = Status.READY_TO_TRANSFER;
-                            System.out.println(getAffiliation()+" "+getName()+" "+getId()+"is "+getStatus()+". Start transferring.");
+                            status = Status.READY_TO_TRANSPORT;
+                            System.out.println(getAffiliation()+" "+getName()+" "+getId()+"is "+getStatus()+". Start transporting.");
                         }else{ // Another waiting ambulance took a patient!
                             status = Status.WAITING;
 
@@ -116,7 +116,7 @@ public class GndAmbulance extends Agent{
                         return "PTS Loading";
                     }
                 };
-            case READY_TO_TRANSFER:
+            case READY_TO_TRANSPORT:
                 return new Action(1) {
                     @Override
                     public void execute() {
@@ -130,12 +130,12 @@ public class GndAmbulance extends Agent{
                         destHospital = checkHospital(pRoomType);
 
                         if(destHospital != null){
-                            status = Status.TRANSFERRING;
+                            status = Status.TRANSPORTING;
                             destHospital.reserveRoom(pRoomType);
 
                             destination = destHospital.getLocation();
                             reachTime = setReachTime();
-                            p.changeStat(); // TRANSFERRING
+                            p.changeStat(); // TRANSPORTING
                         }
                         else
                             System.out.println(getAffiliation()+" "+getName()+" "+getId()+" did not get a destination hospital.");
@@ -146,7 +146,7 @@ public class GndAmbulance extends Agent{
                         return "PTS Searching Hospital";
                     }
                 };
-            case TRANSFERRING:
+            case TRANSPORTING:
                 return new Action(1) {
                     @Override
                     public void execute() {
@@ -159,7 +159,7 @@ public class GndAmbulance extends Agent{
 
                     @Override
                     public String getName() {
-                        return "PTS Transferring";
+                        return "PTS Transporting";
                     }
                 };
             case DELIVERING:
@@ -225,13 +225,13 @@ public class GndAmbulance extends Agent{
     }
 
     @Override
-    public HashMap<String, Object> getProperties() {
-        return new HashMap<String, Object>();
+    public boolean makeDecision() {
+        return false;
     }
 
     @Override
-    public void injectPolicies(ArrayList<Policy> policies) {
-
+    public HashMap<String, Object> getProperties() {
+        return new HashMap<String, Object>();
     }
 
     public String getAffiliation() {
@@ -267,8 +267,7 @@ public class GndAmbulance extends Agent{
     }
 
     private ArrayList<Hospital> sortHospitalByDist(){
-        ArrayList<Hospital> tempList = new ArrayList<>(SoSManager.hospitals);
-        tempList = (ArrayList<Hospital>)SoSManager.hospitals.clone();
+        ArrayList<Hospital> tempList = (ArrayList<Hospital>) SoSManager.hospitals.clone();
 
         Collections.sort(tempList, new Comparator<Hospital>() {
             @Override

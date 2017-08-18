@@ -2,7 +2,6 @@ package simsos.scenario.mci.cs;
 
 import simsos.scenario.mci.Location;
 import simsos.scenario.mci.Patient;
-import simsos.scenario.mci.Policy;
 import simsos.simulation.component.Action;
 import simsos.simulation.component.Agent;
 import simsos.simulation.component.Message;
@@ -23,6 +22,9 @@ public class Hospital extends Agent {
     private String name;
     private int hospitalId;
     private Location location;
+
+    private double conformRate; // indicates how much CS will follow policies
+
     private int totGeneral;
     private int totIntensive;
     private int totOperating;
@@ -41,8 +43,8 @@ public class Hospital extends Agent {
 
 
 
-    public Hospital(World world, int hospitalId, String name, ArrayList<Policy> mciPolicies,
-                    int general, int intensive, int operating, Location location) {
+    public Hospital(World world, int hospitalId, String name,
+                    int general, int intensive, int operating, Location location, double conformRate) {
         super(world);
         this.name = name;
         this.hospitalId = hospitalId;
@@ -55,6 +57,8 @@ public class Hospital extends Agent {
         this.availOperating = this.totOperating;
 
         this.location = location;
+
+        this.conformRate = conformRate;
 
         generalList = new ArrayList<>();
         intensiveList = new ArrayList<>();
@@ -126,13 +130,13 @@ public class Hospital extends Agent {
     }
 
     @Override
-    public HashMap<String, Object> getProperties() {
-        return new HashMap<String, Object>();
+    public boolean makeDecision() {
+        return false;
     }
 
     @Override
-    public void injectPolicies(ArrayList<Policy> policies) {
-
+    public HashMap<String, Object> getProperties() {
+        return new HashMap<String, Object>();
     }
 
     public int getTotGeneral() {

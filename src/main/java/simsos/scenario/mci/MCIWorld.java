@@ -1,8 +1,10 @@
 package simsos.scenario.mci;
 
+import simsos.scenario.mci.policy.Policy;
 import simsos.simulation.component.Action;
 import simsos.simulation.component.World;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -18,14 +20,14 @@ public class MCIWorld extends World {
 
     private Environment environment;
 
-    public MCIWorld(int totalCasualty, int damageFire, int damageCollapse, int mciRadius) {
+    public MCIWorld(int totalCasualty, int damageFire, int damageCollapse, int mciRadius) throws IOException {
         environment = new Environment(totalCasualty, damageFire, damageCollapse, mciRadius);
     }
 
     @Override
     public void reset() {
         super.reset();
-        environment.resetEnvironment();
+//        environment.resetEnvironment();
         //TODO implement reset method in MCIworld
         // 이거 리셋 용도가 어디까지 리셋하는거지 ㅋㅋ
     }

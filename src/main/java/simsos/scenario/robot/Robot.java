@@ -1,12 +1,10 @@
 package simsos.scenario.robot;
 
-import simsos.scenario.mci.Policy;
 import simsos.simulation.component.Action;
 import simsos.simulation.component.Agent;
 import simsos.simulation.component.Message;
 import simsos.simulation.component.World;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Random;
@@ -112,6 +110,11 @@ public class Robot extends Agent{
     }
 
     @Override
+    public boolean makeDecision() {
+        return false;
+    }
+
+    @Override
     public HashMap<String, Object> getProperties() {
         LinkedHashMap<String, Object> agentProperties = new LinkedHashMap<String, Object>();
         agentProperties.put("xpos", xpos);
@@ -120,8 +123,4 @@ public class Robot extends Agent{
         return agentProperties;
     }
 
-    @Override
-    public void injectPolicies(ArrayList<Policy> policies) {
-
-    }
 }

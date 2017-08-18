@@ -1,6 +1,5 @@
 package simsos.scenario.mci.cs;
 
-import simsos.scenario.mci.Policy;
 import simsos.simulation.component.Action;
 import simsos.simulation.component.Agent;
 import simsos.simulation.component.Message;
@@ -58,13 +57,13 @@ public class SoSManager extends Agent {
     }
 
     @Override
-    public HashMap<String, Object> getProperties() {
-        return new HashMap<String, Object>();
+    public boolean makeDecision() {
+        return false;
     }
 
     @Override
-    public void injectPolicies(ArrayList<Policy> policies) {
-
+    public HashMap<String, Object> getProperties() {
+        return new HashMap<String, Object>();
     }
 
     public void setFireDepartments(FireDepartment fd){

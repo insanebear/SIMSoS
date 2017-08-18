@@ -1,8 +1,5 @@
 package simsos.simulation.component;
 
-import simsos.scenario.mci.Policy;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -24,7 +21,8 @@ public abstract class Agent {
 
     public abstract void messageIn(Message msg);
 
+    public abstract boolean makeDecision();
+
     public abstract HashMap<String, Object> getProperties();
 
-    public abstract void injectPolicies(ArrayList<Policy> policies);
 }

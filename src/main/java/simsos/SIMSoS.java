@@ -4,16 +4,12 @@ import mci.Main;
 import simsos.scenario.mci.Environment;
 import simsos.scenario.mci.MCIScenario;
 import simsos.scenario.mci.Patient;
-import simsos.scenario.mci.Policy;
 import simsos.simulation.Simulator;
 import simsos.simulation.component.Scenario;
 import simsos.simulation.component.World;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-
-import com.fasterxml.jackson.*;
 
 /**
  * Created by mgjin on 2017-06-12.
@@ -22,6 +18,8 @@ import com.fasterxml.jackson.*;
  */
 public class SIMSoS {
     public static void main(String[] args) throws IOException {
+        // NOTE How about using JSON file input here to set up MCI scenario's conformRate?
+
         if (args.length > 0 && args[0].equals("old")) {
             String[] passedArgs = Arrays.copyOfRange(args, 1, args.length);
             try {
@@ -33,13 +31,12 @@ public class SIMSoS {
                 System.exit(0);
             }
         }
-
-        ArrayList<Policy> mciPolicies = new ArrayList<>(); // change this into external input
-        Scenario scenario = new MCIScenario(mciPolicies);
+        Scenario scenario = new MCIScenario();
         World world = scenario.getWorld();
 
         Simulator.execute(world, 100);
 
+        // temporary result view
         int alivePatient = 0;
         int deadPatient = 0;
 

@@ -81,7 +81,7 @@ public class Simulator {
             if(!actionSpec.equals("PTS Waiting") || !actionSpec.equals("Hospital waiting")){
                 out.write(actionSpec);  //
                 out.newLine();  //
-                System.out.println(actionSpec);
+//                System.out.println(actionSpec);
             }
             action.execute();
         }

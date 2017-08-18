@@ -1,12 +1,10 @@
 package simsos.scenario.mci.cs;
 
-import simsos.scenario.mci.Policy;
 import simsos.simulation.component.Action;
 import simsos.simulation.component.Agent;
 import simsos.simulation.component.Message;
 import simsos.simulation.component.World;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -17,21 +15,20 @@ import java.util.HashMap;
 public class PTSCenter extends Agent {
     private String name;
     private int ptsCenterId;
-
     private int allocGndAmbul;
+
+    private double conformRate; // indicates how much CS will follow policies
 
     private GndAmbulance[] workGndAmbuls;
 
-    public PTSCenter(World world, int ptsCenterId, String name, ArrayList<Policy> policies) {
+    public PTSCenter(World world, int ptsCenterId, String name, double conformRate) {
         super(world);
         this.name = name;
         this.ptsCenterId = ptsCenterId;
+        this.conformRate = conformRate;
         this.reset();
 
-        this.allocGndAmbul = 6;     // 지금은 고정
-
-        if(policies != null)
-            injectPolicies(policies);
+        this.allocGndAmbul = 20;     // 지금은 고정
 
         workGndAmbuls = new GndAmbulance[allocGndAmbul];
     }
@@ -52,7 +49,7 @@ public class PTSCenter extends Agent {
 
     @Override
     public String getName() {
-        return null;
+        return this.name;
     }
 
     @Override
@@ -61,13 +58,13 @@ public class PTSCenter extends Agent {
     }
 
     @Override
-    public HashMap<String, Object> getProperties() {
-        return new HashMap<String, Object>();
+    public boolean makeDecision() {
+        return false;
     }
 
     @Override
-    public void injectPolicies(ArrayList<Policy> policies) {
-
+    public HashMap<String, Object> getProperties() {
+        return new HashMap<String, Object>();
     }
 
     public int getAllocGndAmbul() {
