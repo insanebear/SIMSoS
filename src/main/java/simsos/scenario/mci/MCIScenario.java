@@ -1,5 +1,6 @@
 package simsos.scenario.mci;
 
+import simsos.scenario.SoSInfrastructure;
 import simsos.scenario.mci.cs.*;
 import simsos.simulation.component.Scenario;
 
@@ -17,23 +18,31 @@ import static simsos.scenario.mci.Environment.hospitalMapSize;
 public class MCIScenario extends Scenario {
 
     private double conformRate = 0.8; // indicates how much CS will follow policies
+    private int totalFD;
+    private int totalPTS;
+    private int totalH;
 
-    public MCIScenario() throws IOException {
+    private int meanGeneral;
+    private int varGeneral;
+    private int meanIntensive;
+    private int varIntensive;
+    private int meanOperating;
+    private int varOperating;
+
+    private SoSInfrastructure infrastructure;
+
+    public MCIScenario(SoSInfrastructure infrastructure) throws IOException {
         Random rd = new Random();
-        this.world = new MCIWorld(5000, 300, 200, 10);
-
-        /*
-        * SoS Construction
-        * SoS Manager: 1, Fire Department: 3, PTS Center: 3, Hospital: 3
-        * CSs follow policies based on a given probability
-        * */
+        this.world = new MCIWorld();
+        this.infrastructure = infrastructure;
+        setInfrastructure();
 
         // SoS Manager
         SoSManager manager = new SoSManager(this.world, "SoSManager");
         this.world.addAgent(manager);
 
         // Fire Department
-        for(int i=0; i<3; i++){
+        for(int i=0; i<this.totalFD; i++){
             FireDepartment fd = new FireDepartment(this.world, i, "Fire Department", conformRate);
             manager.setFireDepartments(fd);
             for(int j=0; j<fd.getAllocFighters(); j++){
@@ -44,7 +53,7 @@ public class MCIScenario extends Scenario {
         }
 
         // PTS Center
-        for(int i=0; i<3; i++){
+        for(int i=0; i<this.totalPTS; i++){
             PTSCenter pts = new PTSCenter(this.world, i, "PTS Center", conformRate);
             manager.setPtsCenters(pts);
             for(int j=0; j<pts.getAllocGndAmbul(); j++){
@@ -54,10 +63,11 @@ public class MCIScenario extends Scenario {
             }
         }
 
-        for(int i=0; i<3; i++){
-            int generalRoom = ThreadLocalRandom.current().nextInt(90, 100);
-            int intensiveRoom = ThreadLocalRandom.current().nextInt(30, 100);
-            int operatingRoom = ThreadLocalRandom.current().nextInt(60, 80);
+        for(int i=0; i<this.totalH; i++){
+            int generalRoom = (int)Math.round(rd.nextGaussian()* varGeneral + meanGeneral);
+            int intensiveRoom = (int)Math.round(rd.nextGaussian()* varIntensive + meanIntensive);
+            int operatingRoom = (int)Math.round(rd.nextGaussian()* varOperating + meanOperating);
+
             int locX = ThreadLocalRandom.current().nextInt(4, hospitalMapSize.getRight());
             int locY = rd.nextInt(hospitalMapSize.getRight());
 
@@ -69,6 +79,20 @@ public class MCIScenario extends Scenario {
 
         this.checker = null;
 //        this.checker = new GoalChecker();
+    }
+
+    public void setInfrastructure() {
+        totalFD = infrastructure.getNumFireDepartment();
+        totalPTS = infrastructure.getNumPTSCenter();
+        totalH = infrastructure.getNumHospital();
+
+        meanGeneral = infrastructure.getMeanGeneral();
+        varGeneral = infrastructure.getVarGeneral();
+        meanIntensive = infrastructure.getMeanIntensive();
+        varIntensive = infrastructure.getVarIntensive();
+        meanOperating = infrastructure.getMeanOperating();
+        varOperating = infrastructure.getVarOperating();
+
     }
 
     public double getConformRate() {

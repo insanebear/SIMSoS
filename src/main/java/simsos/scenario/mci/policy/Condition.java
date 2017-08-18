@@ -9,7 +9,6 @@ public class Condition {
     private String variable;
     private String operator;
     private String value;
-    private boolean condValidity;
 
     public String getVariable() {
         return variable;

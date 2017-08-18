@@ -1,6 +1,8 @@
 package simsos;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import mci.Main;
+import simsos.scenario.SoSInfrastructure;
 import simsos.scenario.mci.Environment;
 import simsos.scenario.mci.MCIScenario;
 import simsos.scenario.mci.Patient;
@@ -8,6 +10,7 @@ import simsos.simulation.Simulator;
 import simsos.simulation.component.Scenario;
 import simsos.simulation.component.World;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -18,7 +21,6 @@ import java.util.Arrays;
  */
 public class SIMSoS {
     public static void main(String[] args) throws IOException {
-        // NOTE How about using JSON file input here to set up MCI scenario's conformRate?
 
         if (args.length > 0 && args[0].equals("old")) {
             String[] passedArgs = Arrays.copyOfRange(args, 1, args.length);
@@ -31,7 +33,12 @@ public class SIMSoS {
                 System.exit(0);
             }
         }
-        Scenario scenario = new MCIScenario();
+
+        ObjectMapper mapper = new ObjectMapper();
+        SoSInfrastructure infrastructure = mapper.readValue(
+                new File("src/main/json/Scenario/SoSProperties.json"), SoSInfrastructure.class);
+
+        Scenario scenario = new MCIScenario(infrastructure);
         World world = scenario.getWorld();
 
         Simulator.execute(world, 100);

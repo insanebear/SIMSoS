@@ -1,0 +1,12 @@
+{
+  "numFireDepartment": 3,
+  "numPTSCenter": 3,
+  "numHospital": 3,
+
+  "meanGeneral":100,
+  "varGeneral": 10,
+  "meanIntensive": 50,
+  "varIntensive": 20,
+  "meanOperating": 30,
+  "varOperating": 10
+}

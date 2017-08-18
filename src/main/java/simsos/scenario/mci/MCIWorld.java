@@ -1,9 +1,10 @@
 package simsos.scenario.mci;
 
-import simsos.scenario.mci.policy.Policy;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import simsos.simulation.component.Action;
 import simsos.simulation.component.World;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -13,32 +14,22 @@ import java.util.ArrayList;
  * Edited by Youlim Jung on 2017-07-18.
  */
 public class MCIWorld extends World {
-//    public static final Pair<Integer, Integer> MAP_SIZE = new Pair<Integer, Integer>(19, 19);
-
-    private int[] patientRaisePlan;
-    private int patientNumbering = 0;
-
     private Environment environment;
 
-    public MCIWorld(int totalCasualty, int damageFire, int damageCollapse, int mciRadius) throws IOException {
-        environment = new Environment(totalCasualty, damageFire, damageCollapse, mciRadius);
+    public MCIWorld() throws IOException {
+        setEnvironment();
     }
-
     @Override
     public void reset() {
         super.reset();
-//        environment.resetEnvironment();
-        //TODO implement reset method in MCIworld
-        // 이거 리셋 용도가 어디까지 리셋하는거지 ㅋㅋ
+        environment.resetEnvironment();
     }
 
     @Override
     public ArrayList<Action> generateExogenousActions() {
         ArrayList<Action> updateEnvironment = new ArrayList<>();
-//        World world = this;
 
         updateEnvironment.add(new Action(0) {
-
             @Override
             public void execute() {
                 // update patients' strength
@@ -54,5 +45,13 @@ public class MCIWorld extends World {
         return updateEnvironment;
     }
 
-
+    private void setEnvironment(){
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            environment = mapper.readValue(new File("src/main/json/Scenario/envProperties.json"), Environment.class);
+            environment.initEnvironment();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

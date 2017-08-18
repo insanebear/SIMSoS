@@ -49,4 +49,12 @@ public class Policy {
         this.action = action;
     }
 
+    public void printConditions(){
+        for (Condition condition : conditions)
+            System.out.println(condition.getVariable()+condition.getOperator()+condition.getValue());
+    }
+
+    public void printAction(){
+        System.out.println(action.getActType()+" "+action.getTarget()+action.getOperator()+action.getValue());
+    }
 }

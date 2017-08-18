@@ -46,15 +46,15 @@ public class PatientFactory {
 
         }
 
-        // patient information
-        for(Patient p : patientsList){
-            System.out.println("Patient "+p.getPatientId()+" is at ("
-                    +p.getLocation().getX()+", "+p.getLocation().getY()+")");
-            System.out.println("Injury type: "+p.getInjuryType());
-            System.out.println("Strength: "+p.getStrength());
-            System.out.println("Severity: "+p.getSeverity());
-            System.out.println();
-        }
+//        // CHECK patient information
+//        for(Patient p : patientsList){
+//            System.out.println("Patient "+p.getPatientId()+" is at ("
+//                    +p.getLocation().getX()+", "+p.getLocation().getY()+")");
+//            System.out.println("Injury type: "+p.getInjuryType());
+//            System.out.println("Strength: "+p.getStrength());
+//            System.out.println("Severity: "+p.getSeverity());
+//            System.out.println();
+//        }
     }
 
 }
