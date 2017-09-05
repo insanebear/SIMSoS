@@ -67,7 +67,7 @@ public class MCIScenario extends Scenario {
             int generalRoom = (int)Math.round(rd.nextGaussian()* varGeneral + meanGeneral);
             int intensiveRoom = (int)Math.round(rd.nextGaussian()* varIntensive + meanIntensive);
             int operatingRoom = (int)Math.round(rd.nextGaussian()* varOperating + meanOperating);
-
+            //TODO Hospital location should not be random in during simulation!!!
             int locX = ThreadLocalRandom.current().nextInt(4, hospitalMapSize.getRight());
             int locY = rd.nextInt(hospitalMapSize.getRight());
 

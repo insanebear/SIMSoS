@@ -15,9 +15,9 @@ import java.util.ArrayList;
  *
  */
 public class Environment {
-    public static Pair<Integer, Integer> worldMapSize;
-    public static Pair<Integer, Integer> patientMapSize;
-    public static Pair<Integer, Integer> hospitalMapSize;
+//    public static Pair<Integer, Integer> worldMapSize;
+//    public static Pair<Integer, Integer> patientMapSize;
+//    public static Pair<Integer, Integer> hospitalMapSize;
 
     private int initCasualty;
     private int initDamageFire;
@@ -31,10 +31,12 @@ public class Environment {
     public static int damageCollapse;
 
     public static ArrayList<Patient> patientsList;
+
+    public static ArrayList<Floor> building;
     public static ArrayList<Integer>[][] patientMap;
+
     public static ArrayList<Integer>[] stageZone;
     public static ArrayList<Integer>[][] hospitalMap;
-    public static ArrayList<Integer>[] building;
 
     // TODO Move these (policy related parts) to SoS Infrastructure in the future
     // Policy
@@ -50,15 +52,21 @@ public class Environment {
         damageFire = this.initDamageFire;
         damageCollapse = this.initDamageCollapse;
 
-        setMapSize();
+//        setMapSize();
+        //TODO PatientMapt이 바뀔 예정
+        building = new ArrayList<>();                           initBuilding(building);
         patientMap = new ArrayList[mciRadius+1][mciRadius+1];     initMap(patientMap);
-        stageZone = new ArrayList[mciRadius+1];                initStageZone();
+        //
+        stageZone = new ArrayList[mciRadius+1];                 initStageZone();
         hospitalMap = new ArrayList[mciRadius+1][mciRadius+1];    initMap(hospitalMap);
+
+
 
         // generate patients
         patientsList = new ArrayList<>();
         PatientFactory patientFactory = new PatientFactory(totalCasualty);
-        patientFactory.generatePatient(patientMap, patientsList);
+//        patientFactory.generatePatient(patientMap, patientsList, building);
+        patientFactory.generatePatient(patientsList, building, mciRadius);
 
         getPolicies();
     }
@@ -75,13 +83,19 @@ public class Environment {
                 map[i][j] = new ArrayList<>();
     }
 
-    private void setMapSize(){
-        worldMapSize = new Pair<Integer, Integer>(mciRadius+10, mciRadius+10);
-        patientMapSize = new Pair<Integer, Integer>(mciRadius, mciRadius);
-        hospitalMapSize = new Pair<Integer, Integer>(mciRadius, mciRadius);
+    private void initBuilding(ArrayList<Floor> building){
+        for(int i=0; i<buildingHeight; i++){
+            building.add(new Floor(mciRadius));
+        }
     }
 
-    // rest environment
+//    private void setMapSize(){
+//        worldMapSize = new Pair<Integer, Integer>(mciRadius+10, mciRadius+10);
+//        patientMapSize = new Pair<Integer, Integer>(mciRadius, mciRadius);
+//        hospitalMapSize = new Pair<Integer, Integer>(mciRadius, mciRadius);
+//    }
+
+    // reset environment
     public void resetEnvironment(){
         totalCasualty = initCasualty;
         MCILevel = calcMCILevel(totalCasualty);
@@ -118,6 +132,8 @@ public class Environment {
         else
             return 5;
     }
+
+
 
     // Policy related methods
     private void getPolicies() {
@@ -218,6 +234,8 @@ public class Environment {
         }
         return false;
     }
+
+
 
     // getters and setters for environment information
     public int getInitCasualty() {

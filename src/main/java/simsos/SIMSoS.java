@@ -22,6 +22,7 @@ import java.util.Arrays;
 public class SIMSoS {
     public static void main(String[] args) throws IOException {
 
+        // Old version of SIMSoS
         if (args.length > 0 && args[0].equals("old")) {
             String[] passedArgs = Arrays.copyOfRange(args, 1, args.length);
             try {
@@ -34,10 +35,12 @@ public class SIMSoS {
             }
         }
 
+        // JSON Read
         ObjectMapper mapper = new ObjectMapper();
         SoSInfrastructure infrastructure = mapper.readValue(
                 new File("src/main/json/Scenario/SoSProperties.json"), SoSInfrastructure.class);
 
+        // Simulation (Scenario and World)
         Scenario scenario = new MCIScenario(infrastructure);
         World world = scenario.getWorld();
 

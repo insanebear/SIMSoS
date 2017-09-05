@@ -27,7 +27,6 @@ public class FireFighter extends Agent{
     public enum Actions{
         SEARCH, RESCUE, TRANSPORT, NONE
     }
-    private Patient.InjuryType patientType;
 
     private String affiliation;
     private String name;

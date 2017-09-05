@@ -21,7 +21,7 @@ public class Patient {
     private int strength;       // 0~199 (200) 0: dead
     private int severity;       // 0~9 (10)
     private InjuryType injuryType;
-    private int story; // Todo: randomly generated
+    private int story;
     private Location location;      // within MCI radius
     private Status status = Status.RESCUE_WAIT;
     public final int FRAC_DEC_RATE = 4;
@@ -30,11 +30,12 @@ public class Patient {
 
     private boolean isSurgeried;
 
-    public Patient(int patientId, int strength, InjuryType injuryType, Location location) {
+    public Patient(int patientId, int strength, InjuryType injuryType, int story, Location location) {
         this.patientId = patientId;
         this.strength = strength;
         this.severity = calcSeverity();
         this.injuryType = injuryType;
+        this.story = story;
         this.location = location;
         this.isSurgeried = false;
     }
@@ -180,6 +181,14 @@ public class Patient {
 
     public void setSeverity(int severity) {
         this.severity = severity;
+    }
+
+    public int getStory() {
+        return story;
+    }
+
+    public void setStory(int story) {
+        this.story = story;
     }
 
     public Location getLocation() {

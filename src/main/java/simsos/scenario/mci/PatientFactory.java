@@ -10,40 +10,32 @@ import java.util.concurrent.ThreadLocalRandom;
  *
  */
 public class PatientFactory {
-    private ArrayList<Patient> patientsList;
 
-    private ArrayList<Integer> [][] patientMap;
     private int totalCasualty;
-
     private Patient.InjuryType[] injuryList;
 
     public PatientFactory(int totalCasualty) {
-        this.patientsList = new ArrayList<>();
         this.totalCasualty = totalCasualty;
         this.injuryList = Patient.InjuryType.values();
-
-
     }
 
-    public void generatePatient(ArrayList<Integer>[][] patientMap, ArrayList<Patient> patientsList){
-        Random random = new Random();
-        int radius = patientMap.length;
+//    public void generatePatient(ArrayList<Integer>[][] patientMap, ArrayList<Patient> patientsList, ArrayList<Floor> building){
+    public void generatePatient(ArrayList<Patient> patientsList, ArrayList<Floor> building, int radius){
+        Random rd = new Random();
 
         for(int i=0; i<totalCasualty; i++){
-            int strength = random.nextInt(90)+40;
-            Patient.InjuryType injuryType = injuryList[random.nextInt(injuryList.length)];
+            Patient.InjuryType injuryType = injuryList[rd.nextInt(injuryList.length)];
+            int strength = setStrengthByType(injuryType);
 
-//            int x = ThreadLocalRandom.current().nextInt(5, radius);
-//            int y = ThreadLocalRandom.current().nextInt(5, radius);
-            int x = random.nextInt(radius);
-            int y = random.nextInt(radius);
+            int story = rd.nextInt(building.size());
+
+            int x = (int)Math.round(rd.nextGaussian()*1.5 + radius/2);
+            int y = (int)Math.round(rd.nextGaussian()*1.5 + radius/2);
             Location location = new Location(x, y);
 
-            Patient p = new Patient(i, strength, injuryType, location);
+            Patient p = new Patient(i, strength, injuryType, story, location);
             patientsList.add(p);
-
-            patientMap[x][y].add(i);
-
+            building.get(story).setPatientOnFloor(i, x, y);
         }
 
 //        // CHECK patient information
@@ -55,6 +47,26 @@ public class PatientFactory {
 //            System.out.println("Severity: "+p.getSeverity());
 //            System.out.println();
 //        }
+    }
+    public int setStrengthByType(Patient.InjuryType injuryType){
+        // total strength: 200 (0~199)
+        // Fractured: relatively slight injury
+        // Bleeding, Burn: burn is much more serious than bleeding in terms of mean strength
+
+        Random rd = new Random();
+        int strength=0;
+
+        switch (injuryType){
+            case FRACTURED:
+                strength = (int)Math.round(rd.nextGaussian()*18 + 120);
+                break;
+            case BLEEDING:
+                strength = (int)Math.round(rd.nextGaussian()*20 + 100);
+                break;
+            case BURN:
+                strength = (int)Math.round(rd.nextGaussian()*15 + 60);
+        }
+        return strength;
     }
 
 }
