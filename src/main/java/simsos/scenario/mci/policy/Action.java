@@ -6,17 +6,17 @@ package simsos.scenario.mci.policy;
  *
  */
 public class Action {
-    private String actType;
+    private String constraintType;
     private String target;
     private String operator;
     private String value;
 
-    public String getActType() {
-        return actType;
+    public String getConstraintType() {
+        return constraintType;
     }
 
-    public void setActType(String actType) {
-        this.actType = actType;
+    public void setConstraintType(String constraintType) {
+        this.constraintType = constraintType;
     }
 
     public String getTarget() {

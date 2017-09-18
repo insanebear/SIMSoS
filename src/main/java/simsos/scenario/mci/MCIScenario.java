@@ -45,6 +45,7 @@ public class MCIScenario extends Scenario {
         for(int i=0; i<this.totalFD; i++){
             FireDepartment fd = new FireDepartment(this.world, i, "Fire Department", conformRate);
             manager.setFireDepartments(fd);
+
             for(int j=0; j<fd.getAllocFighters(); j++){
                 FireFighter ff = new FireFighter(null, j, "Fire Fighter", "FD"+i, conformRate);
                 this.world.addAgent(ff);
@@ -67,12 +68,24 @@ public class MCIScenario extends Scenario {
             int generalRoom = (int)Math.round(rd.nextGaussian()* varGeneral + meanGeneral);
             int intensiveRoom = (int)Math.round(rd.nextGaussian()* varIntensive + meanIntensive);
             int operatingRoom = (int)Math.round(rd.nextGaussian()* varOperating + meanOperating);
-            //TODO Hospital location should not be random in during simulation!!!
+
             int locX = ThreadLocalRandom.current().nextInt(4, hospitalMapSize.getRight());
             int locY = rd.nextInt(hospitalMapSize.getRight());
 
             Hospital hospital = new Hospital(this.world, i, "Hospital", generalRoom,
                     intensiveRoom, operatingRoom, new Location(locX, locY), conformRate);
+
+            // information setting for reset
+            Information info = new Information();
+            info.setName(hospital.getName());
+            info.setId(hospital.getId());
+            info.setLocation(hospital.getLocation());
+            info.setProperties("GR", generalRoom);
+            info.setProperties("IR", intensiveRoom);
+            info.setProperties("OR", operatingRoom);
+
+            infrastructure.putCsInformation(info);
+
             this.world.addAgent(hospital); // hospital acts by itself
             manager.setHospitals(hospital);
         }

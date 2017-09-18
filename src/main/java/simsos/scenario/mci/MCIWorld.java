@@ -49,7 +49,7 @@ public class MCIWorld extends World {
     private void setEnvironment(){
         ObjectMapper mapper = new ObjectMapper();
         try {
-            environment = mapper.readValue(new File("src/main/json/Scenario/envProperties.json"), Environment.class);
+            environment = mapper.readValue(new File("src/main/json/scenario/envProperties.json"), Environment.class);
             environment.initEnvironment();
         } catch (IOException e) {
             e.printStackTrace();

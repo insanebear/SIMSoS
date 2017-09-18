@@ -1,5 +1,9 @@
 package simsos.scenario;
 
+import simsos.scenario.mci.cs.Information;
+
+import java.util.ArrayList;
+
 /**
  * Created by Youlim Jung on 18/08/2017.
  */
@@ -16,6 +20,11 @@ public class SoSInfrastructure {
     private int meanOperating;
     private int varOperating;
 
+    private ArrayList<Information> csInformation;
+
+    public SoSInfrastructure() {
+        this.csInformation = new ArrayList<>();
+    }
 
     public int getNumFireDepartment() {
         return numFireDepartment;
@@ -87,5 +96,9 @@ public class SoSInfrastructure {
 
     public void setVarOperating(int varOperating) {
         this.varOperating = varOperating;
+    }
+
+    public void putCsInformation(Information information){
+        this.csInformation.add(information);
     }
 }

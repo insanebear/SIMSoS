@@ -1,5 +1,6 @@
 package simsos.scenario.mci;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.CollectionType;
@@ -7,6 +8,7 @@ import simsos.scenario.mci.policy.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
@@ -15,9 +17,9 @@ import java.util.ArrayList;
  *
  */
 public class Environment {
-//    public static Pair<Integer, Integer> worldMapSize;
-//    public static Pair<Integer, Integer> patientMapSize;
-//    public static Pair<Integer, Integer> hospitalMapSize;
+    public static Pair<Integer, Integer> worldMapSize;
+    public static Pair<Integer, Integer> patientMapSize;
+    public static Pair<Integer, Integer> hospitalMapSize;
 
     private int initCasualty;
     private int initDamageFire;
@@ -33,8 +35,7 @@ public class Environment {
     public static ArrayList<Patient> patientsList;
 
     public static ArrayList<Floor> building;
-    public static ArrayList<Integer>[][] patientMap;
-
+//    public static ArrayList<Integer>[][] patientMap;
     public static ArrayList<Integer>[] stageZone;
     public static ArrayList<Integer>[][] hospitalMap;
 
@@ -52,10 +53,9 @@ public class Environment {
         damageFire = this.initDamageFire;
         damageCollapse = this.initDamageCollapse;
 
-//        setMapSize();
-        //TODO PatientMapt이 바뀔 예정
+        setMapSize();
         building = new ArrayList<>();                           initBuilding(building);
-        patientMap = new ArrayList[mciRadius+1][mciRadius+1];     initMap(patientMap);
+//        patientMap = new ArrayList[mciRadius+1][mciRadius+1];     initMap(patientMap);
         //
         stageZone = new ArrayList[mciRadius+1];                 initStageZone();
         hospitalMap = new ArrayList[mciRadius+1][mciRadius+1];    initMap(hospitalMap);
@@ -65,7 +65,6 @@ public class Environment {
         // generate patients
         patientsList = new ArrayList<>();
         PatientFactory patientFactory = new PatientFactory(totalCasualty);
-//        patientFactory.generatePatient(patientMap, patientsList, building);
         patientFactory.generatePatient(patientsList, building, mciRadius);
 
         getPolicies();
@@ -89,11 +88,11 @@ public class Environment {
         }
     }
 
-//    private void setMapSize(){
-//        worldMapSize = new Pair<Integer, Integer>(mciRadius+10, mciRadius+10);
-//        patientMapSize = new Pair<Integer, Integer>(mciRadius, mciRadius);
-//        hospitalMapSize = new Pair<Integer, Integer>(mciRadius, mciRadius);
-//    }
+    private void setMapSize(){
+        worldMapSize = new Pair<Integer, Integer>(mciRadius+10, mciRadius+10);
+        patientMapSize = new Pair<Integer, Integer>(mciRadius, mciRadius);
+        hospitalMapSize = new Pair<Integer, Integer>(mciRadius, mciRadius);
+    }
 
     // reset environment
     public void resetEnvironment(){
@@ -138,14 +137,17 @@ public class Environment {
     // Policy related methods
     private void getPolicies() {
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(Policy.class, new PolicyDeserializer());
-
         ObjectMapper mapper = new ObjectMapper();
+//        JavaType type = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Condition.class);
+
+        module.addDeserializer(Policy.class, new PolicyDeserializer(mapper));
+
+
         mapper.registerModule(module);
         CollectionType collectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Policy.class);
 
         try {
-            rescuePolicies = mapper.readValue(new File("src/main/json/Policies/rescuePolicy.json"), collectionType);
+            rescuePolicies = mapper.readValue(new File("src/main/json/policies/previousPolicy.json"), collectionType);
             // set policy id
             for (int i=0; i<rescuePolicies.size(); i++) {
                 rescuePolicies.get(i).setPolicyId(i);

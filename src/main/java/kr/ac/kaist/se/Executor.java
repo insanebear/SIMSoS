@@ -94,7 +94,7 @@ public class Executor {
         System.out.println("==========================================\n" +
                 "[ Simulation Description ]\n" +
                 "Parameters: " + params + "\n" +
-                "Scenario: " + sim.getScenario().getDescription() + "\n" +
+                "scenario: " + sim.getScenario().getDescription() + "\n" +
                 "Checker: " + checker.getName() + "\n" +
                 "Statement: " + ANSI_RED + checker.getDescription() + ANSI_RESET);
 
@@ -242,7 +242,7 @@ public class Executor {
 
         System.out.println("==========================================\n" +
                             "[ Simulation Description ]\n" +
-                            "Scenario: " + sim.getScenario().getDescription() + "\n" +
+                            "scenario: " + sim.getScenario().getDescription() + "\n" +
                             "Checker: " + checker.getName() + "\n" +
                             "Statement: " + checker.getDescription());
 

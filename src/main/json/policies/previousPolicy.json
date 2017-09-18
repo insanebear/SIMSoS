@@ -1,0 +1,65 @@
+[
+  {
+    "policyType": "RESCUE",
+    "conditions": [
+      {
+        "variable": "MCILevel",
+        "operator": "==",
+        "value": "4"
+      },
+      {
+        "variable": "totalDamage",
+        "operator": ">=",
+        "value": "400"
+      }
+    ],
+    "action": {
+      "constraintType": "priority",
+      "target": "criteria",
+      "operator": "=",
+      "value": "Severity"
+    }
+  },
+  {
+    "policyType": "RESCUE",
+    "conditions": [
+      {
+        "variable": "MCILevel",
+        "operator": "==",
+        "value": "5"
+      },
+      {
+        "variable": "totalDamage",
+        "operator": ">=",
+        "value": "400"
+      }
+    ],
+    "action": {
+      "constraintType": "priority",
+      "target": "criteria",
+      "operator": "=",
+      "value": "Severity"
+    }
+  },
+  {
+    "policyType": "TRANSPORT",
+    "conditions": [
+      {
+        "variable": "MCILevel",
+        "operator": "==",
+        "value": "4"
+      },
+      {
+        "variable": "totalDamage",
+        "operator": ">=",
+        "value": "400"
+      }
+    ],
+    "action": {
+      "constraintType": "priority",
+      "target": "criteria",
+      "operator": "=",
+      "value": "Severity"
+    }
+  }
+]

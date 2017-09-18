@@ -9,13 +9,10 @@ import java.util.ArrayList;
  */
 public class Policy {
     private int policyId;
+
     private String policyType;
     protected ArrayList<Condition> conditions;
     private Action action;
-
-    public Policy() {
-        policyId = 0;
-    }
 
     public int getPolicyId() {
         return policyId;
@@ -55,6 +52,6 @@ public class Policy {
     }
 
     public void printAction(){
-        System.out.println(action.getActType()+" "+action.getTarget()+action.getOperator()+action.getValue());
+        System.out.println(action.getConstraintType()+" "+action.getTarget()+action.getOperator()+action.getValue());
     }
 }

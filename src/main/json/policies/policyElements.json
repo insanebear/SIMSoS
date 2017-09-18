@@ -1,0 +1,23 @@
+[
+  {
+    "varName": "role",
+    "scope": "policyType",
+    "type": "value",
+    "values":
+      [
+        "rescue",
+        "transport",
+        "treatment"
+      ]
+  },
+  {
+    "varName": "MCILevel",
+    "scope": "condition",
+    "type": "range",
+    "values":
+      [
+        "1", "5"
+      ]
+  }
+
+]

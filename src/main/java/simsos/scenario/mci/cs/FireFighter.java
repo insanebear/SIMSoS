@@ -8,7 +8,6 @@ import simsos.simulation.component.Message;
 import simsos.simulation.component.World;
 
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static simsos.scenario.mci.Environment.*;
 
@@ -27,22 +26,25 @@ public class FireFighter extends Agent{
     public enum Actions{
         SEARCH, RESCUE, TRANSPORT, NONE
     }
-
+    private int fighterId;
     private String affiliation;
     private String name;
-    private int fighterId;
-    private Location location;
-    private int rescuedPatientId;
-    private ArrayList<Integer> spotPatientList;
-    private Status status;
 
+    // current properties
+    private Status status;
+    private Location location;
+    private int story;
     private Actions currAction;
     private Policy currPolicy;
+
+    private int rescuedPatientId;
+    private ArrayList<Integer> spotPatientList;
 
     private double conformRate; // indicates how much CS will follow policies
 
     //
-    private Location destination;
+    private Location destCoordinate;
+    private int destStory;
     private int reachTime;
 
     public FireFighter(World world, int fighterId, String name, String affiliation, double conformRate) {
@@ -51,13 +53,16 @@ public class FireFighter extends Agent{
         this.affiliation = affiliation;
         this.fighterId = fighterId;
         this.location = new Location(0, 0);
+        this.story = 0;
         this.rescuedPatientId = -1;     // no patient rescued
         this.status = Status.SEARCHING;
         this.currAction = Actions.SEARCH;
         this.conformRate = conformRate;
-        //
-        this.destination = setDestination();
-        this.reachTime = setReachTime(); // distribution 으로 랜덤설정할수도있겠구나
+
+        this.destCoordinate = new Location(0, 0);
+        setDestination();
+        this.reachTime = setReachTime();
+
     }
 
     @Override
@@ -70,6 +75,9 @@ public class FireFighter extends Agent{
                         if (reachTime == 0) {
                             status = Status.RESCUING;
                             currAction = Actions.RESCUE;
+                            location.setX(destCoordinate.getX());
+                            location.setY(destCoordinate.getY());
+                            story = destStory;
                         } else
                             reachTime--;
                     }
@@ -83,7 +91,7 @@ public class FireFighter extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        spotPatientList = patientMap[destination.getX()][destination.getY()];
+                        spotPatientList = building.get(story).getSpotPatientList(location.getX(), location.getY());
                         if (checkPatient(spotPatientList)) {
                             if(spotPatientList.size()>1){
                                 //NOTE Policy applied if there are 2 or more patients
@@ -100,15 +108,15 @@ public class FireFighter extends Agent{
                             currAction = Actions.TRANSPORT;
 
                             //TODO location scheduling?
-                            destination = new Location(new Random().nextInt(patientMapSize.getLeft()), patientMapSize.getRight());
+                            setDestination();
                             reachTime = setReachTime();
 
                             System.out.println("Patient \'" + rescuedPatientId + "\' rescued. Ready to transport.");
                         } else {
-                            destination = setDestination();
+                            setDestination();
                             reachTime = setReachTime();
                             System.out.println("Patient not found");
-                            if(destination==null){
+                            if(destCoordinate ==null){
                                 status = Status.DONE;
                                 currAction = Actions.NONE;
                             }
@@ -129,7 +137,11 @@ public class FireFighter extends Agent{
                     @Override
                     public void execute() {
                         if (reachTime == 0) {
-                            stageZone[destination.getX()].add(rescuedPatientId);
+                            location.setX(destCoordinate.getX());
+                            location.setY(destCoordinate.getY());
+                            story = destStory;
+
+                            stageZone[location.getX()].add(rescuedPatientId);
                             Environment.patientsList.get(rescuedPatientId).changeStat(); // TRANSPORT_WAIT
                             Environment.updateCasualty();
 
@@ -137,11 +149,12 @@ public class FireFighter extends Agent{
                             System.out.println("Patient \'" + rescuedPatientId + "\' is staged on "
                                     + location.getX() + "th area. Patient is " + Environment.patientsList.get(rescuedPatientId).getStatus());
 
-                            rescuedPatientId = -1;  // initialize rescuePatient
-                            destination = setDestination();
+                            // initialize status
+                            rescuedPatientId = -1;
+                            setDestination();
                             reachTime = setReachTime();
 
-                            if(destination==null){
+                            if(destCoordinate ==null){
                                 status = Status.DONE;
                                 currAction = Actions.NONE;
                             }
@@ -208,28 +221,79 @@ public class FireFighter extends Agent{
             return false;
     }
 
-    public Location setDestination(){ //TODO revise
+    public void setDestination(){
         Random rd = new Random();
         int idx = rd.nextInt(patientsList.size());
         int endCond = 0;
 
-
-        while(endCond <= patientsList.size()){
-            Patient p = patientsList.get(idx);
-            if (p.getStatus()== Patient.Status.RESCUE_WAIT){
-                return p.getLocation();
+        if(rescuedPatientId == -1){
+            while(endCond <= patientsList.size()){
+                Patient p = patientsList.get(idx);
+                if (p.getStatus() == Patient.Status.RESCUE_WAIT){
+                    Location pLocation = p.getLocation();
+                    destCoordinate.setX(pLocation.getX());
+                    destCoordinate.setY(pLocation.getY());
+                    destStory = p.getStory();
+                }
+                idx = rd.nextInt(patientsList.size());
+                endCond++;
             }
-            idx = rd.nextInt(patientsList.size());
-            endCond++;
+        }else{
+            destStory = 0;
+            destCoordinate = new Location(rd.nextInt(patientMapSize.getLeft()),0);
         }
-        return null;
+
     }
 
     public int setReachTime(){
-        //TODO review
-        // This can be revised to get a certain distribution from outside if policy is applied.
-        return ThreadLocalRandom.current().nextInt(3, 10);
+        // distance-relative time
+        int weight;
+        int diffLocation = location.distanceTo(destCoordinate); // always > 0, min:0, max:2*radius
+        int diffStory = destStory - story; // diff>0: upward, diff<0: downward, diff=0: same floor
+
+        // weight by distance
+        weight = calDistWeight(diffLocation);
+
+        // weight by height
+        if(diffStory > 0)
+            weight += 2;
+
+        // weight by rescued patient
+        if(rescuedPatientId > 0)
+            weight += 1;
+
+        return calReachTime(weight);
     }
+
+    public int calDistWeight(int distance){
+        int radius = patientMapSize.getLeft();
+
+        if(distance == 0)
+            return 0;
+        else if(distance>0 && distance<(radius/4))
+            return 2;
+        else if(distance>=(radius/4) && distance<(radius/2))
+            return 4;
+        else
+            return 6;
+    }
+
+    public int calReachTime(int weight){
+        Random rd = new Random();
+
+        int mean = 2 + weight;
+        double stdDev = 2;
+        int result = 0;
+        boolean isValid = false;
+
+        while(!isValid){
+            result = (int)Math.round(rd.nextGaussian() * stdDev + mean);
+            if(result>0)
+                isValid = true;
+        }
+        return result;
+    }
+
 
     private int selectPatient(ArrayList<Integer> patientList, Policy policy){
         //NOTE 한 위치에서 여러가지 방법으로(알맞는 방법으로 구해야할 환자의 index 를 골라서 return
@@ -352,9 +416,15 @@ public class FireFighter extends Agent{
 //        return -1;
 //    }
 
+    // 이거 왜 만든거지?
     private void removePatient(int idx, ArrayList<Integer> patientList){
         for(int i=0; i<patientList.size(); i++)
             if(patientList.get(i) == idx)
                 patientList.remove(i);
     }
+
+    private void handleDeadPatient(){
+
+    }
+
 }

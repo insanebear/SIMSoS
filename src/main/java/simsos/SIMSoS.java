@@ -1,17 +1,21 @@
 package simsos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.type.CollectionType;
 import mci.Main;
 import simsos.scenario.SoSInfrastructure;
 import simsos.scenario.mci.Environment;
 import simsos.scenario.mci.MCIScenario;
 import simsos.scenario.mci.Patient;
+import simsos.scenario.mci.policy.*;
 import simsos.simulation.Simulator;
 import simsos.simulation.component.Scenario;
 import simsos.simulation.component.World;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -36,28 +40,68 @@ public class SIMSoS {
         }
 
         // JSON Read
+        /*
+            SoS properties - from SoSProperties.json
+            SoS policy elements (policy element pool) - from PolicyElement.json
+            SoS previous policies - from previousPolicy.json
+         */
+        ArrayList<Policy> prevPolicies;
+        ArrayList<PolicyElement> policyElementsPool;
+        SoSInfrastructure infrastructure;
+
+        SimpleModule module = new SimpleModule();
         ObjectMapper mapper = new ObjectMapper();
-        SoSInfrastructure infrastructure = mapper.readValue(
-                new File("src/main/json/Scenario/SoSProperties.json"), SoSInfrastructure.class);
 
-        // Simulation (Scenario and World)
-        Scenario scenario = new MCIScenario(infrastructure);
-        World world = scenario.getWorld();
+        module.addDeserializer(Policy.class, new PolicyDeserializer(mapper));
+        module.addDeserializer(PolicyElement.class, new PolicyElementDeserializer(mapper));
+        mapper.registerModule(module);
 
-        Simulator.execute(world, 100);
+        CollectionType policyCollectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Policy.class);
+        CollectionType policyElementCollectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, PolicyElement.class);
 
-        // temporary result view
-        int alivePatient = 0;
-        int deadPatient = 0;
+        prevPolicies = mapper.readValue(new File("src/main/json/policies/previousPolicy.json"), policyCollectionType);
+        policyElementsPool = mapper.readValue(new File("src/main/json/policies/policyElements.json"), policyElementCollectionType);
+        infrastructure = mapper.readValue(
+                new File("src/main/json/scenario/SoSProperties.json"), SoSInfrastructure.class);
 
-        for(Patient p: Environment.patientsList){
-            if(p.getStatus() == Patient.Status.DEAD)
-                deadPatient++;
-            if(p.getStatus() == Patient.Status.CURED)
-                alivePatient++;
-            System.out.println("Patient "+p.getPatientId()+" "+p.getStatus());
-        }
-        System.out.println("Alived patient: "+ alivePatient);
-        System.out.println("Dead patient: "+ deadPatient);
+        // SBPS Module (Search-based Policy Suggestion Module)
+        PolicySuggestion policySuggestion = new PolicySuggestion(prevPolicies, policyElementsPool);
+//        policySuggestion.geneticAlgorithm();
+        policySuggestion.simulatePolicy(infrastructure);
+
+
     }
+
+    void printCheck(ArrayList<PolicyElement> policyElementsPool){
+        for(PolicyElement pe : policyElementsPool){
+            System.out.println(pe.getVarName());
+            System.out.println(pe.getScope());
+            System.out.println(pe.getType());
+            if(pe.getType().equals("range")){
+                System.out.println("Minimum: "+pe.getRange()[0]);
+                System.out.println("Maximum: "+pe.getRange()[1]);
+                System.out.println();
+            }else{
+                for(String s: pe.getValues())
+                    System.out.println(s);
+                System.out.println();
+            }
+        }
+
+
+        // set policy id
+        // id 매길 필요가 있나 -_-..
+//        for (int i=0; i<prevPolicies.size(); i++) {
+//            prevPolicies.get(i).setPolicyId(i);
+//        }
+//            //CHECK
+//            for(Policy p : rescuePolicies){
+//                System.out.println("Policy Id: "+p.getPolicyId()+" Policy Type: "+p.getPolicyType());
+//                System.out.println("Policy Conditions:");
+//                p.printConditions();
+//                System.out.println("Policy Action:");
+//                p.printAction();
+//            }
+    }
+
 }

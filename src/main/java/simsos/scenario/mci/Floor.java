@@ -12,6 +12,7 @@ public class Floor {
 
     public Floor(int radius) {
         floorMap = new ArrayList[radius+1][radius+1];
+        initMap();
     }
 
     private void initMap(){
@@ -30,5 +31,9 @@ public class Floor {
 
     public void setPatientOnFloor(int idx, int x, int y){
         this.floorMap[x][y].add(idx);
+    }
+
+    public ArrayList<Integer> getSpotPatientList(int x, int y){
+        return floorMap[x][y];
     }
 }
