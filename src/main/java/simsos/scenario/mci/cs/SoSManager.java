@@ -7,6 +7,8 @@ import simsos.simulation.component.World;
 
 import java.util.*;
 
+import static simsos.scenario.mci.Environment.stageZone;
+
 /**
  * Created by mgjin on 2017-06-29.
  */
@@ -17,6 +19,7 @@ public class SoSManager extends Agent {
     ArrayList<FireDepartment> fireDepartments;
     ArrayList<PTSCenter> ptsCenters;
     public static ArrayList<Hospital> hospitals;
+    public static int[] numWaitPTS = new int[stageZone.length];
 
     public SoSManager(World world, String name) {
         super(world);

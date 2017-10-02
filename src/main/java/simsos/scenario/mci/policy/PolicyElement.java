@@ -9,27 +9,29 @@ import java.util.ArrayList;
  */
 public class PolicyElement {
 
-    String varName;
-    String scope; // '"policyType", "condition", "action"
-    String type; // "range", "value"
-    ArrayList<String> values = new ArrayList<>();
-    int[] range;
+    private String varName;
+    private String varType; // "Environment", "policyType", "condition", "action"
+//    ArrayList<String> relatedComponent = new ArrayList<>();
+    private String valueType; // "range", "value"
+    private ArrayList<String> values = new ArrayList<>();
+    private int[] range;
+
 
     public String getScope() {
-        return scope;
+        return varType;
     }
 
-    public void setScope(String scope) {
-        this.scope = scope;
+    public void setScope(String varType) {
+        this.varType = varType;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
+//    public ArrayList<String> getRelatedComponent() {
+//        return relatedComponent;
+//    }
+//
+//    public void setRelatedComponent(ArrayList<String> relatedComponent) {
+//        this.relatedComponent = relatedComponent;
+//    }
 
     public String getVarName() {
         return varName;
@@ -39,19 +41,35 @@ public class PolicyElement {
         this.varName = varName;
     }
 
-    public ArrayList<String> getValues() {
-        return values;
-    }
-
-    public void setValues(ArrayList<String> values) {
-        this.values = values;
-    }
-
     public int[] getRange() {
         return range;
     }
 
     public void setRange(int[] range) {
         this.range = range;
+    }
+
+    public String getVarType() {
+        return varType;
+    }
+
+    public void setVarType(String varType) {
+        this.varType = varType;
+    }
+
+    public String getValueType() {
+        return valueType;
+    }
+
+    public void setValueType(String valueType) {
+        this.valueType = valueType;
+    }
+
+    public ArrayList<String> getValues() {
+        return values;
+    }
+
+    public void setValues(ArrayList<String> values) {
+        this.values = values;
     }
 }

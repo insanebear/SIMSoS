@@ -45,6 +45,7 @@ public class SIMSoS {
             SoS policy elements (policy element pool) - from PolicyElement.json
             SoS previous policies - from previousPolicy.json
          */
+
         ArrayList<Policy> prevPolicies;
         ArrayList<PolicyElement> policyElementsPool;
         SoSInfrastructure infrastructure;
@@ -59,8 +60,10 @@ public class SIMSoS {
         CollectionType policyCollectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Policy.class);
         CollectionType policyElementCollectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, PolicyElement.class);
 
-        prevPolicies = mapper.readValue(new File("src/main/json/policies/previousPolicy.json"), policyCollectionType);
-        policyElementsPool = mapper.readValue(new File("src/main/json/policies/policyElements.json"), policyElementCollectionType);
+        prevPolicies
+                = mapper.readValue(new File("src/main/json/policies/previousPolicy.json"), policyCollectionType);
+        policyElementsPool
+                = mapper.readValue(new File("src/main/json/policies/policyElements.json"), policyElementCollectionType);
         infrastructure = mapper.readValue(
                 new File("src/main/json/scenario/SoSProperties.json"), SoSInfrastructure.class);
 

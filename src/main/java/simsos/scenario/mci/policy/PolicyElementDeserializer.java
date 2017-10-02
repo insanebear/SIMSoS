@@ -37,13 +37,15 @@ public class PolicyElementDeserializer extends StdDeserializer<PolicyElement> {
 
         ObjectCodec objectCodec = jsonParser.getCodec();
         JsonNode jsonNode = objectCodec.readTree(jsonParser);
-        JavaType type = mapper.getTypeFactory().constructCollectionType(ArrayList.class, String.class);
+        JavaType arrStringType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, String.class);
 
         pe.setVarName(jsonNode.get("varName").asText());
         pe.setScope(jsonNode.get("scope").asText());
+//        ArrayList<String> tempRelatedCS = mapper.convertValue(jsonNode.get("relatedComponent"),arrStringType);
+//        pe.setRelatedComponent(tempRelatedCS);
         String tempType = jsonNode.get("type").asText();
         pe.setType(tempType);
-        ArrayList<String> tempValues = mapper.convertValue(jsonNode.get("values"), type);
+        ArrayList<String> tempValues = mapper.convertValue(jsonNode.get("values"), arrStringType);
         if (tempType.equals("range")) {
             int[] tempRange = new int[2];
             tempRange[0] = Integer.parseInt(tempValues.get(0));

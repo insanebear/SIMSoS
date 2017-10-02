@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static simsos.scenario.mci.Environment.*;
+import static simsos.scenario.mci.cs.SoSManager.numWaitPTS;
 
 /**
  *
@@ -67,6 +68,7 @@ public class GndAmbulance extends Agent{
                         if(waitTime>0){
                             if(stageZone[location.getX()].size()>0 && loadPatientId == -1) {
                                 status = Status.LOADING;
+                                numWaitPTS[location.getX()] -= 1;
                             }
                             else
                                 waitTime--;
@@ -190,6 +192,7 @@ public class GndAmbulance extends Agent{
                     public void execute() {
                         if(reachTime == 0){
                             location = destination;
+                            numWaitPTS[location.getX()] += 1;
                             status = Status.WAITING;
                         }else
                             reachTime--;

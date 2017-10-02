@@ -1,5 +1,6 @@
 package simsos.scenario.mci.cs;
 
+import org.apache.commons.lang3.ArrayUtils;
 import simsos.scenario.mci.*;
 import simsos.scenario.mci.policy.*;
 import simsos.simulation.component.Action;
@@ -10,6 +11,7 @@ import simsos.simulation.component.World;
 import java.util.*;
 
 import static simsos.scenario.mci.Environment.*;
+import static simsos.scenario.mci.cs.SoSManager.numWaitPTS;
 
 /**
  *
@@ -94,7 +96,7 @@ public class FireFighter extends Agent{
                         spotPatientList = building.get(story).getSpotPatientList(location.getX(), location.getY());
                         if (checkPatient(spotPatientList)) {
                             if(spotPatientList.size()>1){
-                                //NOTE Policy applied if there are 2 or more patients
+                                //NOTE RESUE _select policy
                                 currPolicy = checkPolicy(currAction.toString());
                                 rescuedPatientId = selectPatient(spotPatientList, currPolicy);
 //                                rescuedPatientId = selectPatient(spotPatientList, null);
@@ -141,7 +143,11 @@ public class FireFighter extends Agent{
                             location.setY(destCoordinate.getY());
                             story = destStory;
 
-                            stageZone[location.getX()].add(rescuedPatientId);
+                            //Note RESCUE_ stage policy
+                            currPolicy = checkPolicy(currAction.toString());
+                            int stageSpot = stagePatient(currPolicy);
+
+                            stageZone[stageSpot].add(rescuedPatientId);
                             Environment.patientsList.get(rescuedPatientId).changeStat(); // TRANSPORT_WAIT
                             Environment.updateCasualty();
 
@@ -309,8 +315,8 @@ public class FireFighter extends Agent{
 //                    " InjuryType: "+patientsList.get(i).getInjuryType());
 
         if(policy != null){
-            String criteria = policy.getAction().getValue();
-            if(criteria.equals("Severity")){
+            String policyActionMethod = policy.getAction().getValue();
+            if(policyActionMethod.equals("Severity")){
                 System.out.println("Severity first policy applied.");
                 candPatients = sortBySeverity(candPatients); // 이 action은 할 수도 있고 안 할 수도 있게 해야할듯.
 //                //CHECK
@@ -331,7 +337,7 @@ public class FireFighter extends Agent{
                     candPatients.clear();
                     candPatients.add(temp);
                 }
-            }else if(criteria.equals("InjuryType")){
+            }else if(policyActionMethod.equals("InjuryType")){
                 System.out.println("InjurtyType first policy applied.");
                 candPatients = sortByInjuryType(candPatients);
                 while(candPatients.size()>1){
@@ -360,6 +366,47 @@ public class FireFighter extends Agent{
         }
 
         return resIdx;
+    }
+
+    private int stagePatient(Policy policy){
+        int resIdx=0;
+        Random rd = new Random();
+        int prob;
+
+        if(policy != null){
+            String policyActionMethod = policy.getAction().getValue();
+            if(policyActionMethod.equals("Random")){
+                resIdx = rd.nextInt(stageZone.length);
+            }else if(policyActionMethod.equals("MeanRandom")){
+                int totalSlot = stageZone.length;
+                int[] numWaitPatient = new int[totalSlot];
+                int mean = calcMeanWaitPatient(numWaitPatient, totalSlot);
+                ArrayList<Integer> candidIdx = new ArrayList<>();
+                for(int i=0; i<totalSlot; i++)
+                    if(numWaitPatient[i] < mean)
+                        candidIdx.add(i);
+                resIdx = candidIdx.get(rd.nextInt(candidIdx.size()));
+
+            }else if(policyActionMethod.equals("MCSlot")){ // most crowded slot
+                int maximum = Collections.max(Arrays.asList(ArrayUtils.toObject(numWaitPTS)));
+                ArrayList<Integer> maxPTSSlot = new ArrayList<>();
+                for(int i=0; i<numWaitPTS.length; i++)
+                    if(numWaitPTS[i]==maximum)
+                        maxPTSSlot.add(i);
+                resIdx = maxPTSSlot.get(rd.nextInt(maxPTSSlot.size()));
+            }
+        }
+
+        return resIdx;
+    }
+
+    private int calcMeanWaitPatient(int[] numWaitPatient, int totalSlot){
+        int sum=0;
+        for(int i=0; i<totalSlot; i++)
+            numWaitPatient[i] = stageZone[i].size();
+        for(int number : numWaitPatient)
+            sum += number;
+        return Math.round(sum/totalSlot);
     }
 
     private ArrayList<Integer> sortBySeverity(ArrayList<Integer> patientList){
@@ -402,19 +449,6 @@ public class FireFighter extends Agent{
         }
         return tempList;
     }
-
-
-//    private int checkPolicy(String actName){
-//        int idx = 0;
-//
-//        for(Policy p : Environment.rescuePolicies){
-//            if(this.name.equals(p.getActor()) && p.isActive() && actName.equals(p.getAction().getName())){
-//                return idx;
-//            }
-//            idx++;
-//        }
-//        return -1;
-//    }
 
     // 이거 왜 만든거지?
     private void removePatient(int idx, ArrayList<Integer> patientList){

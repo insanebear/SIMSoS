@@ -1,23 +1,104 @@
 [
   {
-    "varName": "role",
-    "scope": "policyType",
-    "type": "value",
+    "varName": "rescue",
+    "varType": "role",
+    "valueType": "value",
     "values":
-      [
-        "rescue",
-        "transport",
-        "treatment"
-      ]
+            [
+              "search", "select",
+              "bring-out", "stage"
+            ]
   },
+
+  {
+    "varName": "transport",
+    "varType": "role",
+    "valueType": "value",
+    "values":
+            [
+              "load", "deliver",
+              "return", "wait"
+            ]
+  },
+
+  {
+    "varName": "treatment",
+    "varType": "role",
+    "valueType": "value",
+    "values":
+            [
+              "move", "operate",
+              "treat", "release"
+            ]
+  },
+
   {
     "varName": "MCILevel",
-    "scope": "condition",
-    "type": "range",
+    "varType": "condition",
+    "scope": "general",
+    "valueType": "range",
     "values":
-      [
-        "1", "5"
-      ]
+            [
+              "1", "5"
+            ]
+  },
+  {
+    "varName": "damageType",
+    "varType": "condition",
+    "scope": "general",
+    "valueType": "value",
+    "values":
+            [
+              "collapse", "fire"
+            ]
+  },
+  {
+    "varName": "story",
+    "varType": "condition",
+    "scope": "rescue",
+    "valueType": "range",
+    "values":
+            [
+              "1", "4"
+            ]
+  },
+
+  {
+    "varName": "search",
+    "varType": "action",
+    "valueType": "value",
+    "values":
+            [
+              "-"
+            ]
+  },
+  {
+    "varName": "select",
+    "varType": "action",
+    "valueType": "value",
+    "values":
+            [
+              "first", "severity", "injuryType"
+            ]
+  },
+  {
+    "varName": "patient",
+    "varType": "actionTarget",
+    "valueType": "value",
+    "values":
+            [
+              "severity", "injuryType"
+            ]
+  },
+  {
+    "varName": "severity",
+    "varType": "targetProperty",
+    "valueType": "range",
+    "values":
+            [
+              "1", "9"
+            ]
   }
+
 
 ]
