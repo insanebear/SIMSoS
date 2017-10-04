@@ -43,6 +43,8 @@ public class FireFighter extends Agent{
     private ArrayList<Integer> spotPatientList;
 
     private double conformRate; // indicates how much CS will follow policies
+    private ArrayList<String> selectMethodList;
+    private ArrayList<String> stageMethodList;
 
     //
     private Location destCoordinate;
@@ -59,7 +61,12 @@ public class FireFighter extends Agent{
         this.rescuedPatientId = -1;     // no patient rescued
         this.status = Status.SEARCHING;
         this.currAction = Actions.SEARCH;
+
         this.conformRate = conformRate;
+
+        selectMethodList = new ArrayList<>();
+        stageMethodList = new ArrayList<>();
+        makeActionMethodList();
 
         this.destCoordinate = new Location(0, 0);
         setDestination();
@@ -207,7 +214,7 @@ public class FireFighter extends Agent{
 
     @Override
     public boolean makeDecision() {
-        return false;
+        return new Random().nextFloat() < conformRate;
     }
 
     @Override
@@ -219,13 +226,25 @@ public class FireFighter extends Agent{
         return affiliation;
     }
 
-
     public boolean checkPatient(ArrayList<Integer> spotPatientList){
         if(!spotPatientList.isEmpty())
             return true;
         else
             return false;
     }
+
+    private void makeActionMethodList(){
+        selectMethodList.add("Random");
+        selectMethodList.add("Distance");
+        selectMethodList.add("Severity");
+        selectMethodList.add("InjuryType");
+
+        stageMethodList.add("Random");
+        stageMethodList.add("MeanRandom");
+        stageMethodList.add("MCSlot");
+    }
+
+    /**--------Destination--------**/
 
     public void setDestination(){
         Random rd = new Random();
@@ -300,103 +319,178 @@ public class FireFighter extends Agent{
         return result;
     }
 
-
+    /**--------Action--------**/
+    /*----Select Patient (Select)----*/
     private int selectPatient(ArrayList<Integer> patientList, Policy policy){
         //NOTE 한 위치에서 여러가지 방법으로(알맞는 방법으로 구해야할 환자의 index 를 골라서 return
         //TODO select action by probability(uncertainty)
-        int resIdx;
+
         ArrayList<Integer> candPatients = (ArrayList<Integer>) patientList.clone();
         Random rd = new Random();
-        int prob;
+        boolean decision = makeDecision();
+        int resIdx = -1;
 
-        //CHECK
-//        for(Integer i : candPatients)
-//            System.out.println("index: "+i+" Severity: "+patientsList.get(i).getSeverity()+
-//                    " InjuryType: "+patientsList.get(i).getInjuryType());
-
-        if(policy != null){
-            String policyActionMethod = policy.getAction().getValue();
-            if(policyActionMethod.equals("Severity")){
-                System.out.println("Severity first policy applied.");
-                candPatients = sortBySeverity(candPatients); // 이 action은 할 수도 있고 안 할 수도 있게 해야할듯.
-//                //CHECK
-//                System.out.println("----------------------------------------------");
-//                for(Integer i : candPatients)
-//                    System.out.println("index: "+i+" Severity: "+patientsList.get(i).getSeverity()+
-//                            " InjuryType: "+patientsList.get(i).getInjuryType());
-//                System.out.println("----------------------------------------------");
-                while(candPatients.size()>1){
-                    prob = rd.nextInt(10);
-                    if(prob>=0 && prob<6){
-                        System.out.println("Rest of the action is processed by InjuryType first.");
-                        candPatients = sortByInjuryType(candPatients);
+        if(policy != null && decision){
+            ArrayList<String> policyActionMethod = policy.getAction().getActionMethod();
+            if(policyActionMethod.size()>0) {
+                for (String s : policyActionMethod) {
+                    switch (s) {
+                        case "Random":
+                            candPatients = randomSelect(candPatients);
+                            break;
+                        case "Distance":
+                            candPatients = distanceSelect(candPatients);
+                            break;
+                        case "Severity":
+                            candPatients = severitySelect(candPatients);
+                            break;
+                        case "InjuryType":
+                            candPatients = injuryTypeSelect(candPatients);
+                            break;
                     }
-
-                    int temp = candPatients.get(rd.nextInt(candPatients.size()));
-                    System.out.println("Rest of the action is processed by random");
-                    candPatients.clear();
-                    candPatients.add(temp);
+                    if (candPatients.size() == 1)
+                        break;
                 }
-            }else if(policyActionMethod.equals("InjuryType")){
-                System.out.println("InjurtyType first policy applied.");
-                candPatients = sortByInjuryType(candPatients);
-                while(candPatients.size()>1){
-                    prob = rd.nextInt(10);
-                    if(prob>=0 && prob<6){
-                        System.out.println("Rest of the action is processed by Severity first.");
-                        candPatients = sortBySeverity(candPatients);
-                    }else if(prob<=6 && prob<10) {
-                        int temp = candPatients.get(rd.nextInt(candPatients.size()));
-                        System.out.println("Rest of the action is processed by random");
-                        candPatients.clear();
-                        candPatients.add(temp);
-                    }
-                }
+                if (candPatients.size() != 1)
+                    resIdx = candPatients.get(rd.nextInt(candPatients.size()));
+                else
+                    resIdx = candPatients.get(0);
             }
-            resIdx = candPatients.get(0);
-//            //CHECK
-//            System.out.println("Selected patient index: "+resIdx+" Severity: "+patientsList.get(resIdx).getSeverity()+
-//                    " InjuryType: "+patientsList.get(resIdx).getInjuryType());
-//            removePatient(resIdx, patientList);
         } else {
-            // TODO randomly select action? or set an action as default?
-            System.out.println("Policy condition does not fit on current situation. Take first patient.");
-            resIdx = patientList.get(0);
-            patientList.remove(0);
-        }
+            if(!decision)
+                System.out.println("Decide not to follow the policy.");
+            else
+                System.out.println("Not fitted condition.");
+            System.out.println("Do the randomly select method.");
 
+            Collections.shuffle(selectMethodList);
+            for(String s: selectMethodList){
+                switch (s){
+                    case "Random":
+                        candPatients = randomSelect(candPatients);
+                        break;
+                    case "Distance":
+                        candPatients = distanceSelect(candPatients);
+                        break;
+                    case "Severity":
+                        candPatients = severitySelect(candPatients);
+                        break;
+                    case "InjuryType":
+                        candPatients = injuryTypeSelect(candPatients);
+                        break;
+                }
+                if(candPatients.size() == 1)
+                    break;
+            }
+            if(candPatients.size()!=1)
+                resIdx = candPatients.get(rd.nextInt(candPatients.size()));
+            else
+                resIdx = candPatients.get(0);
+        }
+        removePatient(resIdx, patientList);
         return resIdx;
     }
 
-    private int stagePatient(Policy policy){
-        int resIdx=0;
-        Random rd = new Random();
-        int prob;
+    private ArrayList<Integer>  randomSelect(ArrayList<Integer> candPatients){
+        System.out.println("Random policy applied.");
+        ArrayList<Integer> tempList = new ArrayList<>();
+        tempList.add(new Random().nextInt(candPatients.size()));
+        return tempList;
+    }
 
-        if(policy != null){
-            String policyActionMethod = policy.getAction().getValue();
-            if(policyActionMethod.equals("Random")){
-                resIdx = rd.nextInt(stageZone.length);
-            }else if(policyActionMethod.equals("MeanRandom")){
-                int totalSlot = stageZone.length;
-                int[] numWaitPatient = new int[totalSlot];
-                int mean = calcMeanWaitPatient(numWaitPatient, totalSlot);
-                ArrayList<Integer> candidIdx = new ArrayList<>();
-                for(int i=0; i<totalSlot; i++)
-                    if(numWaitPatient[i] < mean)
-                        candidIdx.add(i);
-                resIdx = candidIdx.get(rd.nextInt(candidIdx.size()));
+    private ArrayList<Integer>  distanceSelect(ArrayList<Integer> candPatients){
+        System.out.println("Distance policy applied.");
+        ArrayList<Integer> tempList = new ArrayList<>();
+        tempList.add(candPatients.get(0));
+        return tempList;
+    }
 
-            }else if(policyActionMethod.equals("MCSlot")){ // most crowded slot
-                int maximum = Collections.max(Arrays.asList(ArrayUtils.toObject(numWaitPTS)));
-                ArrayList<Integer> maxPTSSlot = new ArrayList<>();
-                for(int i=0; i<numWaitPTS.length; i++)
-                    if(numWaitPTS[i]==maximum)
-                        maxPTSSlot.add(i);
-                resIdx = maxPTSSlot.get(rd.nextInt(maxPTSSlot.size()));
+    private ArrayList<Integer>  severitySelect(ArrayList<Integer> candPatients){
+        System.out.println("Severity policy applied.");
+        ArrayList<Integer> tempList = new ArrayList<>();
+
+        Collections.sort(candPatients, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer idx1, Integer idx2) { // sort descending order
+                return patientsList.get(idx2).getSeverity()-patientsList.get(idx1).getSeverity();
             }
+        });
+
+        int stdSeverity = patientsList.get(candPatients.get(0)).getSeverity(); // highest severity
+
+        for(Integer idx : candPatients)
+            if(patientsList.get(idx).getSeverity() == stdSeverity)
+                tempList.add(idx);
+
+        return tempList;
+    }
+
+    private ArrayList<Integer>  injuryTypeSelect(ArrayList<Integer> candPatients){
+        //NOTE InjuryType Sorting means sorting by strength decreasing rate
+        System.out.println("InjurtyType first policy applied.");
+        ArrayList<Integer> tempList = new ArrayList<>();
+        int stdRate = 0;
+
+        Collections.sort(candPatients, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer idx1, Integer idx2) { // sort descending order
+                return patientsList.get(idx2).strengthDecreasingRate() - patientsList.get(idx1).strengthDecreasingRate();
+            }
+        });
+
+        stdRate = patientsList.get(candPatients.get(0)).strengthDecreasingRate(); // highest decreasing rate
+
+        for(Integer idx : candPatients){
+            if(patientsList.get(idx).strengthDecreasingRate() == stdRate)
+                tempList.add(idx);
         }
 
+        return tempList;
+    }
+
+    /*----Select Slot (Stage)----*/
+    private int stagePatient(Policy policy){
+        int resIdx=0;
+        boolean decision = makeDecision();
+        Random rd = new Random();
+        String policyActionMethod;
+
+        if(policy != null && decision){
+            policyActionMethod = policy.getAction().getActionMethod().get(0);
+        } else {
+            if(!decision)
+                System.out.println("Decide not to follow the policy.");
+            else
+                System.out.println("Not fitted condition.");
+            System.out.println("Do the randomly select method.");
+
+            Collections.shuffle(stageMethodList);
+            policyActionMethod = stageMethodList.get(0);
+        }
+
+        if(policyActionMethod.equals("Random")){
+            resIdx = rd.nextInt(stageZone.length);
+        }else if(policyActionMethod.equals("MeanRandom")){
+            int totalSlot = stageZone.length;
+            int[] numWaitPatient = new int[totalSlot];
+            int mean = calcMeanWaitPatient(numWaitPatient, totalSlot);
+
+            if(mean!=0){
+                ArrayList<Integer> candidIdx = new ArrayList<>();
+                for(int i=0; i<totalSlot; i++)
+                    if(numWaitPatient[i] <= mean)
+                        candidIdx.add(i);
+                resIdx = candidIdx.get(rd.nextInt(candidIdx.size()));
+            }else
+                resIdx = rd.nextInt(stageZone.length);
+        }else if(policyActionMethod.equals("MCSlot")){ // most crowded slot
+            int maximum = Collections.max(Arrays.asList(ArrayUtils.toObject(numWaitPTS)));
+            ArrayList<Integer> maxPTSSlot = new ArrayList<>();
+            for(int i=0; i<numWaitPTS.length; i++)
+                if(numWaitPTS[i]==maximum)
+                    maxPTSSlot.add(i);
+            resIdx = maxPTSSlot.get(rd.nextInt(maxPTSSlot.size()));
+        }
         return resIdx;
     }
 
@@ -409,48 +503,6 @@ public class FireFighter extends Agent{
         return Math.round(sum/totalSlot);
     }
 
-    private ArrayList<Integer> sortBySeverity(ArrayList<Integer> patientList){
-        ArrayList<Integer> tempList = new ArrayList<>();
-        int stdSeverity = 0;
-
-        Collections.sort(patientList, new Comparator<Integer>() {
-            @Override
-            public int compare(Integer idx1, Integer idx2) { // sort descending order
-                return patientsList.get(idx2).getSeverity()-patientsList.get(idx1).getSeverity();
-            }
-        });
-
-        stdSeverity = patientsList.get(patientList.get(0)).getSeverity(); // highest severity
-
-        for(Integer idx : patientList)
-            if(patientsList.get(idx).getSeverity() == stdSeverity)
-                tempList.add(idx);
-
-        return tempList;
-    }
-
-    private ArrayList<Integer> sortByInjuryType(ArrayList<Integer> patientList){
-        //NOTE InjuryType Sorting means sorting by strength decreasing rate
-        ArrayList<Integer> tempList = new ArrayList<>();
-        int stdRate = 0;
-
-        Collections.sort(patientList, new Comparator<Integer>() {
-            @Override
-            public int compare(Integer idx1, Integer idx2) { // sort descending order
-                return patientsList.get(idx2).strengthDecreasingRate() - patientsList.get(idx1).strengthDecreasingRate();
-            }
-        });
-
-        stdRate = patientsList.get(patientList.get(0)).strengthDecreasingRate();
-
-        for(Integer idx : patientList){
-            if(patientsList.get(idx).strengthDecreasingRate() == stdRate)
-                tempList.add(idx);
-        }
-        return tempList;
-    }
-
-    // 이거 왜 만든거지?
     private void removePatient(int idx, ArrayList<Integer> patientList){
         for(int i=0; i<patientList.size(); i++)
             if(patientList.get(i) == idx)

@@ -17,7 +17,7 @@ import static simsos.scenario.mci.Environment.hospitalMapSize;
  */
 public class MCIScenario extends Scenario {
 
-    private double conformRate = 0.8; // indicates how much CS will follow policies
+    private double conformRate; // indicates how much CS will follow policies
     private int totalFD;
     private int totalPTS;
     private int totalH;
@@ -95,6 +95,8 @@ public class MCIScenario extends Scenario {
     }
 
     public void setInfrastructure() {
+        conformRate = infrastructure.getConformRate();
+
         totalFD = infrastructure.getNumFireDepartment();
         totalPTS = infrastructure.getNumPTSCenter();
         totalH = infrastructure.getNumHospital();
@@ -105,7 +107,6 @@ public class MCIScenario extends Scenario {
         varIntensive = infrastructure.getVarIntensive();
         meanOperating = infrastructure.getMeanOperating();
         varOperating = infrastructure.getVarOperating();
-
     }
 
     public double getConformRate() {

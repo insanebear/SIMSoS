@@ -1,6 +1,5 @@
 package simsos.scenario.mci;
 
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.CollectionType;
@@ -8,7 +7,6 @@ import simsos.scenario.mci.policy.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
@@ -41,7 +39,7 @@ public class Environment {
 
     // TODO Move these (policy related parts) to SoS Infrastructure in the future
     // Policy
-    public static ArrayList<Policy> rescuePolicies = new ArrayList<>();
+    public static ArrayList<Policy> policies = new ArrayList<>();
     public static ArrayList<Policy> transportPolicies = new ArrayList<>();
     public static ArrayList<Policy> treatmentPolicies = new ArrayList<>();
     public static ArrayList<Policy> evacuatePolicies = new ArrayList<>();
@@ -147,35 +145,21 @@ public class Environment {
         CollectionType collectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Policy.class);
 
         try {
-            rescuePolicies = mapper.readValue(new File("src/main/json/policies/previousPolicy.json"), collectionType);
-            // set policy id
-            for (int i=0; i<rescuePolicies.size(); i++) {
-                rescuePolicies.get(i).setPolicyId(i);
-            }
-//            //CHECK
-//            for(Policy p : rescuePolicies){
-//                System.out.println("Policy Id: "+p.getPolicyId()+" Policy Type: "+p.getPolicyType());
-//                System.out.println("Policy Conditions:");
-//                p.printConditions();
-//                System.out.println("Policy Action:");
-//                p.printAction();
-//            }
+            policies = mapper.readValue(new File("src/main/json/policies/previousPolicy.json"), collectionType);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static Policy checkPolicy(String currAction){
+    public static Policy checkPolicy(String currPolicyType){
         // TODO policy하나만 리턴하는거 바꿔야할듯.
         ArrayList<Policy> activePolicies;
-
-        switch (currAction){
+        switch (currPolicyType){
             case "RESCUE":
-                activePolicies = evalPolicyCond(rescuePolicies);
+                activePolicies = evalPolicyCond(policies);
                 for(Policy p : activePolicies){
-                    if(p.getPolicyType().equals("RESCUE")){
+                    if(p.getPolicyType().equals("RESCUE"))
                         return p;
-                    }
                 }
             case "TRANSPORT":
                 break;
@@ -186,9 +170,10 @@ public class Environment {
     }
 
     private static ArrayList<Policy> evalPolicyCond(ArrayList<Policy> policies){
-        //NOTE condition 부분과 environment가 맞는지 확인. (Policy　내의 isValid 메소드 사용하면 될 듯)
+        //NOTE condition 부분과 environment가 맞는지 확인.
         ArrayList<Policy> activePolicies = new ArrayList<>();
         boolean isValid = true;
+
         for(Policy p : policies){
             ArrayList<Condition> conditions = p.getConditions();
             for(Condition condition : conditions){
@@ -196,18 +181,19 @@ public class Environment {
                     String operator = condition.getOperator();
                     int value = Integer.parseInt(condition.getValue());
                     isValid = compareValueByOp(MCILevel, value, operator);
-                }else if(condition.getVariable().equals("totalDamage")){
-                    String operator = condition.getOperator();
-                    int totalDamage = damageCollapse+damageFire;
-                    int value = Integer.parseInt(condition.getValue());
-                    isValid = compareValueByOp(totalDamage, value, operator);
+                }else if(condition.getVariable().equals("DamageType")){
+                    String damageType = condition.getValue();
+                    if((damageType.equals("Fire") && damageFire>0)
+                            || (damageType.equals("Collapse") && damageCollapse>0))
+                        isValid = true;
+                    else
+                        isValid = false;
                 }
                 if(!isValid)
                     break;
             }
-            if(isValid){
+            if(isValid)
                 activePolicies.add(p);
-            }
         }
 
         return activePolicies;
@@ -225,7 +211,7 @@ public class Environment {
                 if (envValue <= policyValue)
                     return true;
                 break;
-            case "=":
+            case "==":
                 if (envValue == policyValue)
                     return true;
                 break;

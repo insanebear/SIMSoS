@@ -9,6 +9,8 @@ import java.util.ArrayList;
  */
 public class SoSInfrastructure {
 
+    private double conformRate; // indicates how much CS will follow policies
+
     private int numFireDepartment;
     private int numPTSCenter;
     private int numHospital;
@@ -21,6 +23,14 @@ public class SoSInfrastructure {
     private int varOperating;
 
     private ArrayList<Information> csInformation;
+
+    public double getConformRate() {
+        return conformRate;
+    }
+
+    public void setConformRate(double conformRate) {
+        this.conformRate = conformRate;
+    }
 
     public SoSInfrastructure() {
         this.csInformation = new ArrayList<>();

@@ -33,6 +33,9 @@ public class Hospital extends Agent {
     private ArrayList<Integer> intensiveList;
     private ArrayList<Integer> operatingList;
 
+    private int needSurguryGeneral;
+    private int needSurguryIntensive;
+
     private int availGeneral;
     private int availIntensive;
     private int availOperating;
@@ -95,7 +98,7 @@ public class Hospital extends Agent {
                     public void execute() {
                         operatePatient();
                         movePatient();
-
+                        calcNeedSurgeryPatients();
                         if(generalList.isEmpty() && intensiveList.isEmpty() && operatingList.isEmpty())
                             status = Status.WAITING;
                     }
@@ -179,7 +182,7 @@ public class Hospital extends Agent {
     }
 
     private void operatePatient(){
-        for(Integer pId:operatingList){
+        for(Integer pId : operatingList){
             Patient p = patientsList.get(pId);
 
             if(p.isSurgeried()){
@@ -246,6 +249,32 @@ public class Hospital extends Agent {
             case "Intensive":
                 availIntensive--;
         }
+    }
+
+    private void calcNeedSurgeryPatients(){
+        int tempGeneral=0, tempIntensive=0;
+
+        for(Integer pId : generalList){
+            Patient p = patientsList.get(pId);
+            if(!p.isSurgeried())
+                tempGeneral++;
+        }
+        for(Integer pId : intensiveList){
+            Patient p = patientsList.get(pId);
+            if(!p.isSurgeried())
+                tempIntensive++;
+        }
+
+        needSurguryGeneral = tempGeneral;
+        needSurguryIntensive = tempIntensive;
+    }
+
+    public int getNeedSurguryGeneral() {
+        return needSurguryGeneral;
+    }
+
+    public int getNeedSurguryIntensive() {
+        return needSurguryIntensive;
     }
 
     public int getAvailGeneral() {

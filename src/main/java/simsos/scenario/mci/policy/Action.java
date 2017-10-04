@@ -1,30 +1,58 @@
 package simsos.scenario.mci.policy;
 
+import java.util.ArrayList;
+
 /**
  *
  * Created by Youlim Jung on 06/08/2017.
  *
  */
 public class Action {
-    private String constraintType;
-    private String target;
+    private String actionName;
+    private String actionTarget;
+    private String guideType;
     private String operator;
-    private String value;
+    private ArrayList<String> actionMethod;
 
-    public String getConstraintType() {
-        return constraintType;
+    public String getActionName() {
+        return actionName;
     }
 
-    public void setConstraintType(String constraintType) {
-        this.constraintType = constraintType;
+    public void setActionName(String actionName) {
+        this.actionName = actionName;
     }
 
-    public String getTarget() {
-        return target;
+    public String getActionTarget() {
+        return actionTarget;
     }
 
-    public void setTarget(String target) {
-        this.target = target;
+    public void setActionTarget(String actionTarget) {
+        this.actionTarget = actionTarget;
+    }
+
+    public String getGuideType() {
+        return guideType;
+    }
+
+    public void setGuideType(String guideType) {
+        this.guideType = guideType;
+    }
+
+//    public String getActionMethod() {
+//        return actionMethod;
+//    }
+//
+//    public void setActionMethod(String actionMethod) {
+//        this.actionMethod = actionMethod;
+//    }
+
+
+    public ArrayList<String> getActionMethod() {
+        return actionMethod;
+    }
+
+    public void setActionMethod(ArrayList<String> actionMethod) {
+        this.actionMethod = actionMethod;
     }
 
     public String getOperator() {
@@ -35,11 +63,4 @@ public class Action {
         this.operator = operator;
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
 }

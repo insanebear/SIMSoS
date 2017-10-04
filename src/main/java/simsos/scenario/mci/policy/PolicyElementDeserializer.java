@@ -44,7 +44,7 @@ public class PolicyElementDeserializer extends StdDeserializer<PolicyElement> {
 //        ArrayList<String> tempRelatedCS = mapper.convertValue(jsonNode.get("relatedComponent"),arrStringType);
 //        pe.setRelatedComponent(tempRelatedCS);
         String tempType = jsonNode.get("type").asText();
-        pe.setType(tempType);
+        pe.setValueType(tempType);
         ArrayList<String> tempValues = mapper.convertValue(jsonNode.get("values"), arrStringType);
         if (tempType.equals("range")) {
             int[] tempRange = new int[2];

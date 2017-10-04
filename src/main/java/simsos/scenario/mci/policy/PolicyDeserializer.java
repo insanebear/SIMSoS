@@ -36,11 +36,20 @@ public class PolicyDeserializer extends StdDeserializer<Policy>{
         ObjectCodec objectCodec = jsonParser.getCodec();
         JsonNode jsonNode = objectCodec.readTree(jsonParser);
         JavaType type = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Condition.class);
+        JavaType arrStringType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, String.class);
 
         policy.setPolicyType(jsonNode.get("policyType").asText());
         ArrayList<Condition> tempConds = mapper.convertValue(jsonNode.get("conditions"), type);
         policy.setConditions(tempConds);
-        Action tempAction = mapper.convertValue(jsonNode.get("action"), Action.class);
+
+        Action tempAction = new Action();
+        tempAction.setActionName(jsonNode.get("action").get("actionName").asText());
+        tempAction.setActionTarget(jsonNode.get("action").get("actionTarget").asText());
+        tempAction.setGuideType(jsonNode.get("action").get("guideType").asText());
+        tempAction.setOperator(jsonNode.get("action").get("operator").asText());
+        ArrayList<String> tempValues = mapper.convertValue(jsonNode.get("action").get("actionMethod"), arrStringType);
+        tempAction.setActionMethod(tempValues);
+//        Action tempAction = mapper.convertValue(jsonNode.get("action"), Action.class);
         policy.setAction(tempAction);
 
         return policy;

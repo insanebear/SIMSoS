@@ -54,7 +54,7 @@ public class SIMSoS {
         ObjectMapper mapper = new ObjectMapper();
 
         module.addDeserializer(Policy.class, new PolicyDeserializer(mapper));
-        module.addDeserializer(PolicyElement.class, new PolicyElementDeserializer(mapper));
+//        module.addDeserializer(PolicyElement.class, new PolicyElementDeserializer(mapper));
         mapper.registerModule(module);
 
         CollectionType policyCollectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Policy.class);
@@ -73,23 +73,24 @@ public class SIMSoS {
         policySuggestion.simulatePolicy(infrastructure);
 
 
+
     }
 
-    void printCheck(ArrayList<PolicyElement> policyElementsPool){
-        for(PolicyElement pe : policyElementsPool){
-            System.out.println(pe.getVarName());
-            System.out.println(pe.getScope());
-            System.out.println(pe.getType());
-            if(pe.getType().equals("range")){
-                System.out.println("Minimum: "+pe.getRange()[0]);
-                System.out.println("Maximum: "+pe.getRange()[1]);
-                System.out.println();
-            }else{
-                for(String s: pe.getValues())
-                    System.out.println(s);
-                System.out.println();
-            }
-        }
+//    static void printCheck(ArrayList<Policy> prevPolicies){
+//        for(PolicyElement pe : policyElementsPool){
+//            System.out.println(pe.getVarName());
+//            System.out.println(pe.getScope());
+//            System.out.println(pe.getType());
+//            if(pe.getType().equals("range")){
+//                System.out.println("Minimum: "+pe.getRange()[0]);
+//                System.out.println("Maximum: "+pe.getRange()[1]);
+//                System.out.println();
+//            }else{
+//                for(String s: pe.getValues())
+//                    System.out.println(s);
+//                System.out.println();
+//            }
+//        }
 
 
         // set policy id
@@ -98,13 +99,13 @@ public class SIMSoS {
 //            prevPolicies.get(i).setPolicyId(i);
 //        }
 //            //CHECK
-//            for(Policy p : rescuePolicies){
-//                System.out.println("Policy Id: "+p.getPolicyId()+" Policy Type: "+p.getPolicyType());
+//            for(Policy p : prevPolicies){
+//                System.out.println("Policy Type: "+p.getPolicyType());
 //                System.out.println("Policy Conditions:");
 //                p.printConditions();
 //                System.out.println("Policy Action:");
 //                p.printAction();
 //            }
-    }
+//    }
 
 }

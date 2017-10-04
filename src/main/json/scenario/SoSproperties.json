@@ -3,6 +3,8 @@
   "numPTSCenter": 3,
   "numHospital": 3,
 
+  "conformRate": 0.8,
+
   "meanGeneral":100,
   "varGeneral": 10,
   "meanIntensive": 50,
