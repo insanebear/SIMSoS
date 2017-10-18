@@ -28,7 +28,16 @@ public class Patient {
     public final int BURN_DEC_RATE = 6;
     public final int BLEED_DEC_RATE = 8;
 
-    private boolean isSurgeried;
+    private String roomName; // "General", "Intensive" (for knowing origianl room)
+
+    private boolean isTreated;
+    private int treatPeriod;
+    private int waitPeriod;
+
+    private boolean isOperated;
+    private int operateTime;
+
+    private int stayTime;
 
     public Patient(int patientId, int strength, InjuryType injuryType, int story, Location location) {
         this.patientId = patientId;
@@ -37,7 +46,10 @@ public class Patient {
         this.injuryType = injuryType;
         this.story = story;
         this.location = location;
-        this.isSurgeried = false;
+        this.isTreated = false;
+        this.isOperated = false;
+        this.stayTime = 0;
+        this.roomName = "";
     }
 
     public int calcSeverity() {
@@ -90,34 +102,27 @@ public class Patient {
                 }
                 break;
             case SURGERY_WAIT:
-                rd = new Random();
-                int treatment;
-
-                if(rd.nextBoolean())
-                    treatment=1;
-                else
-                    treatment=3;
-
-                if (injuryType == InjuryType.FRACTURED)
-                    strength -= (FRAC_DEC_RATE - treatment);
-                else if (injuryType == InjuryType.BURN)
-                    strength -= (BURN_DEC_RATE - treatment);
-                else
-                    strength -= (BLEED_DEC_RATE - treatment);
-
+                boolean downStrength = new Random().nextBoolean();
+                if(downStrength) {
+                    if (injuryType == InjuryType.BURN)
+                        strength -= BURN_DEC_RATE;
+                    else
+                        strength -= BLEED_DEC_RATE;
+                }
                 break;
-
-            // increase strength
             case SURGERY:
-                int surgeryCured = 60;
-                strength += surgeryCured;
                 break;
             case RECOVERY:
-                int recoveryRate = 8;
-                strength += recoveryRate;
+                rd = new Random();
+                int selfCure = rd.nextInt(4);
+                boolean upStrength = rd.nextBoolean();
+
+                if(upStrength)
+                    strength += selfCure;
+
                 break;
         }
-
+        // TODO upper bound는 병원의 releasedㅔ 관련해서 변경될 수도 있음
         if(strength == 0 || strength >= 180)
             changeStat();
 
@@ -171,8 +176,8 @@ public class Patient {
         return strength;
     }
 
-    public void setStrength(int strength) {
-        this.strength = strength;
+    public void recoverStrength(int strength) {
+        this.strength += strength;
     }
 
     public int getSeverity() {
@@ -207,12 +212,70 @@ public class Patient {
         this.status = status;
     }
 
-    public void doSurgery() {
-        this.isSurgeried = true;
+    public String getRoomName() {
+        return roomName;
     }
 
-    public boolean isSurgeried() {
-        return isSurgeried;
+    public void setRoomName(String roomName) {
+        this.roomName = roomName;
+    }
+
+    public void setOperated(boolean isOperated) {
+        this.isOperated = isOperated;
+    }
+
+    public boolean isOperated() {
+        return isOperated;
+    }
+
+    public boolean isTreated() {
+        return isTreated;
+    }
+
+    public int getTreatPeriod() {
+        return treatPeriod;
+    }
+
+    public void setTreatPeriod(int treatPeriod) {
+        this.treatPeriod = treatPeriod;
+    }
+
+    public int getWaitPeriod() {
+        return waitPeriod;
+    }
+
+    public void resetWaitPeriod() {
+        this.waitPeriod = getTreatPeriod();
+    }
+
+    public void decreaseWaitPeriod() { this.waitPeriod--; }
+
+    public void setTreated(boolean treated) {
+        isTreated = treated;
+    }
+
+    public int getOperateTime() {
+        return operateTime;
+    }
+
+    public void setOperateTime(int operateTime) {
+        this.operateTime = operateTime;
+    }
+
+    public void decreaseOperateTime(){
+        this.operateTime--;
+    }
+
+    public void increaseOperateTime() {
+        this.operateTime++;
+    }
+
+    public int getStayTime() {
+        return stayTime;
+    }
+
+    public void increaseStayTime() {
+        this.stayTime++;
     }
 
     public int strengthDecreasingRate(){

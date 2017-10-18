@@ -33,16 +33,11 @@ public class Environment {
     public static ArrayList<Patient> patientsList;
 
     public static ArrayList<Floor> building;
-//    public static ArrayList<Integer>[][] patientMap;
     public static ArrayList<Integer>[] stageZone;
     public static ArrayList<Integer>[][] hospitalMap;
 
-    // TODO Move these (policy related parts) to SoS Infrastructure in the future
     // Policy
     public static ArrayList<Policy> policies = new ArrayList<>();
-    public static ArrayList<Policy> transportPolicies = new ArrayList<>();
-    public static ArrayList<Policy> treatmentPolicies = new ArrayList<>();
-    public static ArrayList<Policy> evacuatePolicies = new ArrayList<>();
 
     // initialize environment
     public void initEnvironment(){
@@ -65,7 +60,7 @@ public class Environment {
         PatientFactory patientFactory = new PatientFactory(totalCasualty);
         patientFactory.generatePatient(patientsList, building, mciRadius);
 
-        getPolicies();
+        readPolicies();
     }
 
     private void initStageZone(){
@@ -98,17 +93,16 @@ public class Environment {
         MCILevel = calcMCILevel(totalCasualty);
         damageFire = initDamageFire;
         damageCollapse = initDamageCollapse;
-        //NOTE patient는 리셋을 해야되나.?;;
+        //NOTE patient는 리셋을 해야되나.?;; --> SoS만 유지되면 될 것.
     }
 
-    //update environment
+    // update environment
     void updatePatientsList(){
+        // update patients' strength according to their status
         for(Patient patient : patientsList){
             patient.updateStrength();
         }
     }
-
-    //TODO update patient location (self-escaping)
 
     public static void updateCasualty(){
         // In this context, casualties mean "not-staged patient"
@@ -130,17 +124,12 @@ public class Environment {
             return 5;
     }
 
-
-
     // Policy related methods
-    private void getPolicies() {
+    private void readPolicies() {
         SimpleModule module = new SimpleModule();
         ObjectMapper mapper = new ObjectMapper();
-//        JavaType type = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Condition.class);
 
         module.addDeserializer(Policy.class, new PolicyDeserializer(mapper));
-
-
         mapper.registerModule(module);
         CollectionType collectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Policy.class);
 
@@ -151,22 +140,106 @@ public class Environment {
         }
     }
 
-    public static Policy checkPolicy(String currPolicyType){
-        // TODO policy하나만 리턴하는거 바꿔야할듯.
+    // TODO conflict handling
+    public static Policy checkActionPolicy(String role, String actionName, CallBack callBack){
+        //TODO Policy Conflict Handling (with assumption)
+        /* "activePolicy" ArrayList stores valid policies that satisfy current condition.*/
         ArrayList<Policy> activePolicies;
-        switch (currPolicyType){
+        switch (role){
+            // Find an appropriate policy on current action name and role.
             case "RESCUE":
-                activePolicies = evalPolicyCond(policies);
+                activePolicies = evalPolicyCond(policies, callBack);
                 for(Policy p : activePolicies){
-                    if(p.getPolicyType().equals("RESCUE"))
+                    if(p.getRole().equals("RESCUE") && p.getAction().getActionName().equals(actionName))
                         return p;
                 }
             case "TRANSPORT":
+                activePolicies = evalPolicyCond(policies, callBack);
+                for(Policy p : activePolicies){
+                    if(p.getRole().equals("TRANSPORT") && p.getAction().getActionName().equals(actionName))
+                        return p;
+                }
                 break;
             case "TREATMENT":
+                activePolicies = evalPolicyCond(policies, callBack);
+                for(Policy p : activePolicies){
+                    if(p.getRole().equals("TREATMENT") && p.getAction().getActionName().equals(actionName))
+                        return p;
+                }
                 break;
         }
         return null;
+    }
+
+    public static Policy checkCompliancePolicy(String role){
+        //TODO Policy Conflict Handling (with assumption)
+        /* "activePolicy" ArrayList stores valid policies that satisfy current condition.*/
+        ArrayList<Policy> activePolicies;
+        switch (role){
+            case "RESCUE":
+                activePolicies = evalPolicyCond(policies);
+                for(Policy p : activePolicies){
+                    if(p.getRole().equals("RESCUE"))
+                        return p;
+                }
+            case "TRANSPORT":
+                activePolicies = evalPolicyCond(policies);
+                for(Policy p : activePolicies){
+                    if(p.getRole().equals("TRANSPORT"))
+                        return p;
+                }
+                break;
+            case "TREATMENT":
+                activePolicies = evalPolicyCond(policies);
+                for(Policy p : activePolicies){
+                    if(p.getRole().equals("TREATMENT"))
+                        return p;
+                }
+                break;
+        }
+        return null;
+    }
+
+    private static ArrayList<Policy> evalPolicyCond(ArrayList<Policy> policies, CallBack callBack){
+        //NOTE 1. Check condition comparing with environment.
+        //NOTE 2. Condition contains CS variables. (compares not only common environment but CS environment using callback)
+        ArrayList<Policy> activePolicies = new ArrayList<>();
+        boolean isValid = true;
+
+        for(Policy p : policies){
+            ArrayList<Condition> conditions = p.getConditions();
+            for(Condition condition : conditions){
+                if(condition.getVariable().equals("MCILevel")){
+                    String operator = condition.getOperator();
+                    int value = Integer.parseInt(condition.getValue().get(0));
+                    isValid = compareValueByOp(MCILevel, value, operator);
+                }else if(condition.getVariable().equals("DamageType")){
+                    ArrayList<String> damageTypes = condition.getValue();
+                    for(String damageType : damageTypes){
+                        if((damageType.equals("Fire") && damageFire>0)
+                                || (damageType.equals("Collapse") && damageCollapse>0))
+                            isValid = true;
+                        else
+                            isValid = false;
+                        if(!isValid)
+                            break;
+                    }
+                }else if(condition.getVariable().equals("Story")){
+                    int value = Integer.parseInt(condition.getValue().get(0));
+                    if(callBack.checkCSStat("Story", value))
+                        isValid = true;
+                }else if(condition.getVariable().equals("Time")){
+                    int value = Integer.parseInt(condition.getValue().get(0));
+                    if(callBack.checkCSStat("Time", value))
+                        isValid = true;
+                }
+                if(!isValid)
+                    break;
+            }
+            if(isValid)
+                activePolicies.add(p);
+        }
+        return activePolicies;
     }
 
     private static ArrayList<Policy> evalPolicyCond(ArrayList<Policy> policies){
@@ -179,15 +252,19 @@ public class Environment {
             for(Condition condition : conditions){
                 if(condition.getVariable().equals("MCILevel")){
                     String operator = condition.getOperator();
-                    int value = Integer.parseInt(condition.getValue());
+                    int value = Integer.parseInt(condition.getValue().get(0));
                     isValid = compareValueByOp(MCILevel, value, operator);
-                }else if(condition.getVariable().equals("DamageType")){
-                    String damageType = condition.getValue();
-                    if((damageType.equals("Fire") && damageFire>0)
-                            || (damageType.equals("Collapse") && damageCollapse>0))
-                        isValid = true;
-                    else
-                        isValid = false;
+                }else if(condition.getVariable().equals("DamageType")) {
+                    ArrayList<String> damageTypes = condition.getValue();
+                    for (String damageType : damageTypes) {
+                        if ((damageType.equals("Fire") && damageFire > 0)
+                                || (damageType.equals("Collapse") && damageCollapse > 0))
+                            isValid = true;
+                        else
+                            isValid = false;
+                        if (!isValid)
+                            break;
+                    }
                 }
                 if(!isValid)
                     break;
@@ -195,7 +272,6 @@ public class Environment {
             if(isValid)
                 activePolicies.add(p);
         }
-
         return activePolicies;
     }
 

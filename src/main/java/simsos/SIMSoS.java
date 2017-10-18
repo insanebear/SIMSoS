@@ -100,7 +100,7 @@ public class SIMSoS {
 //        }
 //            //CHECK
 //            for(Policy p : prevPolicies){
-//                System.out.println("Policy Type: "+p.getPolicyType());
+//                System.out.println("Policy Type: "+p.getRole());
 //                System.out.println("Policy Conditions:");
 //                p.printConditions();
 //                System.out.println("Policy Action:");

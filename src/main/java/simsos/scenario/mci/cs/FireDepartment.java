@@ -17,21 +17,21 @@ import java.util.HashMap;
 public class FireDepartment extends Agent {
     private String name;
     private int fireDeptId;
-    private int allocTrucks;
-    private int allocExcavotors;
     private int allocFighters;
 
-    private double conformRate; // indicates how much CS will follow policies
+    private double compliance; // indicates how much CS will follow policies
+    private boolean enforced;
 
     private ArrayList<Policy> rescuePolicies;
 
     private FireFighter[] workFighterList;
 
-    public FireDepartment(World world, int fireDeptId, String name, double conformRate) {
+    public FireDepartment(World world, int fireDeptId, String name, double compliance, boolean enforced) {
         super(world);
         this.name = name;
         this.fireDeptId = fireDeptId;
-        this.conformRate = conformRate;
+        this.compliance = compliance;
+        this.enforced = enforced;
         this.reset();
 
         this.allocFighters = 50;    //NOTE 지금은 고정

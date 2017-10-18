@@ -20,7 +20,7 @@ import static simsos.scenario.mci.cs.SoSManager.numWaitPTS;
  */
 public class FireFighter extends Agent{
     private enum Status{
-        SEARCHING, RESCUING, TRANSPORTING, DONE
+        SEARCHING, RESCUING, TRANSPORTING, INACTIVE
     }
     private enum Directions{ //TODO Refactor this (not using moving direction)
         WEST, SOUTH, EAST, NORTH
@@ -31,6 +31,8 @@ public class FireFighter extends Agent{
     private int fighterId;
     private String affiliation;
     private String name;
+    private String role;
+    private boolean active;
 
     // current properties
     private Status status;
@@ -42,7 +44,10 @@ public class FireFighter extends Agent{
     private int rescuedPatientId;
     private ArrayList<Integer> spotPatientList;
 
-    private double conformRate; // indicates how much CS will follow policies
+    private double compliance; // indicates how much CS will follow policies
+    private double selectCompliance;
+    private double stageCompliance;
+    private boolean enforced; // directed SoS or acknowledged SoS
     private ArrayList<String> selectMethodList;
     private ArrayList<String> stageMethodList;
 
@@ -51,18 +56,37 @@ public class FireFighter extends Agent{
     private int destStory;
     private int reachTime;
 
-    public FireFighter(World world, int fighterId, String name, String affiliation, double conformRate) {
+    private CallBack callBack = new CallBack() {
+        @Override
+        public boolean checkCSStat(String condString, int condValue) {
+            if(condString.equals("Story") && story==condValue)
+                return true;
+            return false;
+        }
+    };
+
+    public FireFighter(World world, int fighterId, String name, String affiliation, double compliance, boolean enforced) {
         super(world);
         this.name = name;
         this.affiliation = affiliation;
+        this.role = "RESCUE";
         this.fighterId = fighterId;
+        this.enforced = enforced;
         this.location = new Location(0, 0);
         this.story = 0;
         this.rescuedPatientId = -1;     // no patient rescued
-        this.status = Status.SEARCHING;
-        this.currAction = Actions.SEARCH;
 
-        this.conformRate = conformRate;
+        if(checkActive()){
+            this.status = Status.SEARCHING;
+            this.currAction = Actions.SEARCH;
+        }else{
+            this.status = Status.INACTIVE;
+            this.currAction = Actions.NONE;
+        }
+
+        this.compliance = compliance;
+        this.selectCompliance = randomCompliance();
+        this.stageCompliance = randomCompliance();
 
         selectMethodList = new ArrayList<>();
         stageMethodList = new ArrayList<>();
@@ -71,7 +95,6 @@ public class FireFighter extends Agent{
         this.destCoordinate = new Location(0, 0);
         setDestination();
         this.reachTime = setReachTime();
-
     }
 
     @Override
@@ -104,7 +127,8 @@ public class FireFighter extends Agent{
                         if (checkPatient(spotPatientList)) {
                             if(spotPatientList.size()>1){
                                 //NOTE RESUE _select policy
-                                currPolicy = checkPolicy(currAction.toString());
+//                                currPolicy = checkActionPolicy(currAction.toString(), callBack);
+                                currPolicy = checkActionPolicy(role, currAction.toString(), callBack);
                                 rescuedPatientId = selectPatient(spotPatientList, currPolicy);
 //                                rescuedPatientId = selectPatient(spotPatientList, null);
                             }else{
@@ -126,7 +150,7 @@ public class FireFighter extends Agent{
                             reachTime = setReachTime();
                             System.out.println("Patient not found");
                             if(destCoordinate ==null){
-                                status = Status.DONE;
+                                status = Status.INACTIVE;
                                 currAction = Actions.NONE;
                             }
                             else {
@@ -151,7 +175,8 @@ public class FireFighter extends Agent{
                             story = destStory;
 
                             //Note RESCUE_ stage policy
-                            currPolicy = checkPolicy(currAction.toString());
+//                            currPolicy = checkActionPolicy(currAction.toString(), callBack);
+                            currPolicy = checkActionPolicy(role, currAction.toString(), callBack);
                             int stageSpot = stagePatient(currPolicy);
 
                             stageZone[stageSpot].add(rescuedPatientId);
@@ -167,8 +192,8 @@ public class FireFighter extends Agent{
                             setDestination();
                             reachTime = setReachTime();
 
-                            if(destCoordinate ==null){
-                                status = Status.DONE;
+                            if(destCoordinate == null){
+                                status = Status.INACTIVE;
                                 currAction = Actions.NONE;
                             }
                             else {
@@ -185,8 +210,12 @@ public class FireFighter extends Agent{
                         return "Transporting";
                     }
                 };
-            case DONE:
-                String s = this.getAffiliation()+" "+this.getName()+" "+this.getId()+" finished its work.";
+            case INACTIVE:
+                if(checkActive()){
+                    this.status = Status.SEARCHING;
+                    this.currAction = Actions.SEARCH;
+                }
+                String s = this.getAffiliation()+" "+this.getName()+" "+this.getId()+" does not fit to SoS.";
                 return Action.getNullAction(1, s);
         }
         return Action.getNullAction(1, this.getName() + ": ??");
@@ -214,12 +243,20 @@ public class FireFighter extends Agent{
 
     @Override
     public boolean makeDecision() {
-        return new Random().nextFloat() < conformRate;
+        return new Random().nextFloat() < compliance;
     }
 
     @Override
     public HashMap<String, Object> getProperties() {
         return new HashMap<String, Object>();
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public String getAffiliation() {
@@ -243,6 +280,8 @@ public class FireFighter extends Agent{
         stageMethodList.add("MeanRandom");
         stageMethodList.add("MCSlot");
     }
+
+
 
     /**--------Destination--------**/
 
@@ -318,6 +357,15 @@ public class FireFighter extends Agent{
         }
         return result;
     }
+    /**--------ActiveCheck--------**/
+    private boolean checkActive(){
+        currPolicy = checkCompliancePolicy(role);
+        if((currPolicy==null || currPolicy.getMinCompliance() < compliance))
+            active = true;
+        else
+            active = false;
+        return active;
+    }
 
     /**--------Action--------**/
     /*----Select Patient (Select)----*/
@@ -360,7 +408,7 @@ public class FireFighter extends Agent{
             if(!decision)
                 System.out.println("Decide not to follow the policy.");
             else
-                System.out.println("Not fitted condition.");
+                System.out.println("Not fitted condition or No policy");
             System.out.println("Do the randomly select method.");
 
             Collections.shuffle(selectMethodList);
@@ -507,6 +555,18 @@ public class FireFighter extends Agent{
         for(int i=0; i<patientList.size(); i++)
             if(patientList.get(i) == idx)
                 patientList.remove(i);
+    }
+
+    private double randomCompliance(){
+        Random rd = new Random();
+        double min = this.compliance*0.3;
+        double max = 1-min;
+        double tempCompliance = 0;
+        while(tempCompliance < min || tempCompliance > max){
+            tempCompliance = Math.round(rd.nextGaussian()*3 + this.compliance*10);
+            tempCompliance = tempCompliance/10;
+        }
+        return tempCompliance;
     }
 
     private void handleDeadPatient(){

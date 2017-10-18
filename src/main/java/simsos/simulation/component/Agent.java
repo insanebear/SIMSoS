@@ -8,6 +8,7 @@ import java.util.HashMap;
  * Edited by Youlim Jung on 2017-07-22.
  */
 public abstract class Agent {
+
     protected World world = null;
 
     public Agent(World world) {

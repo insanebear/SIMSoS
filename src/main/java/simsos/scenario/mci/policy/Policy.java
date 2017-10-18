@@ -10,7 +10,11 @@ import java.util.ArrayList;
 public class Policy {
     private String policyType;
     protected ArrayList<Condition> conditions;
+    private String role;
     private Action action;
+    private double minCompliance;
+    private boolean enforce;
+
 
     public String getPolicyType() {
         return policyType;
@@ -28,6 +32,14 @@ public class Policy {
         return conditions;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
     public Action getAction() {
         return action;
     }
@@ -36,13 +48,30 @@ public class Policy {
         this.action = action;
     }
 
+    public double getMinCompliance() {
+        return minCompliance;
+    }
+
+    public void setMinCompliance(double minCompliance) {
+        this.minCompliance = minCompliance;
+    }
+
+    public boolean isEnforce() {
+        return enforce;
+    }
+
+    public void setEnforce(boolean enforce) {
+        this.enforce = enforce;
+    }
+
+
     public void printConditions(){
         for (Condition condition : conditions)
             System.out.println(condition.getVariable()+condition.getOperator()+condition.getValue());
     }
 
-    public void printAction(){
-        System.out.println(action.getActionName()+" "+action.getActionTarget()+action.getGuideType()+" "
-                +action.getOperator()+action.getActionMethod());
-    }
+//    public void printAction(){
+//        System.out.println(action.getActionName()+" "+action.getActionTarget()+action.getGuideType()+" "
+//                +action.getOperator()+action.getActionMethod());
+//    }
 }

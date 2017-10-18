@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 
+import static simsos.scenario.mci.Environment.patientsList;
 import static simsos.scenario.mci.Environment.stageZone;
 
 /**
@@ -26,11 +27,11 @@ public class Simulator {
         ArrayList<Snapshot> simulationLog = new ArrayList<Snapshot>();
 
         boolean stoppingCondition = false;
-        ArrayList<Action> actions = new ArrayList();
-        ArrayList<Action> immediateActions = new ArrayList();
+        ArrayList<Action> actions = new ArrayList<>();
+        ArrayList<Action> immediateActions = new ArrayList<>();
 
         world.reset();
-        simulationLog.add(world.getCurrentSnapshot()); // Initial snapshot
+        simulationLog.add(world.getCurrentSnapshot(patientsList)); // Initial snapshot
 
         while (!stoppingCondition) {
             System.out.println();
@@ -64,13 +65,16 @@ public class Simulator {
             progress(out, msgActions);
 
             world.progress(1);
-            simulationLog.add(world.getCurrentSnapshot());
+
             // Verdict - evaluateProperties();
             if (world.getTime() >= endOfTime)
                 stoppingCondition = true;
 
             System.out.println("STAGE ZONE STATUS: "+Arrays.toString(stageZone));
         }
+
+        // Last snapshot only
+        simulationLog.add(world.getCurrentSnapshot(patientsList));
 
         return simulationLog;
     }

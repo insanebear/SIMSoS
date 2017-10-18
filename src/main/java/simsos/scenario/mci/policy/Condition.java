@@ -1,5 +1,7 @@
 package simsos.scenario.mci.policy;
 
+import java.util.ArrayList;
+
 /**
  *
  * Created by Youlim Jung on 06/08/2017.
@@ -8,7 +10,8 @@ package simsos.scenario.mci.policy;
 public class Condition {
     private String variable;
     private String operator;
-    private String value;
+//    private String value;
+    private ArrayList<String> value;
 
     public String getVariable() {
         return variable;
@@ -26,11 +29,19 @@ public class Condition {
         this.operator = operator;
     }
 
-    public String getValue() {
+//    public String getValue() {
+//        return value;
+//    }
+//
+//    public void setValue(String value) {
+//        this.value = value;
+//    }
+
+    public ArrayList<String> getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(ArrayList<String> value) {
         this.value = value;
     }
 }

@@ -46,6 +46,7 @@ public class PolicySuggestion {
         Scenario scenario = new MCIScenario(infrastructure);
         World world = scenario.getWorld();
 
+        // NOTE simulation repeat
         Simulator.execute(world, 100);
 
         // temporary result view

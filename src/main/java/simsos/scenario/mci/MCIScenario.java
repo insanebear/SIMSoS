@@ -17,11 +17,18 @@ import static simsos.scenario.mci.Environment.hospitalMapSize;
  */
 public class MCIScenario extends Scenario {
 
-    private double conformRate; // indicates how much CS will follow policies
+    // indicates how much CS will follow policies
+    private double rescueCompliance;
+    private double transportCompliance;
+    private double treatmentCompliance;
+    private boolean enforced;
+
     private int totalFD;
     private int totalPTS;
     private int totalH;
 
+    private int meanCrew;
+    private int varCrew;
     private int meanGeneral;
     private int varGeneral;
     private int meanIntensive;
@@ -43,11 +50,11 @@ public class MCIScenario extends Scenario {
 
         // Fire Department
         for(int i=0; i<this.totalFD; i++){
-            FireDepartment fd = new FireDepartment(this.world, i, "Fire Department", conformRate);
+            FireDepartment fd = new FireDepartment(this.world, i, "Fire Department", getRescueCompliance(), this.isEnforced());
             manager.setFireDepartments(fd);
 
             for(int j=0; j<fd.getAllocFighters(); j++){
-                FireFighter ff = new FireFighter(null, j, "Fire Fighter", "FD"+i, conformRate);
+                FireFighter ff = new FireFighter(null, j, "Fire Fighter", "FD"+i, getRescueCompliance(), this.isEnforced());
                 this.world.addAgent(ff);
                 fd.setWorkFighterList(j, ff);
             }
@@ -55,25 +62,26 @@ public class MCIScenario extends Scenario {
 
         // PTS Center
         for(int i=0; i<this.totalPTS; i++){
-            PTSCenter pts = new PTSCenter(this.world, i, "PTS Center", conformRate);
+            PTSCenter pts = new PTSCenter(this.world, i, "PTS Center", getTransportCompliance(), this.isEnforced());
             manager.setPtsCenters(pts);
             for(int j=0; j<pts.getAllocGndAmbul(); j++){
-                GndAmbulance gndAmbul = new GndAmbulance(null, j, "Gnd Ambulance", "PTS"+i , conformRate);
+                GndAmbulance gndAmbul = new GndAmbulance(null, j, "Gnd Ambulance", "PTS"+i , getTransportCompliance(), this.isEnforced());
                 this.world.addAgent(gndAmbul);
                 pts.setWorkGndAmbuls(j, gndAmbul);
             }
         }
 
         for(int i=0; i<this.totalH; i++){
-            int generalRoom = (int)Math.round(rd.nextGaussian()* varGeneral + meanGeneral);
-            int intensiveRoom = (int)Math.round(rd.nextGaussian()* varIntensive + meanIntensive);
-            int operatingRoom = (int)Math.round(rd.nextGaussian()* varOperating + meanOperating);
+            int generalRoom = getRandomValue(varGeneral, meanGeneral);
+            int intensiveRoom = getRandomValue(varIntensive, meanIntensive);
+            int operatingRoom = getRandomValue(varOperating, meanOperating);
+            int medicalCrew = getRandomValue(varCrew, meanCrew);
 
             int locX = ThreadLocalRandom.current().nextInt(4, hospitalMapSize.getRight());
             int locY = rd.nextInt(hospitalMapSize.getRight());
 
             Hospital hospital = new Hospital(this.world, i, "Hospital", generalRoom,
-                    intensiveRoom, operatingRoom, new Location(locX, locY), conformRate);
+                    intensiveRoom, operatingRoom, new Location(locX, locY), medicalCrew, getTreatmentCompliance(), this.isEnforced());
 
             // information setting for reset
             Information info = new Information();
@@ -95,25 +103,48 @@ public class MCIScenario extends Scenario {
     }
 
     public void setInfrastructure() {
-        conformRate = infrastructure.getConformRate();
+        this.rescueCompliance = infrastructure.getRescueCompliance();
+        this.transportCompliance = infrastructure.getTransportCompliance();
+        this.treatmentCompliance = infrastructure.getTreatmentCompliance();
+        this.enforced = infrastructure.isEnforced();
 
-        totalFD = infrastructure.getNumFireDepartment();
-        totalPTS = infrastructure.getNumPTSCenter();
-        totalH = infrastructure.getNumHospital();
+        this.totalFD = infrastructure.getNumFireDepartment();
+        this.totalPTS = infrastructure.getNumPTSCenter();
+        this.totalH = infrastructure.getNumHospital();
 
-        meanGeneral = infrastructure.getMeanGeneral();
-        varGeneral = infrastructure.getVarGeneral();
-        meanIntensive = infrastructure.getMeanIntensive();
-        varIntensive = infrastructure.getVarIntensive();
-        meanOperating = infrastructure.getMeanOperating();
-        varOperating = infrastructure.getVarOperating();
+        this.meanCrew = infrastructure.getMeanCrew();
+        this.varCrew = infrastructure.getVarCrew();
+        this.meanGeneral = infrastructure.getMeanGeneral();
+        this.varGeneral = infrastructure.getVarGeneral();
+        this.meanIntensive = infrastructure.getMeanIntensive();
+        this.varIntensive = infrastructure.getVarIntensive();
+        this.meanOperating = infrastructure.getMeanOperating();
+        this.varOperating = infrastructure.getVarOperating();
     }
 
-    public double getConformRate() {
-        return conformRate;
+    public boolean isEnforced() {
+        return enforced;
     }
 
-    public void setConformRate(double conformRate) {
-        this.conformRate = conformRate;
+    private int getRandomValue(int variance, int mean){
+        Random rd = new Random();
+        int min = (int)Math.round(mean*0.3);
+        int max = (int)Math.round(mean*0.7);
+        int result = (int)Math.round(rd.nextGaussian()* variance + mean);
+        while(result < min || result > max)
+            result = (int)Math.round(rd.nextGaussian()* variance + mean);
+        return result;
+    }
+
+    public double getRescueCompliance() {
+        return rescueCompliance;
+    }
+
+    public double getTransportCompliance() {
+        return transportCompliance;
+    }
+
+    public double getTreatmentCompliance() {
+        return treatmentCompliance;
     }
 }

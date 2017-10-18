@@ -9,10 +9,11 @@ import java.util.ArrayList;
  */
 public class Action {
     private String actionName;
-    private String actionTarget;
-    private String guideType;
-    private String operator;
+//    private String actionTarget;
+//    private String guideType;
+//    private String operator;
     private ArrayList<String> actionMethod;
+    private int methodValue;
 
     public String getActionName() {
         return actionName;
@@ -22,22 +23,44 @@ public class Action {
         this.actionName = actionName;
     }
 
-    public String getActionTarget() {
-        return actionTarget;
+    public ArrayList<String> getActionMethod() {
+        return actionMethod;
     }
 
-    public void setActionTarget(String actionTarget) {
-        this.actionTarget = actionTarget;
+    public void setActionMethod(ArrayList<String> actionMethod) {
+        this.actionMethod = actionMethod;
     }
 
-    public String getGuideType() {
-        return guideType;
+    public int getMethodValue() {
+        return methodValue;
     }
 
-    public void setGuideType(String guideType) {
-        this.guideType = guideType;
+    public void setMethodValue(int methodValue) {
+        this.methodValue = methodValue;
     }
 
+    //    public String getOperator() {
+//        return operator;
+//    }
+//
+//    public void setOperator(String operator) {
+//        this.operator = operator;
+//    }
+//    public String getActionTarget() {
+//        return actionTarget;
+//    }
+//
+//    public void setActionTarget(String actionTarget) {
+//        this.actionTarget = actionTarget;
+//    }
+//
+//    public String getGuideType() {
+//        return guideType;
+//    }
+//
+//    public void setGuideType(String guideType) {
+//        this.guideType = guideType;
+//    }
 //    public String getActionMethod() {
 //        return actionMethod;
 //    }
@@ -47,20 +70,6 @@ public class Action {
 //    }
 
 
-    public ArrayList<String> getActionMethod() {
-        return actionMethod;
-    }
 
-    public void setActionMethod(ArrayList<String> actionMethod) {
-        this.actionMethod = actionMethod;
-    }
-
-    public String getOperator() {
-        return operator;
-    }
-
-    public void setOperator(String operator) {
-        this.operator = operator;
-    }
 
 }

@@ -9,12 +9,19 @@ import java.util.ArrayList;
  */
 public class SoSInfrastructure {
 
-    private double conformRate; // indicates how much CS will follow policies
+    //TODO role-compliance mapping?
+    //NOTE Compliance descriptions based on mean values
+    private double rescueCompliance; // indicates how much CS will follow policies
+    private double transportCompliance;
+    private double treatmentCompliance;
+    private boolean enforced=false;
 
     private int numFireDepartment;
     private int numPTSCenter;
     private int numHospital;
 
+    private int meanCrew;
+    private int varCrew;
     private int meanGeneral;
     private int varGeneral;
     private int meanIntensive;
@@ -24,12 +31,36 @@ public class SoSInfrastructure {
 
     private ArrayList<Information> csInformation;
 
-    public double getConformRate() {
-        return conformRate;
+    public double getRescueCompliance() {
+        return rescueCompliance;
     }
 
-    public void setConformRate(double conformRate) {
-        this.conformRate = conformRate;
+    public void setRescueCompliance(double rescueCompliance) {
+        this.rescueCompliance = rescueCompliance;
+    }
+
+    public double getTransportCompliance() {
+        return transportCompliance;
+    }
+
+    public void setTransportCompliance(double transportCompliance) {
+        this.transportCompliance = transportCompliance;
+    }
+
+    public double getTreatmentCompliance() {
+        return treatmentCompliance;
+    }
+
+    public void setTreatmentCompliance(double treatmentCompliance) {
+        this.treatmentCompliance = treatmentCompliance;
+    }
+
+    public boolean isEnforced() {
+        return enforced;
+    }
+
+    public void setEnforced(boolean enforced) {
+        this.enforced = enforced;
     }
 
     public SoSInfrastructure() {
@@ -58,6 +89,23 @@ public class SoSInfrastructure {
 
     public void setNumHospital(int numHospital) {
         this.numHospital = numHospital;
+    }
+
+
+    public int getMeanCrew() {
+        return meanCrew;
+    }
+
+    public void setMeanCrew(int meanCrew) {
+        this.meanCrew = meanCrew;
+    }
+
+    public int getVarCrew() {
+        return varCrew;
+    }
+
+    public void setVarCrew(int varCrew) {
+        this.varCrew = varCrew;
     }
 
     public int getMeanGeneral() {
@@ -111,4 +159,5 @@ public class SoSInfrastructure {
     public void putCsInformation(Information information){
         this.csInformation.add(information);
     }
+
 }

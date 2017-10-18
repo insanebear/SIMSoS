@@ -1,11 +1,17 @@
 package simsos.simulation.component;
 
+import simsos.scenario.mci.Patient;
+
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
 /**
+ *
  * Created by mgjin on 2017-06-21.
+ *
+ * Edited by Youlim Jung on 2017-10-11.
+ *
  */
 public abstract class World {
     protected ArrayList<Agent> agents = new ArrayList<Agent>();
@@ -37,7 +43,7 @@ public abstract class World {
         return this.time;
     }
 
-    public Snapshot getCurrentSnapshot() {
+    public Snapshot getCurrentSnapshot(ArrayList<Patient> patientsList) {
         // Environment - Property - Value
         // Agent1 - Property - Value
         // Agent2 - Property - Value
@@ -46,6 +52,7 @@ public abstract class World {
 
         LinkedHashMap<String, Object> worldProperties = new LinkedHashMap<String, Object>();
         worldProperties.put("Time", time);
+        worldProperties.put("Patients", patientsList);
         snapshot.addProperties(null, worldProperties);
 
         for (Agent agent : agents)

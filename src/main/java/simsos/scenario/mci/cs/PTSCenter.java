@@ -17,15 +17,17 @@ public class PTSCenter extends Agent {
     private int ptsCenterId;
     private int allocGndAmbul;
 
-    private double conformRate; // indicates how much CS will follow policies
+    private double compliance; // indicates how much CS will follow policies
+    private boolean enforced;
 
     private GndAmbulance[] workGndAmbuls;
 
-    public PTSCenter(World world, int ptsCenterId, String name, double conformRate) {
+    public PTSCenter(World world, int ptsCenterId, String name, double compliance, boolean enforced) {
         super(world);
         this.name = name;
         this.ptsCenterId = ptsCenterId;
-        this.conformRate = conformRate;
+        this.compliance = compliance;
+        this.enforced = enforced;
         this.reset();
 
         this.allocGndAmbul = 20;     // 지금은 고정
