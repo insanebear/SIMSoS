@@ -14,6 +14,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import static simsos.scenario.mci.Environment.checkActionPolicy;
+import static simsos.scenario.mci.Environment.checkCompliancePolicy;
 import static simsos.scenario.mci.Environment.patientsList;
 
 /**
@@ -22,13 +23,14 @@ import static simsos.scenario.mci.Environment.patientsList;
  * Edited by Youlim Jung on 2017-07-25.
  */
 public class Hospital extends Agent {
-    private enum Status {WAITING, TREATING}
+    private enum Status {WAITING, TREATING, INACTIVE}
     private enum Actions {WAIT, TREAT, OPERATE, RELEASE}
     private String name;
     private String role;
     private int hospitalId;
     private Location location;
     private int medicalCrew;
+    private boolean active;
 
     private double compliance; // indicates how much CS will follow policies
     private double treatCompliance;
@@ -106,20 +108,29 @@ public class Hospital extends Agent {
         this.currPolicy = null;
 
         System.out.println(getName()+" "+getId()+" is at "+location.getX()+", "+location.getY());
+        System.out.println("General: "+totGeneral+", Intensive: "+totIntensive+", Operating: "+totOperating+", Crew: "+medicalCrew);
 
         this.reset();
     }
 
     @Override
     public Action step() {
+        // check if it is active or not every time it starts its action
+        // If true, accept patients
+        // If false, not accept patients
+
+
         switch(status){
             case WAITING:
                 return new Action(1) {
                     @Override
                     public void execute() {
+                        active = checkActive();
+                        System.out.println("[Hospital "+hospitalId+"]");
                         if(generalRoom.size()>0 || intensiveRoom.size()>0 || operatingRoom.size()>0){
                             status = Status.TREATING;
                         }
+                        System.out.println("Waiting...");
                     }
                     @Override
                     public String getName() {
@@ -131,6 +142,9 @@ public class Hospital extends Agent {
                 return new Action(1) {
                     @Override
                     public void execute() {
+                        active = checkActive();
+                        System.out.println("[Hospital "+hospitalId+"]");
+
                         // release patients
                         releasePatients();
                         // rearrange rooms
@@ -141,9 +155,10 @@ public class Hospital extends Agent {
                         operatePatients();
 
                         // update information
+                        System.out.println("General");
                         increaseStayTime(generalRoom);
+                        System.out.println("Intensive");
                         increaseStayTime(intensiveRoom);
-                        increaseStayTime(operatingRoom);
                         calcNeedSurgeryPatients();
                         updatePatientPeriod();
 
@@ -189,66 +204,63 @@ public class Hospital extends Agent {
         return new HashMap<String, Object>();
     }
 
-    public int getTotGeneral() {
-        return totGeneral;
-    }
-
-    public int getTotIntensive() {
-        return totIntensive;
-    }
-
-    public int getTotOperating() {
-        return totOperating;
-    }
-
-    public ArrayList<Integer> getGeneralRoom() {
-        return generalRoom;
-    }
-
-    public ArrayList<Integer> getIntensiveRoom() {
-        return intensiveRoom;
-    }
-
-    public ArrayList<Integer> getOperatingRoom() {
-        return operatingRoom;
-    }
-
-    public Location getLocation() {
-        return location;
-    }
-
-    private void updatePatientPeriod(){
-        // to fair treatment
-        for(Integer patientId : generalRoom){
-            Patient patient = patientsList.get(patientId);
-            if(patient.getWaitPeriod()>0 && patient.isTreated())
-                patient.decreaseWaitPeriod();
-            if(patient.getWaitPeriod() == 0)
-                patient.setTreated(false);
-        }
+    private <K, V extends Comparable<? super V>> HashMap<K, V> sortByValue(HashMap<K, V> map) {
+        return map.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
     }
 
     public void enterHospital(String roomType, int patientId){
         // only called by ambulances to hospitalize patient.
         Patient patient = patientsList.get(patientId);
+        patient.setHospital(hospitalId);
+        patient.setPrevRoomName("");
         patient.setRoomName(roomType);
 
         switch (roomType){
             case "General":
                 generalRoom.add(patientId);
                 availGeneral--;
+                break;
             case "Intensive":
                 intensiveRoom.add(patientId);
                 availIntensive--;
-//            case "Operating":
-//                operatingRoom.add(patientId);
-//                availOperating--;
+                break;
         }
         patientsInHospital.add(patientId);
         // categorize patient by setting treatPeriod;
         categorizePatient(patientId);
     }
 
+    private void categorizePatient(int patientId){
+        Patient patient = patientsList.get(patientId);
+        Random rd = new Random();
+        if(patient.getSeverity() >= 7)
+            patient.setTreatPeriod(rd.nextInt(2)+1); // 1, 2
+        else if(patient.getSeverity() >= 4)
+            patient.setTreatPeriod(rd.nextInt(3)+1); // 1, 2, 3
+        else
+            patient.setTreatPeriod(rd.nextInt(3)+2); // 2, 3, 4
+        patient.resetWaitPeriod();
+    }
+
+    private void increaseStayTime(ArrayList<Integer> room){
+        Patient patient;
+        for (int i=0; i<room.size(); i++){
+            int patientId = room.get(i);
+            patient = patientsList.get(patientId);
+            System.out.println("Patient "+patientId+", StayTime: "+patient.getStayTime());
+            patient.increaseStayTime();
+        }
+    }
+
+    /**--- Treat ---**/
     private void treatPatients(){
         // related to only general room
         currAction = Actions.TREAT;
@@ -273,92 +285,43 @@ public class Hospital extends Agent {
         else
             treatPatients = candPatients;
 
-        // treat patient
+        // treat patient (General Room)
         for (Integer patientId : treatPatients) {
             Patient patient = patientsList.get(patientId);
             if(patient.getInjuryType() == Patient.InjuryType.BURN)
-                patient.recoverStrength(rd.nextInt(3)+1); // 1, 2, 3
+                patient.recoverStrength(rd.nextInt(3)+10);
             else if(patient.getInjuryType() == Patient.InjuryType.BLEEDING)
-                patient.recoverStrength(rd.nextInt(4)+1); // 1, 2, 3, 4
+                patient.recoverStrength(rd.nextInt(4)+10);
             else if(patient.getInjuryType() == Patient.InjuryType.FRACTURED)
-                patient.recoverStrength(rd.nextInt(4)+2); // 2, 3, 4, 5
+                patient.recoverStrength(rd.nextInt(4)+15);
+            patient.setTreated(true);
+            // re-categorize before wait period starts.
+            categorizePatient(patientId);
+            patient.resetWaitPeriod();
+        }
+
+        // treat patient (Intensive Room)
+        for(Integer patientId : intensiveRoom){
+            Patient patient = patientsList.get(patientId);
+            if(patient.getInjuryType() == Patient.InjuryType.BURN)
+                patient.recoverStrength(rd.nextInt(3)+10);
+            else if(patient.getInjuryType() == Patient.InjuryType.BLEEDING)
+                patient.recoverStrength(rd.nextInt(4)+10);
+            else if(patient.getInjuryType() == Patient.InjuryType.FRACTURED)
+                System.out.println("무엇인가 잘못됐다");
             patient.setTreated(true);
             patient.resetWaitPeriod();
         }
     }
 
-    private void setOperateTime(ArrayList<Integer> toBeOperated){
-        Random rd = new Random();
-        for (Integer patientId : toBeOperated){
+    private void updatePatientPeriod(){
+        // to fair treatment
+        for(Integer patientId : generalRoom){
             Patient patient = patientsList.get(patientId);
-            int time=1;
-            if(patient.getSeverity() >= 7)
-                time = rd.nextInt(3)+2; // 2, 3, 4
-            else if(patient.getSeverity() >= 4)
-                time = rd.nextInt(2)+1; // 1, 2
-            else if(patient.getSeverity() == 3)
-                time = 1;
-            patient.setOperateTime(time);
-        }
-    }
-
-    private void operatePatients(){
-        currAction = Actions.OPERATE;
-
-        boolean successSurgery = new Random().nextBoolean();
-        ArrayList<Integer> toBeOperated;
-        int strength;
-
-        // select patients to be operated
-        currPolicy = checkActionPolicy(role, currAction.toString(), callBack);
-        toBeOperated = selectOperatePatient(availOperating, currPolicy);
-        setOperateTime(toBeOperated);
-        // move them to Operating room (but reserved their bed)
-        for(Integer patientId : toBeOperated)
-            movePatientRoom("Operating", patientId);
-
-        // operate patients in operating room
-        for(Integer patientId : operatingRoom){
-            Patient patient = patientsList.get(patientId);
-
-            // move patients who are finished operation
-            if(patient.getOperateTime() == 0)
-                patient.setOperated(true);
-            if(patient.isOperated()){
-                patient.changeStat(); // to RECOVERY
-                if(patient.getRoomName().equals("Intensive")){
-                    if(patient.getSeverity()<7 && availGeneral>0){
-                        movePatientRoom("General", patientId);
-                        removePatient(patientId, intensiveRoom);
-                        availIntensive++;
-                    } // else, go back to original bed.
-                }else{
-                    if(patient.getSeverity()>=7 && availIntensive>0){
-                        movePatientRoom("Intensive", patientId);
-                        removePatient(patientId, generalRoom);
-                        availGeneral++;
-                    } // else, go back to original bed.
-                }
-                removePatient(patientId, operatingRoom);
-                availOperating++;
-                break;
-            }
-
-            // new operation
-            if(successSurgery){
-                if(patient.getSeverity() >= 7)
-                    strength = ThreadLocalRandom.current().nextInt(20, 40);
-                else if(patient.getSeverity() >= 4)
-                    strength = ThreadLocalRandom.current().nextInt(30, 50);
-                else
-                    strength = ThreadLocalRandom.current().nextInt(50, 70);
-            } else {
-                strength = ThreadLocalRandom.current().nextInt(-50, -10);
-                if(new Random().nextBoolean())
-                    patient.increaseOperateTime();
-            }
-            patient.recoverStrength(strength);
-            patient.decreaseOperateTime();
+            if(patient.getWaitPeriod()>0 && patient.isTreated())
+                patient.decreaseWaitPeriod();
+            if(patient.getWaitPeriod() == 0)
+                patient.setTreated(false);
         }
     }
 
@@ -383,11 +346,11 @@ public class Hospital extends Agent {
                 }
             }
         }else{
-            if(!decision)
-                System.out.println("Decide not to follow the policy.");
-            else
-                System.out.println("Not fitted condition or No policy");
-            System.out.println("Do the randomly select method.");
+//            if(!decision)
+//                System.out.println("Decide not to follow the policy.");
+//            else
+//                System.out.println("Not fitted condition or No policy");
+//            System.out.println("Do the randomly select method.");
             Collections.shuffle(tempList);
         }
         for(int i=0; i<selectNumber; i++)
@@ -421,30 +384,131 @@ public class Hospital extends Agent {
         return tempList;
     }
 
+    /**--- Operate ---**/
+    private void operatePatients(){
+        currAction = Actions.OPERATE;
+
+        boolean successSurgery = new Random().nextBoolean();
+        ArrayList<Integer> toBeOperated;
+        int strength;
+
+        // select patients to be operated
+        currPolicy = checkActionPolicy(role, currAction.toString(), callBack);
+        toBeOperated = selectOperatePatient(availOperating, currPolicy);
+        setOperateTime(toBeOperated);
+
+        // move them to Operating room (but reserved their bed)
+        for(Integer patientId : toBeOperated){
+            Patient patient = patientsList.get(patientId);
+            movePatientRoom("Operating", patientId);
+            System.out.println("MOVE TO OPERATING ROOM");
+            if(patient.getPrevRoomName().equals("General"))
+                removePatient(patientId, generalRoom);
+            else if(patient.getPrevRoomName().equals("Intensive"))
+                removePatient(patientId, intensiveRoom);
+        }
+
+
+        // operate patients in operating room
+        for(Integer patientId : operatingRoom){
+            Patient patient = patientsList.get(patientId);
+
+            // move patients who are finished operation
+            if(patient.getOperateTime()==0 || patient.getStrength()>=270)
+                patient.setOperated(true);
+
+            if(patient.isOperated()){
+                System.out.println("Hospital RECOVERY");
+                System.out.println("Original Status: "+patient.getStatus());
+                patient.changeStat(); // to RECOVERY
+                System.out.println("Changed Status: "+patient.getStatus());
+                System.out.println("PrevRoom "+patient.getPrevRoomName()+" Severity: "+patient.getSeverity());
+                System.out.println("AvailGeneral: "+availGeneral+" AvailIntensive: "+availIntensive);
+
+                // After surgery,
+                if(patient.getRoomName().equals("Intensive")){
+                    if(patient.getSeverity()<7 && availGeneral>0){
+                        availIntensive++;
+                        movePatientRoom("General", patientId);
+                        System.out.println("Before remove Intensive");
+                        for(Integer i : intensiveRoom)
+                            System.out.print(i+", ");
+                        removePatient(patientId, intensiveRoom);
+                        System.out.println("After remove Intensive");
+                        for(Integer i : intensiveRoom)
+                            System.out.print(i+", ");
+                    } // else, go back to original bed.
+                }else if(patient.getRoomName().equals("General")){
+                    if(patient.getSeverity()>6 && availIntensive>0){
+                        availGeneral++;
+                        System.out.println("Before remove General");
+                        for(Integer i : generalRoom)
+                            System.out.print(i+", ");
+                        movePatientRoom("Intensive", patientId);
+                        removePatient(patientId, generalRoom);
+                        System.out.println("After remove General");
+                        for(Integer i : generalRoom)
+                            System.out.print(i+", ");
+                    } // else, go back to original bed.
+                }
+                removePatient(patientId, operatingRoom);
+                availOperating++;
+                break;
+            }
+
+            // new operation
+            if(successSurgery){
+                if(patient.getSeverity() >= 7)
+//                    strength = ThreadLocalRandom.current().nextInt(20, 40);
+                    strength = ThreadLocalRandom.current().nextInt(60, 80);
+                else if(patient.getSeverity() >= 4)
+//                    strength = ThreadLocalRandom.current().nextInt(30, 50);
+                    strength = ThreadLocalRandom.current().nextInt(70, 100);
+                else
+//                    strength = ThreadLocalRandom.current().nextInt(50, 70);
+                    strength = ThreadLocalRandom.current().nextInt(100, 120);
+            } else {
+                strength = ThreadLocalRandom.current().nextInt(-30, -10);
+                if(new Random().nextBoolean())
+                    patient.increaseOperateTime();
+            }
+            patient.recoverStrength(strength);
+            patient.decreaseOperateTime();
+        }
+    }
+
+    private void setOperateTime(ArrayList<Integer> toBeOperated){
+        Random rd = new Random();
+        for (Integer patientId : toBeOperated){
+            Patient patient = patientsList.get(patientId);
+            int time=1;
+            if(patient.getSeverity() >= 7)
+                time = rd.nextInt(3)+2; // 2, 3, 4
+            else if(patient.getSeverity() >= 4)
+                time = rd.nextInt(2)+1; // 1, 2
+            else if(patient.getSeverity() == 3)
+                time = 1;
+            patient.setOperateTime(time);
+        }
+    }
+
     private ArrayList<Integer> selectOperatePatient(int selectNumber, Policy policy){
         ArrayList<Integer> candidPatient = new ArrayList<>();
-//        ArrayList<Integer> candidFromGeneral = new ArrayList<>();
-//        ArrayList<Integer> candidFromIntensive = new ArrayList<>();
         ArrayList<Integer> resultList = new ArrayList<>();
         boolean decision = makeDecision();
 
         // sort out candidate patients for operation
         for(Integer patientId : generalRoom){
             Patient patient = patientsList.get(patientId);
-            if(!patient.isOperated() && patient.getSeverity()>2) {    // exclude severity 0, 1, 2
+            if(!patient.isOperated() && patient.getSeverity()>2)    // exclude severity 0, 1, 2
                 candidPatient.add(patientId);
-//                candidFromGeneral.add(patientId);
-            }
         }
 
         for(Integer patientId : intensiveRoom){
             Patient patient = patientsList.get(patientId);
             if(!patient.isOperated())
                 candidPatient.add(patientId);
-//                candidFromIntensive.add(patientId);
-        }
-//        candidPatient.addAll(candidFromGeneral);
-//        candidPatient.addAll(candidFromIntensive);
+        };
 
         // select patients to be operated
         if(policy!=null && decision){
@@ -469,42 +533,44 @@ public class Hospital extends Agent {
                 }
             }
         }else{
-            if(!decision)
-                System.out.println("Decide not to follow the policy.");
-            else
-                System.out.println("Not fitted condition or No policy");
-            System.out.println("Do the randomly select method.");
+//            if(!decision)
+//                System.out.println("Decide not to follow the policy.");
+//            else
+//                System.out.println("Not fitted condition or No policy");
+//            System.out.println("Do the randomly select method.");
             Collections.shuffle(candidPatient);
         }
 
         // take patients as many as selectable
-        if(candidPatient.size()>selectNumber)
+        if(candidPatient.size() > selectNumber)
             for(int i=0; i<selectNumber; i++){
                 int patientId = candidPatient.get(i);
                 Patient patient = patientsList.get(patientId);
+                System.out.println("Hospital SURGERY");
+                System.out.println("Original Status: "+patient.getStatus());
                 patient.changeStat(); // to SURGERY
+                System.out.println("Changed Status: "+patient.getStatus());
                 resultList.add(patientId);
             }
         else
             resultList.addAll(candidPatient);
 
-//        // Remove designated patients from their original place.
-//        // But do not increase availability (reserved for after operation.
-//        for(Integer patientId : resultList){
-//            if(candidFromGeneral.contains(patientId)){
-//                removePatient(patientId, generalRoom);
-////                availGeneral++;
-//            } else if(candidFromIntensive.contains(patientId)){
-//                removePatient(patientId, intensiveRoom);
-////                availIntensive++;
-//            }
-//        }
         // re-calculate operating room availability
         availOperating -= resultList.size();
 
         return resultList;
     }
 
+    public void reserveRoom(String roomType){
+        switch (roomType){
+            case "General":
+                availGeneral--;
+            case "Intensive":
+                availIntensive--;
+        }
+    }
+
+    /**----RELEASE----**/
     private void releasePatients(){
         currAction = Actions.RELEASE;
 
@@ -540,10 +606,10 @@ public class Hospital extends Agent {
                 }
             }
         }else{
-            if(!decision)
-                System.out.println("Decide not to follow the policy.");
-            else
-                System.out.println("Not fitted condition or No policy");
+//            if(!decision)
+//                System.out.println("Decide not to follow the policy.");
+//            else
+//                System.out.println("Not fitted condition or No policy");
             this.severityLimit = 3;
             this.timeLimit = 2;
         }
@@ -551,8 +617,10 @@ public class Hospital extends Agent {
         for(Integer patientId : candidList){
             Patient patient = patientsList.get(patientId);
             if(patient.getSeverity() <= this.severityLimit){
-                if(patient.getStayTime() >= this.timeLimit)
+                if(patient.getStayTime() >= this.timeLimit){
                     resultList.add(patientId);
+                    patient.setReleased(true);
+                }
             }
         }
         return resultList;
@@ -573,10 +641,10 @@ public class Hospital extends Agent {
             Patient patient = patientsList.get(patientId);
 
             // general room to intensive room
-            if(patient.getSeverity()>=7 && availIntensive>0){
+            if(patient.getSeverity()>6 && availIntensive>0){
+                availGeneral++;
                 movePatientRoom("Intensive", patientId);
                 movedPatients.add(patientId);
-                availGeneral++;
             }
 
             if(availIntensive==0)
@@ -608,8 +676,10 @@ public class Hospital extends Agent {
 
     private void movePatientRoom(String roomTo, int patientId){
         Patient patient = patientsList.get(patientId);
+        String prevRoom = patient.getRoomName();
+        System.out.println("Patient "+patientId+" is moved from "+prevRoom+" to "+roomTo);
+        patient.setPrevRoomName(patient.getRoomName());
         patient.setRoomName(roomTo);
-
         switch (roomTo){
             case "General":
                 generalRoom.add(patientId);
@@ -638,19 +708,19 @@ public class Hospital extends Agent {
                     vacancy++;
                 }
             }
-
+        System.out.println("Hospital DEAD: "+removeList.size());
         for(Integer patientId : removeList)
             removePatient(patientId, room);
         return vacancy;
     }
 
-    public void reserveRoom(String roomType){
-        switch (roomType){
-            case "General":
-                availGeneral--;
-            case "Intensive":
-                availIntensive--;
-        }
+    // Other manipulations
+    public int getNeedSurgeryGeneral() {
+        return needSurgeryGeneral;
+    }
+
+    public int getNeedSurgeryIntensive() {
+        return needSurgeryIntensive;
     }
 
     private void calcNeedSurgeryPatients(){
@@ -671,74 +741,10 @@ public class Hospital extends Agent {
         needSurgeryIntensive = tempIntensive;
     }
 
-    public int getNeedSurgeryGeneral() {
-        return needSurgeryGeneral;
-    }
-
-    public int getNeedSurgeryIntensive() {
-        return needSurgeryIntensive;
-    }
-
-    private void categorizePatient(int patientId){
-        Patient patient = patientsList.get(patientId);
-        Random rd = new Random();
-        if(patient.getSeverity() >= 7)
-            patient.setTreatPeriod(rd.nextInt(2)+1); // 1, 2
-        else if(patient.getSeverity() >= 4)
-            patient.setTreatPeriod(rd.nextInt(3)+2); // 2, 3, 4
-        else
-            patient.setTreatPeriod(rd.nextInt(3)+3); // 3, 4, 5
-        patient.resetWaitPeriod();
-    }
-
-    private <K, V extends Comparable<? super V>> HashMap<K, V> sortByValue(HashMap<K, V> map) {
-        return map.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByValue())
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (e1, e2) -> e1,
-                        LinkedHashMap::new
-                ));
-    }
-
-    private <K, V extends Comparable<? super V>> HashMap<K, V> sortByValueReverse(HashMap<K, V> map) {
-        return map.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (e1, e2) -> e1,
-                        LinkedHashMap::new
-                ));
-    }
-
-    public int getAvailGeneral() {
-        return availGeneral;
-    }
-
-    public int getAvailIntensive() {
-        return availIntensive;
-    }
-
-    public int getAvailOperating() {
-        return availOperating;
-    }
-
     private void removePatient(int idx, ArrayList<Integer> patientList){
-        for(int i=0; i<patientList.size(); i++)
+        for(int i=0; i<patientList.size(); i++){
             if(patientList.get(i) == idx)
                 patientList.remove(i);
-    }
-
-    private void increaseStayTime(ArrayList<Integer> room){
-        Patient patient;
-        for (int i=0; i<room.size(); i++){
-            int patientId = room.get(i);
-            patient = patientsList.get(patientId);
-            patient.increaseStayTime();
         }
     }
 
@@ -752,5 +758,70 @@ public class Hospital extends Agent {
             tempCompliance = tempCompliance/10;
         }
         return tempCompliance;
+    }
+
+    private boolean checkActive(){
+        ArrayList<Policy> compliancePolicies = checkCompliancePolicy(role);
+        this.active = true;
+
+        if(compliancePolicies.size() != 0){ // policy exists
+            for(Policy policy : compliancePolicies){
+                String actionName = policy.getAction().getActionName();
+                switch (actionName){
+                    case "Treat":
+                        if(treatCompliance < policy.getMinCompliance())
+                            this.active = false;
+                        break;
+                    case "Operate":
+                        if(operateCompliance < policy.getMinCompliance())
+                            this.active = false;
+                        break;
+                    case "Release":
+                        if(releaseCompliance < policy.getMinCompliance())
+                            this.active = false;
+                        break;
+                }
+                if (!this.active)
+                    break;
+            }
+        }
+        return this.active;
+    }
+
+    // Getters and Setters
+    public boolean isActive() {
+        return active;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public int getAvailGeneral() {
+        return availGeneral;
+    }
+
+    public int getAvailIntensive() {
+        return availIntensive;
+    }
+
+    public int getTotGeneral() {
+        return totGeneral;
+    }
+
+    public int getTotIntensive() {
+        return totIntensive;
+    }
+
+    public int getTotOperating() {
+        return totOperating;
+    }
+
+    public ArrayList<Integer> getGeneralRoom() {
+        return generalRoom;
+    }
+
+    public ArrayList<Integer> getIntensiveRoom() {
+        return intensiveRoom;
     }
 }

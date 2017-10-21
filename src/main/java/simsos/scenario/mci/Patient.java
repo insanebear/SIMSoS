@@ -16,67 +16,76 @@ public class Patient {
     public enum InjuryType {
         FRACTURED, BURN, BLEEDING
     }
-
+    // basic information
     private int patientId;
-    private int strength;       // 0~199 (200) 0: dead
+    private int strength;       // 0~299 (200) 0: dead
     private int severity;       // 0~9 (10)
     private InjuryType injuryType;
+    private boolean dead;
+
+    // MCI zone information
     private int story;
     private Location location;      // within MCI radius
-    private Status status = Status.RESCUE_WAIT;
-    public final int FRAC_DEC_RATE = 4;
+    private Status status;
+    public final int FRAC_DEC_RATE = 1;
     public final int BURN_DEC_RATE = 6;
     public final int BLEED_DEC_RATE = 8;
 
-    private String roomName; // "General", "Intensive" (for knowing origianl room)
-
+    // Hospital information
+    private int hospital;
+    private String prevRoomName;
+    private String roomName; // "General", "Intensive" (for knowing previous room)
     private boolean isTreated;
     private int treatPeriod;
     private int waitPeriod;
-
     private boolean isOperated;
     private int operateTime;
-
     private int stayTime;
+    private boolean released = false;
 
     public Patient(int patientId, int strength, InjuryType injuryType, int story, Location location) {
         this.patientId = patientId;
         this.strength = strength;
         this.severity = calcSeverity();
         this.injuryType = injuryType;
+        this.dead = false;
         this.story = story;
         this.location = location;
+        this.status = Status.RESCUE_WAIT;
         this.isTreated = false;
         this.isOperated = false;
         this.stayTime = 0;
         this.roomName = "";
+        this.hospital = -1;
     }
 
     public int calcSeverity() {
-        if (strength >= 1 && strength < 20)
+        if (strength >= 1 && strength < 30)
             return 9;
-        else if (strength >= 20 && strength < 40)
+        else if (strength >= 30 && strength < 60)
             return 8;
-        else if (strength >= 40 && strength < 60)
+        else if (strength >= 60 && strength < 90)
             return 7;
-        else if (strength >= 60 && strength < 80)
+        else if (strength >= 90 && strength < 120)
             return 6;
-        else if (strength >= 80 && strength < 100)
+        else if (strength >= 120 && strength < 150)
             return 5;
-        else if (strength >= 100 && strength < 120)
+        else if (strength >= 150 && strength < 180)
             return 4;
-        else if (strength >= 120 && strength < 140)
+        else if (strength >= 180 && strength < 210)
             return 3;
-        else if (strength >= 140 && strength < 160)
+        else if (strength >= 210 && strength < 240)
             return 2;
-        else if (strength >= 160 && strength < 180)
+        else if (strength >= 240 && strength < 270)
             return 1;
-        else
+        else if (strength >=270)
             return 0;
+        else
+            return -1;  // DEAD
     }
 
     public void updateStrength(){
-        switch (status) {
+        switch (this.status) {
             // decrease strength
             case RESCUE_WAIT:
             case RESCUED:
@@ -110,56 +119,53 @@ public class Patient {
                         strength -= BLEED_DEC_RATE;
                 }
                 break;
-            case SURGERY:
-                break;
             case RECOVERY:
                 rd = new Random();
                 int selfCure = rd.nextInt(4);
                 boolean upStrength = rd.nextBoolean();
-
                 if(upStrength)
                     strength += selfCure;
-
                 break;
         }
         // TODO upper bound는 병원의 releasedㅔ 관련해서 변경될 수도 있음
-        if(strength == 0 || strength >= 180)
+        if(this.strength <= 0 || this.strength >= 270)
             changeStat();
 
-        calcSeverity();
+        this.severity = calcSeverity();
     }
 
     public void changeStat() {
-        if (strength == 0) {
-            status = Status.DEAD;
-        }else if(strength >= 180){
-            status = Status.CURED;
+        if (strength <= 0) {
+            this.status = Status.DEAD;
+            this.dead = true;
+        }else if(strength >= 270){
+            this.status = Status.CURED;
         }else{
             switch (status) {
                 case RESCUE_WAIT:
-                    status = Status.RESCUED;
+                    this.status = Status.RESCUED;
                     break;
                 case RESCUED:
-                    status = Status.TRANSPORT_WAIT;
+                    this.status = Status.TRANSPORT_WAIT;
                     break;
                 case TRANSPORT_WAIT:
-                    status = Status.LOADED;
+                    this.status = Status.LOADED;
                     break;
                 case LOADED:
-                    status = Status.TRANSPORTING;
+                    this.status = Status.TRANSPORTING;
                     break;
                 case TRANSPORTING:
-                    status = Status.SURGERY_WAIT;
+                    this.status = Status.SURGERY_WAIT;
                     break;
                 case SURGERY_WAIT:
-                    status = Status.SURGERY;
+                    this.status = Status.SURGERY;
                     break;
                 case SURGERY:
-                    status = Status.RECOVERY;
+                    this.status = Status.RECOVERY;
                     break;
-                case RECOVERY:
-                    status = Status.CURED;
-                    break;
+//                case RECOVERY:
+//                    status = Status.CURED;
+//                    break;
             }
         }
     }
@@ -186,6 +192,10 @@ public class Patient {
 
     public void setSeverity(int severity) {
         this.severity = severity;
+    }
+
+    public boolean isDead() {
+        return dead;
     }
 
     public int getStory() {
@@ -240,6 +250,14 @@ public class Patient {
         this.treatPeriod = treatPeriod;
     }
 
+    public boolean isReleased() {
+        return released;
+    }
+
+    public void setReleased(boolean released) {
+        this.released = released;
+    }
+
     public int getWaitPeriod() {
         return waitPeriod;
     }
@@ -288,5 +306,22 @@ public class Patient {
                 return FRAC_DEC_RATE;
         }
         return 0;
+    }
+
+    public void setHospital(int hospital) {
+        this.hospital = hospital;
+    }
+
+    public void printPatientStatus(){
+        System.out.println("|| Patient   "+patientId+"   | "+dead+"     | "+strength+"      | "+ severity+"     | "
+                +hospital+"       | "+isOperated+"       | "+roomName+"      | "+stayTime+"      | "+status.toString()+"      | "+released+" ||");
+    }
+
+    public String getPrevRoomName() {
+        return prevRoomName;
+    }
+
+    public void setPrevRoomName(String prevRoomName) {
+        this.prevRoomName = prevRoomName;
     }
 }

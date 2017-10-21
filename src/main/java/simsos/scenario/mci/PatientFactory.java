@@ -26,7 +26,7 @@ public class PatientFactory {
 
         for(int i=0; i<totalCasualty; i++){
             Patient.InjuryType injuryType = injuryList[rd.nextInt(injuryList.length)];
-            int strength = 199;
+            int strength = 299;
             while(!checkValidStrength(strength)){
                 strength = setStrengthByType(injuryType);
             }
@@ -43,23 +43,14 @@ public class PatientFactory {
 
             Location location = new Location(x, y);
 
+            // Patient Instantiation
             Patient p = new Patient(i, strength, injuryType, story, location);
             patientsList.add(p);
             building.get(story).setPatientOnFloor(i, x, y);
         }
-
-//        // CHECK patient information
-//        for(Patient p : patientsList){
-//            System.out.println("Patient "+p.getPatientId()+" is at ("
-//                    +p.getLocation().getX()+", "+p.getLocation().getY()+") on the "+p.getStory()+"th floor.");
-//            System.out.println("Injury type: "+p.getInjuryType());
-//            System.out.println("Strength: "+p.getStrength());
-//            System.out.println("Severity: "+p.getSeverity());
-//            System.out.println();
-//        }
     }
     public int setStrengthByType(Patient.InjuryType injuryType){
-        // total strength: 200 (0~199)
+        // total strength: 300 (0~299)
         // Fractured: relatively slight injury
         // Bleeding, Burn: burn is much more serious than bleeding in terms of mean strength
 
@@ -68,13 +59,13 @@ public class PatientFactory {
 
         switch (injuryType){
             case FRACTURED:
-                strength = (int)Math.round(rd.nextGaussian()*18 + 120);
+                strength = (int)Math.round(rd.nextGaussian()*18 + 220);
                 break;
             case BLEEDING:
-                strength = (int)Math.round(rd.nextGaussian()*20 + 100);
+                strength = (int)Math.round(rd.nextGaussian()*20 + 200);
                 break;
             case BURN:
-                strength = (int)Math.round(rd.nextGaussian()*15 + 60);
+                strength = (int)Math.round(rd.nextGaussian()*15 + 160);
         }
         return strength;
     }

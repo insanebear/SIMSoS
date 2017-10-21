@@ -110,6 +110,19 @@ public class Environment {
         MCILevel = calcMCILevel(totalCasualty);
     }
 
+    public void rearrangeStageZone(){
+        // exclude dead patients in stageZone
+        for(int i=0; i<stageZone.length; i++){
+            ArrayList<Integer> stageSpot = stageZone[i];
+            for(int idx=0; i<stageSpot.size(); i++){
+                int patientId = stageSpot.get(idx);
+                Patient patient = patientsList.get(patientId);
+                if(patient.isDead())
+                    stageSpot.remove(idx);
+            }
+        }
+    }
+
     // manipulate methods
     private static int calcMCILevel(int totalCasualty){
         if(totalCasualty<10)
@@ -171,33 +184,32 @@ public class Environment {
         return null;
     }
 
-    public static Policy checkCompliancePolicy(String role){
+    public static ArrayList<Policy> checkCompliancePolicy(String role){
         //TODO Policy Conflict Handling (with assumption)
         /* "activePolicy" ArrayList stores valid policies that satisfy current condition.*/
-        ArrayList<Policy> activePolicies;
+        ArrayList<Policy> activePolicies = evalPolicyCond(policies);
+        ArrayList<Policy> activeByRole = new ArrayList<>();
         switch (role){
             case "RESCUE":
-                activePolicies = evalPolicyCond(policies);
+
                 for(Policy p : activePolicies){
                     if(p.getRole().equals("RESCUE"))
-                        return p;
+                        activeByRole.add(p);
                 }
             case "TRANSPORT":
-                activePolicies = evalPolicyCond(policies);
                 for(Policy p : activePolicies){
                     if(p.getRole().equals("TRANSPORT"))
-                        return p;
+                        activeByRole.add(p);
                 }
                 break;
             case "TREATMENT":
-                activePolicies = evalPolicyCond(policies);
                 for(Policy p : activePolicies){
                     if(p.getRole().equals("TREATMENT"))
-                        return p;
+                        activeByRole.add(p);
                 }
                 break;
         }
-        return null;
+        return activeByRole;
     }
 
     private static ArrayList<Policy> evalPolicyCond(ArrayList<Policy> policies, CallBack callBack){
@@ -341,4 +353,5 @@ public class Environment {
     public void setBuildingHeight(int buildingHeight) {
         this.buildingHeight = buildingHeight;
     }
+
 }

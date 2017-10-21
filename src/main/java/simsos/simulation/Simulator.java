@@ -1,5 +1,6 @@
 package simsos.simulation;
 
+import simsos.scenario.mci.Patient;
 import simsos.simulation.component.Action;
 import simsos.simulation.component.Agent;
 import simsos.simulation.component.Snapshot;

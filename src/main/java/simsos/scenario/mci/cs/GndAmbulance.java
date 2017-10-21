@@ -23,20 +23,22 @@ import static simsos.scenario.mci.cs.SoSManager.numWaitPTS;
  *
  */
 public class GndAmbulance extends Agent{
-    private enum Status {WAITING, LOADING, READY_TO_TRANSPORT, TRANSPORTING, DELIVERING, BACK_TO_SCENE}
+    private enum Status {WAITING, LOADING, READY_TO_TRANSPORT, TRANSPORTING, DELIVERING, BACK_TO_SCENE, INACTIVE}
 
-    private enum Actions{ WAIT, LOAD, READY_TRANSPORT, TRANSPORT, DELIVER, RETURN }
+    private enum Actions{ WAIT, LOAD, READY_TRANSPORT, TRANSPORT, DELIVER, RETURN, NONE }
 
     private int gAmbId;
     private String affiliation;
     private String name;
     private String role;
+    private boolean active;
 
     private Location location;
     private Location originLocation;
     private Status status;
     private Actions currAction;
     private Policy currPolicy;
+    private int findingTrial;
 
     private int loadPatientId;
     private ArrayList<Integer> spotPatientList;
@@ -76,6 +78,15 @@ public class GndAmbulance extends Agent{
         this.name = name;
         this.affiliation = affiliation;
         this.role = "TRANSPORT";
+
+        if(checkActive()){
+            this.status = Status.WAITING;
+            this.currAction = Actions.WAIT;
+        }else{
+            this.status = Status.INACTIVE;
+            this.currAction = Actions.NONE;
+        }
+        this.findingTrial = 0;
         this.gAmbId = gAmbId;
         this.location = new Location(rd.nextInt(patientMapSize.getLeft()), 0);
         this.originLocation = new Location(this.location.getX(), this.location.getY());
@@ -103,25 +114,36 @@ public class GndAmbulance extends Agent{
     @Override
     public Action step() {
         switch(status){
+            case INACTIVE:
+                if(checkActive()){
+                    Random rd = new Random();
+                    location = new Location(rd.nextInt(patientMapSize.getLeft()), 0);
+                    numWaitPTS[location.getX()] += 1;
+                    this.status = Status.WAITING;
+                    this.currAction = Actions.WAIT;
+                }
+                return Action.getNullAction(1, "FF: INACTIVE");
             case WAITING:
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        if(waitTime>0){
-                            if(stageZone[location.getX()].size()>0 && loadPatientId == -1) {
-                                status = Status.LOADING;
-                                currAction = Actions.LOAD;
-                                numWaitPTS[location.getX()] -= 1;
+                        if(checkActive()){
+                            if(waitTime>0){
+                                if(stageZone[location.getX()].size()>0 && loadPatientId == -1) {
+                                    status = Status.LOADING;
+                                    currAction = Actions.LOAD;
+                                    numWaitPTS[location.getX()] -= 1;
+                                }
+                                else
+                                    waitTime--;
+                            }else{ //TODO review the policy which can manage waiting time.
+                                if(location.getX()+1 <= hospitalMapSize.getLeft())
+                                    location.moveX(1);
+                                else
+                                    location.setX(0);
+                                setWaitTime(defaultWait);
                             }
-                            else
-                                waitTime--;
-                        }else{ //TODO review the policy which can manage waiting time.
-                            if(location.getX()+1 < hospitalMapSize.getLeft())
-                                location.moveX(1);
-                            else
-                                location.moveX(-hospitalMapSize.getLeft()+1);
-                            setWaitTime(defaultWait);
-                        }
+                        } // else, this CS does not join SoS now.
                     }
                     @Override
                     public String getName() {
@@ -132,21 +154,26 @@ public class GndAmbulance extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        //TODO change to searching a patient whose status is not DEAD.
                         spotPatientList = stageZone[location.getX()];
+                        // exclude dead patients
+                        excludeDeadPatient(spotPatientList);
 //                        System.out.println("Ambulance location: "+location.getX()+", "+location.getY());
                         if(spotPatientList.size()>0){ // double check if there is a patient
                             currPolicy = checkActionPolicy(role, currAction.toString(), callBack);
                             loadPatientId = loadPatient(spotPatientList, currPolicy);
 
-                            System.out.println("Patient "+loadPatientId+" is ready to be transported.");
-
-                            patientsList.get(loadPatientId).changeStat(); // LOADED
-
+//                            System.out.println("Patient "+loadPatientId+" is ready to be transported.");
+                            Patient patient = patientsList.get(loadPatientId);
+                            System.out.println("GND ambulance LOADED");
+                            System.out.println("Original Status: "+patient.getStatus());
+                            patientsList.get(loadPatientId).changeStat(); // to LOADED
+                            System.out.println("Changed Status: "+patient.getStatus());
+                            System.out.println("Loaded patient: "+loadPatientId);
+                            System.out.println();
                             status = Status.READY_TO_TRANSPORT;
                             currAction = Actions.READY_TRANSPORT;
-                            System.out.println(getAffiliation()+" "+getName()+" "+getId()+"is "+getStatus()+". Start transporting.");
-                        }else{ // Another waiting ambulance took a patient!
+//                            System.out.println(getAffiliation()+" "+getName()+" "+getId()+"is "+getStatus()+". Start transporting.");
+                        }else{ // Another waiting ambulance took a patient! No patients on the spot!
                             status = Status.WAITING;
                             currAction = Actions.WAIT;
 
@@ -154,9 +181,8 @@ public class GndAmbulance extends Agent{
                                 location.moveX(1);
                             else
                                 location.moveX(-hospitalMapSize.getLeft()+1);
-
-                            System.out.println("Ambulance waits patients on changed place.");
-                            System.out.println("Changed location: "+location.getX()+", "+location.getY());
+//                            System.out.println("Ambulance waits patients on changed place.");
+//                            System.out.println("Changed location: "+location.getX()+", "+location.getY());
                         }
                     }
                     @Override
@@ -168,29 +194,41 @@ public class GndAmbulance extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        Patient p = patientsList.get(loadPatientId);
                         //TODO review policy in severity
-                        if(p.getSeverity()<7)
-                            pRoomType = "General";
-                        else
-                            pRoomType = "Intensive";
+                        Patient patient = patientsList.get(loadPatientId);
 
-                        //TODO Change
-//                        destHospital = checkAvailHospitals(pRoomType, currPolicy);
-                        destHospital = selectHospital(pRoomType, currPolicy);
+                        if(!patient.isDead()){  // Loaded patient is not dead
+                            if(patient.getSeverity()>6 && !patient.getInjuryType().equals(Patient.InjuryType.FRACTURED))
+                                pRoomType = "Intensive";
+                            else
+                                pRoomType = "General";
 
-                        if(destHospital != null){
-                            status = Status.TRANSPORTING;
-                            currAction = Actions.TRANSPORT;
-
-                            destHospital.reserveRoom(pRoomType);
-
-                            destination = destHospital.getLocation();
-                            reachTime = setReachTime();
-                            p.changeStat(); // TRANSPORTING
+                            System.out.println("Finding Hospital -- "+findingTrial+" th trial.");
+                            destHospital = selectHospital(pRoomType, currPolicy);
+                            System.out.println("Patient ID: "+loadPatientId);
+                            if(destHospital != null){
+                                status = Status.TRANSPORTING;
+                                currAction = Actions.TRANSPORT;
+                                destHospital.reserveRoom(pRoomType);
+                                destination = destHospital.getLocation();
+                                reachTime = setReachTime();
+                                System.out.println("GND ambulance TRANSPORTING");
+                                System.out.println("Original Status: "+patient.getStatus());
+                                patient.changeStat(); // TRANSPORTING
+                                System.out.println("Changed Status: "+patient.getStatus());
+                                System.out.println();
+                            }
+                            else{
+                                System.out.println(loadPatientId+" did not get a destination hospital.");
+                                System.out.println();
+                                findingTrial++;
+                                // First aid
+                                patient.recoverStrength(new Random().nextInt(15));
+                            }
+                        } else {    // LoadedPatient is Dead.
+                            status = Status.LOADING;
+                            currAction = Actions.LOAD;
                         }
-                        else
-                            System.out.println(getAffiliation()+" "+getName()+" "+getId()+" did not get a destination hospital.");
                     }
 
                     @Override
@@ -219,8 +257,11 @@ public class GndAmbulance extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        Patient p = patientsList.get(loadPatientId);
-                        p.changeStat(); // to SURGERY_WAIT
+                        Patient patient = patientsList.get(loadPatientId);
+                        System.out.println("GND ambulance SURGERY_WAIT");
+                        System.out.println("Original Status: "+patient.getStatus());
+                        patient.changeStat(); // to SURGERY_WAIT
+                        System.out.println("Changed Status: "+patient.getStatus());
 
                         destHospital.enterHospital(pRoomType, loadPatientId);
 
@@ -242,10 +283,17 @@ public class GndAmbulance extends Agent{
                     @Override
                     public void execute() {
                         if(reachTime == 0){
-                            location = destination;
-                            numWaitPTS[location.getX()] += 1;
-                            status = Status.WAITING;
-                            currAction = Actions.WAIT;
+                            if(checkActive()){
+                                location = destination;
+                                numWaitPTS[location.getX()] += 1;
+                                status = Status.WAITING;
+                                currAction = Actions.WAIT;
+                            }else{
+                                location = null;
+                                status = Status.INACTIVE;
+                                currAction = Actions.NONE;
+                            }
+
                         }else
                             reachTime--;
                     }
@@ -301,7 +349,8 @@ public class GndAmbulance extends Agent{
         return status;
     }
 
-    /*----Select Hospital (DeliverTo)----*/
+    /**----Select Hospital (DeliverTo)----**/
+    @SuppressWarnings("unchecked")
     private Hospital selectHospital(String pRoomType, Policy policy){
         ArrayList<Hospital> hospitals = (ArrayList<Hospital>) SoSManager.hospitals.clone();
         ArrayList<Integer> availHospitals = checkAvailHospitals(pRoomType, hospitals);
@@ -309,9 +358,10 @@ public class GndAmbulance extends Agent{
         int resIdx = -1;
         boolean decision = makeDecision();
 
-        if(availHospitals.size()==0)
+        if(availHospitals.size()==0){
+            System.out.println("No available hospital now.");
             return null;    // no available hospital now.
-
+        }
         if(policy != null && decision){
             ArrayList<String> policyActionMethod = policy.getAction().getActionMethod();
             if(policyActionMethod.size()>0){
@@ -330,20 +380,22 @@ public class GndAmbulance extends Agent{
                             availHospitals = rateSelect(availHospitals);
                             break;
                     }
-                    if(availHospitals.size() == 1)
+                    if(availHospitals.size() == 1){
+                        System.out.println(s + "Select used. (Hospital)");
                         break;
+                    }
                 }
-                if(availHospitals.size() != 1)
+                if(availHospitals.size() > 1)
                     resIdx = availHospitals.get(rd.nextInt(availHospitals.size()));
-                else
+                else if (availHospitals.size() == 1)
                     resIdx = availHospitals.get(0);
             }
         }else{
-            if(!decision)
-                System.out.println("Decide not to follow the policy.");
-            else
-                System.out.println("Not fitted condition or No policy");
-            System.out.println("Do the randomly select method.");
+//            if(!decision)
+//                System.out.println("Decide not to follow the policy.");
+//            else
+//                System.out.println("Not fitted condition or No policy");
+//            System.out.println("Do the randomly select method.");
 
             Collections.shuffle(deliverMethodList);
             for(String s : deliverMethodList){
@@ -361,12 +413,14 @@ public class GndAmbulance extends Agent{
                         availHospitals = rateSelect(availHospitals);
                         break;
                 }
-                if(availHospitals.size() == 1)
+                if(availHospitals.size() == 1){
+                    System.out.println(s + "Select used. (Hospital)");
                     break;
+                }
             }
-            if(availHospitals.size() != 1)
+            if(availHospitals.size() > 1)
                 resIdx = availHospitals.get(rd.nextInt(availHospitals.size()));
-            else
+            else if (availHospitals.size() == 1)
                 resIdx = availHospitals.get(0);
         }
 
@@ -377,30 +431,10 @@ public class GndAmbulance extends Agent{
         return null;
     }
 
-    private ArrayList<Integer> checkAvailHospitals(String roomType, ArrayList<Hospital> hospitals){
-        int avail;
-        ArrayList<Integer> availHospitals = new ArrayList<>();
-        switch (roomType){
-            case "General":
-                for(Hospital h : hospitals) {
-                    avail = h.getTotGeneral() - h.getGeneralRoom().size();
-                    if (avail > 0)
-                        availHospitals.add(h.getId());
-                }
-            case "Intensive":
-                for(Hospital h : hospitals) {
-                    avail = h.getTotIntensive() - h.getIntensiveRoom().size();
-                    if (avail > 0)
-                        availHospitals.add(h.getId());
-                }
-        }
-        return availHospitals;
-    }
-
     private ArrayList<Integer> randomSelect(ArrayList<Integer> availHospitals){
-        System.out.println("Random policy applied.");
         ArrayList<Integer> tempList = new ArrayList<>();
-        tempList.add(new Random().nextInt(availHospitals.size()));
+        int candidIdx = new Random().nextInt(availHospitals.size());
+        tempList.add(availHospitals.get(candidIdx));
         return tempList;
     }
 
@@ -429,30 +463,6 @@ public class GndAmbulance extends Agent{
             i++;
         }
         return tempList;
-    }
-
-    private <K, V extends Comparable<? super V>> HashMap<K, V> sortByValue(HashMap<K, V> map) {
-        return map.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByValue())
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (e1, e2) -> e1,
-                        LinkedHashMap::new
-                ));
-    }
-
-    private <K, V extends Comparable<? super V>> HashMap<K, V> sortByValueReverse(HashMap<K, V> map) {
-        return map.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (e1, e2) -> e1,
-                        LinkedHashMap::new
-                ));
     }
 
     private ArrayList<Integer> vacancySelect(ArrayList<Integer> availHospitals){
@@ -523,13 +533,61 @@ public class GndAmbulance extends Agent{
         return tempList;
     }
 
-    /*----Select Patient (Load)----*/
+    private ArrayList<Integer> checkAvailHospitals(String roomType, ArrayList<Hospital> hospitals){
+        int avail;
+        ArrayList<Integer> availHospitals = new ArrayList<>();
+        switch (roomType){
+            case "General":
+                for(Hospital h : hospitals) {
+//                    avail = h.getTotGeneral() - h.getGeneralRoom().size();
+                    avail = h.getAvailGeneral();
+                    if (avail > 0 && h.isActive())
+                        availHospitals.add(h.getId());
+                }
+            case "Intensive":
+                for(Hospital h : hospitals) {
+//                    avail = h.getTotIntensive() - h.getIntensiveRoom().size();
+                    avail = h.getAvailIntensive();
+                    if (avail > 0 && h.isActive())
+                        availHospitals.add(h.getId());
+                }
+        }
+        return availHospitals;
+    }
+
+    private <K, V extends Comparable<? super V>> HashMap<K, V> sortByValue(HashMap<K, V> map) {
+        return map.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
+    }
+
+    private <K, V extends Comparable<? super V>> HashMap<K, V> sortByValueReverse(HashMap<K, V> map) {
+        return map.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
+    }
+
+    /**----Select Patient (Load)----**/
     @SuppressWarnings("unchecked")
     private int loadPatient(ArrayList<Integer> patientList, Policy policy) {
         ArrayList<Integer> candPatients = (ArrayList<Integer>) patientList.clone();
         Random rd = new Random();
         boolean decision = makeDecision();
         int resIdx = -1;
+
+
 
         if(policy != null && decision){
             ArrayList<String> policyActionMethod = policy.getAction().getActionMethod();
@@ -549,8 +607,10 @@ public class GndAmbulance extends Agent{
                             candPatients = injuryTypeLoad(candPatients);
                             break;
                     }
-                    if (candPatients.size() == 1)
+                    if (candPatients.size() == 1){
+                        System.out.println(s + "Load used. (Patient)");
                         break;
+                    }
                 }
                 if (candPatients.size() != 1)
                     resIdx = candPatients.get(rd.nextInt(candPatients.size()));
@@ -558,11 +618,11 @@ public class GndAmbulance extends Agent{
                     resIdx = candPatients.get(0);
             }
         } else {
-            if(!decision)
-                System.out.println("Decide not to follow the policy.");
-            else
-                System.out.println("Not fitted condition or No policy");
-            System.out.println("Do the randomly select method.");
+//            if(!decision)
+//                System.out.println("Decide not to follow the policy.");
+//            else
+//                System.out.println("Not fitted condition or No policy");
+//            System.out.println("Do the randomly select method.");
 
             Collections.shuffle(loadMethodList);
             for(String s: loadMethodList){
@@ -580,8 +640,10 @@ public class GndAmbulance extends Agent{
                         candPatients = injuryTypeLoad(candPatients);
                         break;
                 }
-                if(candPatients.size() == 1)
+                if(candPatients.size() == 1){
+                    System.out.println(s + "Load used. (Patient)");
                     break;
+                }
             }
             if(candPatients.size()!=1)
                 resIdx = candPatients.get(rd.nextInt(candPatients.size()));
@@ -593,21 +655,19 @@ public class GndAmbulance extends Agent{
     }
 
     private ArrayList<Integer> randomLoad(ArrayList<Integer> candPatients){
-        System.out.println("Random policy applied.");
         ArrayList<Integer> tempList = new ArrayList<>();
-        tempList.add(new Random().nextInt(candPatients.size()));
+        int candidIdx = new Random().nextInt(candPatients.size());
+        tempList.add(candPatients.get(candidIdx));
         return tempList;
     }
 
     private ArrayList<Integer> distanceLoad(ArrayList<Integer> candPatients){
-        System.out.println("Distance policy applied.");
         ArrayList<Integer> tempList = new ArrayList<>();
         tempList.add(candPatients.get(0));
         return tempList;
     }
 
     private ArrayList<Integer> severityLoad(ArrayList<Integer> candPatients){
-        System.out.println("Severity policy applied.");
         ArrayList<Integer> tempList = new ArrayList<>();
 
         Collections.sort(candPatients, new Comparator<Integer>() {
@@ -628,7 +688,6 @@ public class GndAmbulance extends Agent{
 
     private ArrayList<Integer> injuryTypeLoad(ArrayList<Integer> candPatients){
         //NOTE InjuryType Sorting means sorting by strength decreasing rate
-        System.out.println("InjurtyType first policy applied.");
         ArrayList<Integer> tempList = new ArrayList<>();
         int stdRate = 0;
 
@@ -649,7 +708,7 @@ public class GndAmbulance extends Agent{
         return tempList;
     }
 
-    /*----Select Slot (ReturnTo)----*/
+    /**----Select Slot (ReturnTo)----**/
     private Location selectSlot(Policy policy){
         int resIdx=0;
         boolean decision = makeDecision();
@@ -659,11 +718,11 @@ public class GndAmbulance extends Agent{
         if(policy != null && decision){
             policyActionMethod = policy.getAction().getActionMethod().get(0);
         } else {
-            if(!decision)
-                System.out.println("Decide not to follow the policy.");
-            else
-                System.out.println("Not fitted condition or No policy");
-            System.out.println("Do the randomly select method.");
+//            if(!decision)
+//                System.out.println("Decide not to follow the policy.");
+//            else
+//                System.out.println("Not fitted condition or No policy");
+//            System.out.println("Do the randomly select method.");
 
             Collections.shuffle(returnMethodList);
             policyActionMethod = returnMethodList.get(0);
@@ -709,7 +768,7 @@ public class GndAmbulance extends Agent{
     private int setReachTime(){
         //TODO review
         // This can be revised to get a certain distribution from outside if policy is applied.
-        return ThreadLocalRandom.current().nextInt(3, 10);
+        return ThreadLocalRandom.current().nextInt(2, 5);
     }
 
     private void makeActionMethodList(){
@@ -737,6 +796,55 @@ public class GndAmbulance extends Agent{
             tempCompliance = tempCompliance/10;
         }
         return tempCompliance;
+    }
+
+    private boolean checkActive(){
+        ArrayList<Policy> compliancePolicies = checkCompliancePolicy(role);
+        this.active = true;
+
+        if(compliancePolicies.size() != 0){ // policy exists
+            for(Policy policy : compliancePolicies){
+                String actionName = policy.getAction().getActionName();
+                switch (actionName){
+                    case "Load":
+                        if(loadCompliance < policy.getMinCompliance())
+                            this.active = false;
+                        break;
+                    case "DeliverTo":
+                        if(deliverCompliance < policy.getMinCompliance())
+                            this.active = false;
+                        break;
+                    case "ReturnTo":
+                        if(returnCompliance < policy.getMinCompliance())
+                            this.active = false;
+                        break;
+                    case "Wait":
+                        if(waitCompliance < policy.getMinCompliance())
+                            this.active = false;
+                        break;
+                }
+                if (!this.active)
+                    break;
+            }
+        }
+        return this.active;
+    }
+
+    private boolean checkDeadPatient(int patientId){
+        Patient patient = patientsList.get(patientId);
+        return patient.isDead();
+    }
+
+    private void excludeDeadPatient(ArrayList<Integer> spotPatientList){
+        ArrayList<Integer> deadList = new ArrayList<>();
+        for(Integer patientId : spotPatientList){
+            if(checkDeadPatient(patientId))
+                deadList.add(patientId);
+        }
+        System.out.println("StageDEAD: "+deadList.size());
+        for (Integer patientId : deadList){
+            spotPatientList.remove(spotPatientList.indexOf(patientId));
+        }
     }
 
     //TODO policy구현 (시간 관련)

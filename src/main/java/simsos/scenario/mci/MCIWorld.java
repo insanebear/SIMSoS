@@ -34,7 +34,7 @@ public class MCIWorld extends World {
             public void execute() {
                 // update patients' strength
                 environment.updatePatientsList();
-                // TODO update patient location (movable patients)
+//                environment.rearrangeStageZone();
             }
 
             @Override
