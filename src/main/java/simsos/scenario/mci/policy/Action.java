@@ -9,10 +9,8 @@ import java.util.ArrayList;
  */
 public class Action {
     private String actionName;
-//    private String actionTarget;
-//    private String guideType;
-//    private String operator;
-    private ArrayList<String> actionMethod;
+//    private ArrayList<String> actionMethod;
+    private String actionMethod;
     private int methodValue;
 
     public String getActionName() {
@@ -23,13 +21,13 @@ public class Action {
         this.actionName = actionName;
     }
 
-    public ArrayList<String> getActionMethod() {
-        return actionMethod;
-    }
-
-    public void setActionMethod(ArrayList<String> actionMethod) {
-        this.actionMethod = actionMethod;
-    }
+//    public ArrayList<String> getActionMethod() {
+//        return actionMethod;
+//    }
+//
+//    public void setActionMethod(ArrayList<String> actionMethod) {
+//        this.actionMethod = actionMethod;
+//    }
 
     public int getMethodValue() {
         return methodValue;
@@ -39,35 +37,13 @@ public class Action {
         this.methodValue = methodValue;
     }
 
-    //    public String getOperator() {
-//        return operator;
-//    }
-//
-//    public void setOperator(String operator) {
-//        this.operator = operator;
-//    }
-//    public String getActionTarget() {
-//        return actionTarget;
-//    }
-//
-//    public void setActionTarget(String actionTarget) {
-//        this.actionTarget = actionTarget;
-//    }
-//
-//    public String getGuideType() {
-//        return guideType;
-//    }
-//
-//    public void setGuideType(String guideType) {
-//        this.guideType = guideType;
-//    }
-//    public String getActionMethod() {
-//        return actionMethod;
-//    }
-//
-//    public void setActionMethod(String actionMethod) {
-//        this.actionMethod = actionMethod;
-//    }
+    public String getActionMethod() {
+        return actionMethod;
+    }
+
+    public void setActionMethod(String actionMethod) {
+        this.actionMethod = actionMethod;
+    }
 
 
 

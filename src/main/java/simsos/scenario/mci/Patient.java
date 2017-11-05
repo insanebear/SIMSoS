@@ -59,6 +59,44 @@ public class Patient {
         this.hospital = -1;
     }
 
+    // Status
+    public void changeStat() {
+        if (strength <= 0) {
+            this.status = Status.DEAD;
+            this.dead = true;
+        }else if(strength >= 270){
+            this.status = Status.CURED;
+        }else{
+            switch (status) {
+                case RESCUE_WAIT:
+                    this.status = Status.RESCUED;
+                    break;
+                case RESCUED:
+                    this.status = Status.TRANSPORT_WAIT;
+                    break;
+                case TRANSPORT_WAIT:
+                    this.status = Status.LOADED;
+                    break;
+                case LOADED:
+                    this.status = Status.TRANSPORTING;
+                    break;
+                case TRANSPORTING:
+                    this.status = Status.SURGERY_WAIT;
+                    break;
+                case SURGERY_WAIT:
+                    this.status = Status.SURGERY;
+                    break;
+                case SURGERY:
+                    this.status = Status.RECOVERY;
+                    break;
+//                case RECOVERY:
+//                    status = Status.CURED;
+//                    break;
+            }
+        }
+    }
+
+    // Strength and Severity
     public int calcSeverity() {
         if (strength >= 1 && strength < 30)
             return 9;
@@ -82,6 +120,13 @@ public class Patient {
             return 0;
         else
             return -1;  // DEAD
+    }
+
+    public void recoverStrength(int strength) {
+        if(this.strength+strength > 299)
+            this.strength = 299;
+        else
+            this.strength += strength;
     }
 
     public void updateStrength(){
@@ -128,119 +173,17 @@ public class Patient {
                 break;
         }
         // TODO upper bound는 병원의 releasedㅔ 관련해서 변경될 수도 있음
-        if(this.strength <= 0 || this.strength >= 270)
+        if(this.strength <= 0 || this.strength >= 270){
             changeStat();
-
+            if(this.strength <0)
+                this.strength = 0;
+            else if (this.strength > 299)
+                this.strength =299;
+        }
         this.severity = calcSeverity();
     }
 
-    public void changeStat() {
-        if (strength <= 0) {
-            this.status = Status.DEAD;
-            this.dead = true;
-        }else if(strength >= 270){
-            this.status = Status.CURED;
-        }else{
-            switch (status) {
-                case RESCUE_WAIT:
-                    this.status = Status.RESCUED;
-                    break;
-                case RESCUED:
-                    this.status = Status.TRANSPORT_WAIT;
-                    break;
-                case TRANSPORT_WAIT:
-                    this.status = Status.LOADED;
-                    break;
-                case LOADED:
-                    this.status = Status.TRANSPORTING;
-                    break;
-                case TRANSPORTING:
-                    this.status = Status.SURGERY_WAIT;
-                    break;
-                case SURGERY_WAIT:
-                    this.status = Status.SURGERY;
-                    break;
-                case SURGERY:
-                    this.status = Status.RECOVERY;
-                    break;
-//                case RECOVERY:
-//                    status = Status.CURED;
-//                    break;
-            }
-        }
-    }
-
-    public InjuryType getInjuryType() {
-        return injuryType;
-    }
-
-    public int getPatientId() {
-        return patientId;
-    }
-
-    public int getStrength() {
-        return strength;
-    }
-
-    public void recoverStrength(int strength) {
-        this.strength += strength;
-    }
-
-    public int getSeverity() {
-        return severity;
-    }
-
-    public void setSeverity(int severity) {
-        this.severity = severity;
-    }
-
-    public boolean isDead() {
-        return dead;
-    }
-
-    public int getStory() {
-        return story;
-    }
-
-    public void setStory(int story) {
-        this.story = story;
-    }
-
-    public Location getLocation() {
-        return location;
-    }
-
-    public void setLocation(Location location) {
-        this.location = location;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
-    public String getRoomName() {
-        return roomName;
-    }
-
-    public void setRoomName(String roomName) {
-        this.roomName = roomName;
-    }
-
-    public void setOperated(boolean isOperated) {
-        this.isOperated = isOperated;
-    }
-
-    public boolean isOperated() {
-        return isOperated;
-    }
-
-    public boolean isTreated() {
-        return isTreated;
-    }
+    // Treat and wait time
 
     public int getTreatPeriod() {
         return treatPeriod;
@@ -250,28 +193,17 @@ public class Patient {
         this.treatPeriod = treatPeriod;
     }
 
-    public boolean isReleased() {
-        return released;
-    }
-
-    public void setReleased(boolean released) {
-        this.released = released;
-    }
-
     public int getWaitPeriod() {
         return waitPeriod;
     }
+
+    public void decreaseWaitPeriod() { this.waitPeriod--; }
 
     public void resetWaitPeriod() {
         this.waitPeriod = getTreatPeriod();
     }
 
-    public void decreaseWaitPeriod() { this.waitPeriod--; }
-
-    public void setTreated(boolean treated) {
-        isTreated = treated;
-    }
-
+    // Operate time
     public int getOperateTime() {
         return operateTime;
     }
@@ -296,6 +228,97 @@ public class Patient {
         this.stayTime++;
     }
 
+
+    // Getters and Setters
+    public int getPatientId() {
+        return patientId;
+    }
+
+    public boolean isDead() {
+        return dead;
+    }
+
+    public int getStrength() {
+        return strength;
+    }
+
+    public int getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(int severity) {
+        this.severity = severity;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public InjuryType getInjuryType() {
+        return injuryType;
+    }
+
+
+    // Hospital information
+    public int getStory() {
+        return story;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public String getRoomName() {
+        return roomName;
+    }
+
+    public String getPrevRoomName() {
+        return prevRoomName;
+    }
+
+    public void setPrevRoomName(String prevRoomName) {
+        this.prevRoomName = prevRoomName;
+    }
+
+    public void setRoomName(String roomName) {
+        this.roomName = roomName;
+    }
+
+    public boolean isTreated() {
+        return isTreated;
+    }
+
+    public void setTreated(boolean treated) {
+        isTreated = treated;
+    }
+
+    public boolean isOperated() {
+        return isOperated;
+    }
+
+    public void setOperated(boolean isOperated) {
+        this.isOperated = isOperated;
+    }
+
+    public boolean isReleased() {
+        return released;
+    }
+
+    public void setReleased(boolean released) {
+        this.released = released;
+    }
+
+
+
+    public void setHospital(int hospital) {
+        this.hospital = hospital;
+    }
+
+    // Other manipulation
     public int strengthDecreasingRate(){
         switch (injuryType){
             case BURN:
@@ -308,20 +331,10 @@ public class Patient {
         return 0;
     }
 
-    public void setHospital(int hospital) {
-        this.hospital = hospital;
-    }
-
     public void printPatientStatus(){
         System.out.println("|| Patient   "+patientId+"   | "+dead+"     | "+strength+"      | "+ severity+"     | "
                 +hospital+"       | "+isOperated+"       | "+roomName+"      | "+stayTime+"      | "+status.toString()+"      | "+released+" ||");
     }
 
-    public String getPrevRoomName() {
-        return prevRoomName;
-    }
 
-    public void setPrevRoomName(String prevRoomName) {
-        this.prevRoomName = prevRoomName;
-    }
 }

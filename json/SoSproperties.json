@@ -1,11 +1,11 @@
 {
-  "numFireDepartment": 3,
-  "numPTSCenter": 3,
-  "numHospital": 4,
+  "numFireDepartment": 4,
+  "numPTSCenter": 4,
+  "numHospital": 6,
 
-  "rescueCompliance": 0.8,
-  "transportCompliance": 0.6,
-  "treatmentCompliance": 0.8,
+  "rescueCompliance": 0.3,
+  "transportCompliance": 0.5,
+  "treatmentCompliance": 0.6,
   "enforced": false,
 
   "meanCrew": 70,

@@ -51,7 +51,7 @@ public abstract class World {
         Snapshot snapshot = new Snapshot();
 
         LinkedHashMap<String, Object> worldProperties = new LinkedHashMap<String, Object>();
-        worldProperties.put("Time", time);
+        worldProperties.put("InitCasualty", patientsList.size());
         worldProperties.put("Patients", patientsList);
         snapshot.addProperties(null, worldProperties);
 

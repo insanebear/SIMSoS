@@ -22,8 +22,6 @@ public class FireDepartment extends Agent {
     private double compliance; // indicates how much CS will follow policies
     private boolean enforced;
 
-    private ArrayList<Policy> rescuePolicies;
-
     private FireFighter[] workFighterList;
 
     public FireDepartment(World world, int fireDeptId, String name, double compliance, boolean enforced) {
@@ -36,24 +34,11 @@ public class FireDepartment extends Agent {
 
         this.allocFighters = 50;    //NOTE 지금은 고정
 
-
-        /* policy가 injected되면 얘네는 작동 전에 construction부터 조정하겠지
-        * 최초 fd 생성 때 total resource랑 비교해서 제한에 위배되지 않는다면
-        * ff를 policy에서 준 수만큼 instantiation
-        */
-
         workFighterList = new FireFighter[allocFighters];
     }
 
     @Override
     public Action step() {
-        /*
-         * 여기에는 뭘 구현해야되지 ㅋㅋㅋ fd는 ff생성을 계속 할 것도 아니고
-         * 할만한 기능은 agent status update받는거-_-?
-         * 아니면 나중에interaction flag같은거 놓고 조건 맞으면
-         * staging zone어디에 갖다놓을지? 할 수는 있을 듯.
-         */
-
         return Action.getNullAction(0,"FireDepartment action-_-");
     }
 

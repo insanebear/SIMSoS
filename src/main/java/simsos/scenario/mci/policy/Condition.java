@@ -10,8 +10,8 @@ import java.util.ArrayList;
 public class Condition {
     private String variable;
     private String operator;
-//    private String value;
-    private ArrayList<String> value;
+    private String value;
+//    private ArrayList<String> value;
 
     public String getVariable() {
         return variable;
@@ -29,19 +29,19 @@ public class Condition {
         this.operator = operator;
     }
 
-//    public String getValue() {
-//        return value;
-//    }
-//
-//    public void setValue(String value) {
-//        this.value = value;
-//    }
-
-    public ArrayList<String> getValue() {
+    public String getValue() {
         return value;
     }
 
-    public void setValue(ArrayList<String> value) {
+    public void setValue(String value) {
         this.value = value;
     }
+//
+//    public ArrayList<String> getValue() {
+//        return value;
+//    }
+//
+//    public void setValue(ArrayList<String> value) {
+//        this.value = value;
+//    }
 }

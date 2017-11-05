@@ -18,9 +18,9 @@ import static simsos.scenario.mci.Environment.hospitalMapSize;
 public class MCIScenario extends Scenario {
 
     // indicates how much CS will follow policies
-    private double rescueCompliance;
-    private double transportCompliance;
-    private double treatmentCompliance;
+    private double mResCompliance;
+    private double mTransCompliance;
+    private double mTreatCompliance;
     private boolean enforced;
 
     private int totalFD;
@@ -50,11 +50,11 @@ public class MCIScenario extends Scenario {
 
         // Fire Department
         for(int i=0; i<this.totalFD; i++){
-            FireDepartment fd = new FireDepartment(this.world, i, "Fire Department", getRescueCompliance(), this.isEnforced());
+            FireDepartment fd = new FireDepartment(this.world, i, "Fire Department", this.mResCompliance, this.isEnforced());
             manager.setFireDepartments(fd);
 
             for(int j=0; j<fd.getAllocFighters(); j++){
-                FireFighter ff = new FireFighter(null, j, "Fire Fighter", "FD"+i, getRescueCompliance(), this.isEnforced());
+                FireFighter ff = new FireFighter(null, j, "Fire Fighter", "FD"+i, getRandomCompliance(mResCompliance), this.isEnforced());
                 this.world.addAgent(ff);
                 fd.setWorkFighterList(j, ff);
             }
@@ -62,15 +62,16 @@ public class MCIScenario extends Scenario {
 
         // PTS Center
         for(int i=0; i<this.totalPTS; i++){
-            PTSCenter pts = new PTSCenter(this.world, i, "PTS Center", getTransportCompliance(), this.isEnforced());
+            PTSCenter pts = new PTSCenter(this.world, i, "PTS Center", this.mTransCompliance, this.isEnforced());
             manager.setPtsCenters(pts);
             for(int j=0; j<pts.getAllocGndAmbul(); j++){
-                GndAmbulance gndAmbul = new GndAmbulance(null, j, "Gnd Ambulance", "PTS"+i , getTransportCompliance(), this.isEnforced());
+                GndAmbulance gndAmbul = new GndAmbulance(null, j, "Gnd Ambulance", "PTS"+i , getRandomCompliance(mTransCompliance), this.isEnforced());
                 this.world.addAgent(gndAmbul);
                 pts.setWorkGndAmbuls(j, gndAmbul);
             }
         }
 
+        // Hospital
         for(int i=0; i<this.totalH; i++){
             int generalRoom = getRandomValue(varGeneral, meanGeneral);
             int intensiveRoom = getRandomValue(varIntensive, meanIntensive);
@@ -81,7 +82,7 @@ public class MCIScenario extends Scenario {
             int locY = rd.nextInt(hospitalMapSize.getRight());
 
             Hospital hospital = new Hospital(this.world, i, "Hospital", generalRoom,
-                    intensiveRoom, operatingRoom, new Location(locX, locY), medicalCrew, getTreatmentCompliance(), this.isEnforced());
+                    intensiveRoom, operatingRoom, new Location(locX, locY), medicalCrew, getRandomCompliance(mTreatCompliance), this.isEnforced());
 
             // information setting for reset
             Information info = new Information();
@@ -99,13 +100,12 @@ public class MCIScenario extends Scenario {
         }
 
         this.checker = null;
-//        this.checker = new GoalChecker();
     }
 
     public void setInfrastructure() {
-        this.rescueCompliance = infrastructure.getRescueCompliance();
-        this.transportCompliance = infrastructure.getTransportCompliance();
-        this.treatmentCompliance = infrastructure.getTreatmentCompliance();
+        this.mResCompliance = infrastructure.getRescueCompliance();
+        this.mTransCompliance = infrastructure.getTransportCompliance();
+        this.mTreatCompliance = infrastructure.getTreatmentCompliance();
         this.enforced = infrastructure.isEnforced();
 
         this.totalFD = infrastructure.getNumFireDepartment();
@@ -136,15 +136,16 @@ public class MCIScenario extends Scenario {
         return result;
     }
 
-    public double getRescueCompliance() {
-        return rescueCompliance;
-    }
+    public double getRandomCompliance(double mCompliance) {
+        Random rd = new Random();
+        double min = mCompliance;
+        double max = 0.9;
+        double result;
 
-    public double getTransportCompliance() {
-        return transportCompliance;
-    }
+        do{
+            result = Math.round(rd.nextDouble()*10d)/10d;
+        }while(result < min || result > max);
 
-    public double getTreatmentCompliance() {
-        return treatmentCompliance;
+        return result;
     }
 }

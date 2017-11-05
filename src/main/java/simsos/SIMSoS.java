@@ -10,13 +10,20 @@ import simsos.scenario.mci.MCIScenario;
 import simsos.scenario.mci.Patient;
 import simsos.scenario.mci.policy.*;
 import simsos.simulation.Simulator;
+import simsos.simulation.component.PropertyValue;
 import simsos.simulation.component.Scenario;
+import simsos.simulation.component.Snapshot;
 import simsos.simulation.component.World;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+
+import static simsos.scenario.mci.Environment.patientsList;
 
 /**
  * Created by mgjin on 2017-06-12.
@@ -39,73 +46,79 @@ public class SIMSoS {
             }
         }
 
-        // JSON Read
-        /*
-            SoS properties - from SoSProperties.json
-            SoS policy elements (policy element pool) - from PolicyElement.json
-            SoS previous policies - from previousPolicy.json
-         */
-
-        ArrayList<Policy> prevPolicies;
-        ArrayList<PolicyElement> policyElementsPool;
+        // SIMVA-SoS for MCI Policy Simulator
         SoSInfrastructure infrastructure;
 
         SimpleModule module = new SimpleModule();
         ObjectMapper mapper = new ObjectMapper();
 
         module.addDeserializer(Policy.class, new PolicyDeserializer(mapper));
-//        module.addDeserializer(PolicyElement.class, new PolicyElementDeserializer(mapper));
         mapper.registerModule(module);
 
-        CollectionType policyCollectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Policy.class);
-        CollectionType policyElementCollectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, PolicyElement.class);
+        CollectionType pCollectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Policy.class);
+        // CHECK
+//        Environment.policies = mapper.readValue(new File("src/main/json/policies/previousPolicy.json"), pCollectionType);
+//        infrastructure = mapper.readValue(new File("src/main/json/scenario/SoSProperties.json"), SoSInfrastructure.class);
+        Environment.policies = mapper.readValue(new File(args[0]), pCollectionType);
+        infrastructure = mapper.readValue(new File("./json/SoSProperties.json"), SoSInfrastructure.class);
 
-        prevPolicies
-                = mapper.readValue(new File("src/main/json/policies/previousPolicy.json"), policyCollectionType);
-        policyElementsPool
-                = mapper.readValue(new File("src/main/json/policies/policyElements.json"), policyElementCollectionType);
-        infrastructure = mapper.readValue(
-                new File("src/main/json/scenario/SoSProperties.json"), SoSInfrastructure.class);
+        Scenario scenario = new MCIScenario(infrastructure);
+        World world = scenario.getWorld();
+        ArrayList<Double> simResults = new ArrayList<>();
+//        printAllPatientStatus();
 
-        // SBPS Module (Search-based Policy Suggestion Module)
-        PolicySuggestion policySuggestion = new PolicySuggestion(prevPolicies, policyElementsPool);
-//        policySuggestion.geneticAlgorithm();
-        policySuggestion.simulatePolicy(infrastructure);
-
-
+        // NOTE simulation repeat 50-time
+        for(int nSimulation = 0; nSimulation<50; nSimulation++){
+            Simulator.execute(world, 100);
+            simResults.add(calcGoalAchievement());
+        }
+        double totalResult = calcMeanAchievement(simResults);
+        System.out.println(totalResult);
+        String achievement = Double.toString(totalResult);
+        BufferedWriter out = new BufferedWriter(new FileWriter("Sim_Result.txt"));
+        out.write(achievement);
+        out.close();
 
     }
 
-//    static void printCheck(ArrayList<Policy> prevPolicies){
-//        for(PolicyElement pe : policyElementsPool){
-//            System.out.println(pe.getVarName());
-//            System.out.println(pe.getScope());
-//            System.out.println(pe.getType());
-//            if(pe.getType().equals("range")){
-//                System.out.println("Minimum: "+pe.getRange()[0]);
-//                System.out.println("Maximum: "+pe.getRange()[1]);
-//                System.out.println();
-//            }else{
-//                for(String s: pe.getValues())
-//                    System.out.println(s);
-//                System.out.println();
-//            }
-//        }
+    public static void printAllPatientStatus(){
+        System.out.println("----------------------------------------------------------------------------------------------------------------------------------");
+        System.out.println("|| PatientID    |  Dead     | Strength  | Severity  | Hospital    | Operate   | Room Name | Stay Time | Last Status | Released  ||");
+        System.out.println("----------------------------------------------------------------------------------------------------------------------------------");
+        for (Patient patient : patientsList)
+            patient.printPatientStatus();
+        System.out.println("----------------------------------------------------------------------------------------------------------------------------------");
+    }
 
+    public static double calcGoalAchievement(){
+        int totalCasualties = patientsList.size();
+        int alivePatient = 0;
+        int deadPatient = 0;
 
-        // set policy id
-        // id 매길 필요가 있나 -_-..
-//        for (int i=0; i<prevPolicies.size(); i++) {
-//            prevPolicies.get(i).setPolicyId(i);
-//        }
-//            //CHECK
-//            for(Policy p : prevPolicies){
-//                System.out.println("Policy Type: "+p.getRole());
-//                System.out.println("Policy Conditions:");
-//                p.printConditions();
-//                System.out.println("Policy Action:");
-//                p.printAction();
-//            }
-//    }
+        for(Patient p: patientsList){
+            if(p.getStatus() == Patient.Status.DEAD)
+                deadPatient++;
+            if(p.getStatus() == Patient.Status.CURED
+                    || p.getStatus() == Patient.Status.RECOVERY)
+                alivePatient++;
+        }
+        System.out.println("Total casualties: "+ totalCasualties);
+        System.out.println("Alive patient: "+ alivePatient);
+        System.out.println("Dead patient: "+ deadPatient);
+
+        double average = (double)alivePatient/totalCasualties*100;
+
+//        printAllPatientStatus();
+        return Math.round(average*100d) / 100d;
+    }
+
+    public static double calcMeanAchievement(ArrayList<Double> simResults){
+        double sumResult = 0.0;
+        for(Double res : simResults)
+            sumResult+=res;
+        double average = sumResult / simResults.size();
+        System.out.println("Average achievement of 50 simulations: "+ average);
+        return Math.round(average*100d) / 100d;
+    }
 
 }

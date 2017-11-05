@@ -1,5 +1,7 @@
 package simsos.simulation.component;
 
+import simsos.scenario.mci.policy.Policy;
+
 import java.util.HashMap;
 
 /**
@@ -21,6 +23,8 @@ public abstract class Agent {
     public abstract String getName();
 
     public abstract void messageIn(Message msg);
+
+//    public abstract boolean makeDecision(Policy currPolicy);
 
     public abstract boolean makeDecision();
 

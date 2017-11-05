@@ -1,0 +1,71 @@
+[
+  {
+    "policyType": "Action",
+    "conditions": [
+      {
+        "variable": "MCILevel",
+        "operator": "==",
+        "value": "1"
+      },
+      {
+        "variable": "DamageType",
+        "operator": "==",
+        "value": "Fire"
+      }
+    ],
+    "role": "RESCUE",
+    "action": {
+      "actionName": "Select",
+      "actionMethod": "Severity",
+      "methodValue": "0"
+    },
+    "minCompliance": -1,
+    "enforce": false
+  },
+  {
+    "policyType": "Compliance",
+    "conditions": [
+      {
+        "variable": "MCILevel",
+        "operator": "==",
+        "value": "1"
+      },
+      {
+        "variable": "DamageType",
+        "operator": "==",
+        "value": "Collapse"
+      }
+    ],
+    "minCompliance": 0.0,
+    "enforce": false,
+    "role": "RESCUE",
+    "action": {
+      "actionName": "",
+      "actionMethod": "",
+      "methodValue": "0"
+    }
+  },
+  {
+    "policyType": "Compliance",
+    "conditions": [
+      {
+        "variable": "MCILevel",
+        "operator": "==",
+        "value": "5"
+      },
+      {
+        "variable": "DamageType",
+        "operator": "==",
+        "value": "Collapse"
+      }
+    ],
+    "minCompliance": 0.0,
+    "enforce": false,
+    "role": "RESCUE",
+    "action": {
+      "actionName": "",
+      "actionMethod": "",
+      "methodValue": "0"
+    }
+  }
+]

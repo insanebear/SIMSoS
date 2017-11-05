@@ -22,9 +22,6 @@ public class FireFighter extends Agent{
     private enum Status{
         INACTIVE, SEARCHING, RESCUING, TRANSPORTING, DONE
     }
-    private enum Directions{ //TODO Refactor this (not using moving direction)
-        WEST, SOUTH, EAST, NORTH
-    }
     public enum Actions{
         SEARCH, RESCUE, TRANSPORT, NONE
     }
@@ -59,9 +56,7 @@ public class FireFighter extends Agent{
     private CallBack callBack = new CallBack() {
         @Override
         public boolean checkCSStat(String condString, int condValue) {
-            if(condString.equals("Story") && story==condValue)
-                return true;
-            return false;
+            return condString.equals("Story") && story==condValue;
         }
     };
 
@@ -101,11 +96,20 @@ public class FireFighter extends Agent{
     public Action step() {
         switch (status) {
             case INACTIVE:
-                if(checkActive()){
-                    this.status = Status.SEARCHING;
-                    this.currAction = Actions.SEARCH;
-                }
-                return Action.getNullAction(1, "FF: INACTIVE");
+                return new Action(1){
+                    @Override
+                    public void execute() {
+                        if(checkActive()){
+                            status = Status.SEARCHING;
+                            currAction = Actions.SEARCH;
+                        }
+                    }
+
+                    @Override
+                    public String getName() {
+                        return "FF inactive";
+                    }
+                };
             case SEARCHING:
                 return new Action(1) {
                     @Override
@@ -136,45 +140,22 @@ public class FireFighter extends Agent{
                             if(spotPatientList.size()>1){
                                 //NOTE RESCUE_ select Policy
                                 currPolicy = checkActionPolicy(role, currAction.toString(), callBack);
-                                //CHECK
-                                System.out.println("Original spot patients");
-                                for(Integer i:spotPatientList)
-                                    System.out.print(i+", ");
-                                System.out.println();
-
                                 rescuedPatientId = selectPatient(spotPatientList, currPolicy);
                                 removePatient(rescuedPatientId, spotPatientList);
-
-                                //CHECK
-                                System.out.println("removed spot patients");
-                                for(Integer i:spotPatientList)
-                                    System.out.print(i+", ");
-                                System.out.println();
                             }else{
                                 // rescue patient but do not need to check policy (no selectable situation)
-                                System.out.println("Only one patient exists.");
                                 rescuedPatientId = spotPatientList.get(0);
                                 spotPatientList.remove(0);
                             }
-                            System.out.println("Rescued ID: "+rescuedPatientId);
                             Patient patient = patientsList.get(rescuedPatientId);
-                            System.out.println("Firefighter RESCUED");
-                            System.out.println("Original Status: "+patient.getStatus());
-                            patientsList.get(rescuedPatientId).changeStat(); // to RESCUED
-                            System.out.println("Changed Status: "+patient.getStatus());
-                            System.out.println();
+                            patient.changeStat(); // to RESCUED
                             status = Status.TRANSPORTING;
                             currAction = Actions.TRANSPORT;
 
                             setDestination();
                             reachTime = setReachTime();
-                            System.out.println("*"+reachTime+" ticks will take to outside.");
-
-//                            System.out.println("Patient \'" + rescuedPatientId + "\' rescued. Ready to transport.");
                         } else {
                             // Patients do not exist. Search again.
-//                            System.out.println("Patient not found");
-
                             setDestination();
                             if(destCoordinate ==null){
                                 status = Status.DONE;
@@ -211,13 +192,8 @@ public class FireFighter extends Agent{
 
                                 // Stage a patient at a spot.
                                 stageZone[stageSpot].add(rescuedPatientId);
-                                System.out.println("Firefighter TRANSPORT_WAIT");
-                                System.out.println("Original Status: "+patient.getStatus());
                                 patientsList.get(rescuedPatientId).changeStat(); // to TRANSPORT_WAIT
-                                System.out.println("Changed Status: "+patient.getStatus());
                                 updateCasualty();
-                                System.out.println(rescuedPatientId + " on " + stageSpot);
-                                System.out.println();
                             }
                             // initialize information
                             rescuedPatientId = -1;
@@ -248,8 +224,17 @@ public class FireFighter extends Agent{
                     }
                 };
             case DONE:
-                String s = this.getAffiliation()+" "+this.getName()+" "+this.getId()+" finished its job.";
-                return Action.getNullAction(1, s);
+                return new Action(1) {
+                    @Override
+                    public void execute() {
+                        String s = getAffiliation()+" "+this.getName()+" "+getId()+" finished its job.";
+                    }
+
+                    @Override
+                    public String getName() {
+                        return "FF finished job.";
+                    }
+                };
         }
         return Action.getNullAction(1, this.getName() + ": ??");
     }
@@ -407,9 +392,9 @@ public class FireFighter extends Agent{
 
     /**--------Action--------**/
     /*----Select Patient (Select)----*/
+    @SuppressWarnings("unchecked")
     private int selectPatient(ArrayList<Integer> patientList, Policy policy){
         //NOTE 한 위치에서 여러가지 방법으로(알맞는 방법으로 구해야할 환자의 index 를 골라서 return
-        //TODO select action by probability(uncertainty)
 
         ArrayList<Integer> candPatients = (ArrayList<Integer>) patientList.clone();
         Random rd = new Random();
@@ -417,33 +402,53 @@ public class FireFighter extends Agent{
         int resIdx = -1;
 
         if(policy != null && decision){
-            ArrayList<String> policyActionMethod = policy.getAction().getActionMethod();
-            if(policyActionMethod.size()>0) {
-                for (String s : policyActionMethod) {
-                    switch (s) {
-                        case "Random":
-                            candPatients = randomSelect(candPatients);
-                            break;
-                        case "Distance":
-                            candPatients = distanceSelect(candPatients);
-                            break;
-                        case "Severity":
-                            candPatients = severitySelect(candPatients);
-                            break;
-                        case "InjuryType":
-                            candPatients = injuryTypeSelect(candPatients);
-                            break;
-                    }
-                    if(candPatients.size() == 1) {
-                        System.out.println(s + "Select used. (Patient)");
-                        break;
-                    }
-                }
-                if (candPatients.size() != 1)
-                    resIdx = candPatients.get(rd.nextInt(candPatients.size()));
-                else
-                    resIdx = candPatients.get(0);
+            String actionMethod = policy.getAction().getActionMethod();
+            switch (actionMethod) {
+                case "Random":
+                    candPatients = randomSelect(candPatients);
+                    break;
+                case "Distance":
+                    candPatients = distanceSelect(candPatients);
+                    break;
+                case "Severity":
+                    candPatients = severitySelect(candPatients);
+                    break;
+                case "InjuryType":
+                    candPatients = injuryTypeSelect(candPatients);
+                    break;
             }
+//            if(candPatients.size() == 1) {
+////                        System.out.println(s + "Select used. (Patient)");
+//                break;
+//            }
+
+//            ArrayList<String> policyActionMethod = policy.getAction().getActionMethod();
+//            if(policyActionMethod.size()>0) {
+//                for (String s : policyActionMethod) {
+//                    switch (s) {
+//                        case "Random":
+//                            candPatients = randomSelect(candPatients);
+//                            break;
+//                        case "Distance":
+//                            candPatients = distanceSelect(candPatients);
+//                            break;
+//                        case "Severity":
+//                            candPatients = severitySelect(candPatients);
+//                            break;
+//                        case "InjuryType":
+//                            candPatients = injuryTypeSelect(candPatients);
+//                            break;
+//                    }
+//                    if(candPatients.size() == 1) {
+////                        System.out.println(s + "Select used. (Patient)");
+//                        break;
+//                    }
+//                }
+//                if (candPatients.size() != 1)
+//                    resIdx = candPatients.get(rd.nextInt(candPatients.size()));
+//                else
+//                    resIdx = candPatients.get(0);
+//            }
         } else {
 //            if(!decision)
 //                System.out.println("Decide not to follow the policy.");
@@ -468,7 +473,7 @@ public class FireFighter extends Agent{
                         break;
                 }
                 if(candPatients.size() == 1){
-                    System.out.println(s + "Select used. (Patient)");
+//                    System.out.println(s + "Select used. (Patient)");
                     break;
                 }
             }
@@ -539,10 +544,11 @@ public class FireFighter extends Agent{
         int destIdx=0;
         boolean decision = makeDecision();
         Random rd = new Random();
-        String policyActionMethod;
+        String actionMethod;
 
         if(policy != null && decision){
-            policyActionMethod = policy.getAction().getActionMethod().get(0);
+//            policyActionMethod = policy.getAction().getActionMethod().get(0);
+            actionMethod = policy.getAction().getActionMethod();
         } else {
 //            if(!decision)
 //                System.out.println("Decide not to follow the policy.");
@@ -550,12 +556,12 @@ public class FireFighter extends Agent{
 //                System.out.println("Not fitted condition.");
 //            System.out.println("Do the randomly select method.");
             Collections.shuffle(stageMethodList);
-            policyActionMethod = stageMethodList.get(0);
+            actionMethod = stageMethodList.get(0);
         }
-        System.out.println(policyActionMethod + "Stage used. (Patient)");
-        if(policyActionMethod.equals("Random")){
+//        System.out.println(policyActionMethod + "Stage used. (Patient)");
+        if(actionMethod.equals("Random")){
             destIdx = rd.nextInt(stageZone.length);
-        }else if(policyActionMethod.equals("MeanRandom")){
+        }else if(actionMethod.equals("MeanRandom")){
             int totalSlot = stageZone.length;
             int[] numWaitPatient = new int[totalSlot];
             int mean = calcMeanWaitPatient(numWaitPatient, totalSlot);
@@ -568,7 +574,7 @@ public class FireFighter extends Agent{
                 destIdx = candidIdx.get(rd.nextInt(candidIdx.size()));
             }else
                 destIdx = rd.nextInt(stageZone.length);
-        }else if(policyActionMethod.equals("MCSlot")){ // most crowded slot
+        }else if(actionMethod.equals("MCSlot")){ // most crowded slot
             int maximum = Collections.max(Arrays.asList(ArrayUtils.toObject(numWaitPTS)));
             ArrayList<Integer> maxPTSSlot = new ArrayList<>();
             for(int i=0; i<numWaitPTS.length; i++)

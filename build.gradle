@@ -4,9 +4,20 @@ version '1.0-SNAPSHOT'
 apply plugin: 'java'
 apply plugin: 'application'
 
-mainClassName = 'mci.Main'
+mainClassName = 'simsos.SIMSoS'
 sourceCompatibility = 1.8
 version = '1.0'
+
+jar {
+    manifest {
+        attributes  'Title': 'SIMVASoS-MCI', 'Version': version, 'Main-Class': mainClassName
+    }
+    archiveName 'SIMVASoS-MCI.jar'
+    dependsOn configurations.runtime
+    from{
+        configurations.compile.collect{it.isDirectory()? it:zipTree(it)}
+    }
+}
 
 repositories {
     mavenCentral()

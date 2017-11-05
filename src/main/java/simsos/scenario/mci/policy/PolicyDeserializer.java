@@ -14,7 +14,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
+ *
  * Created by Youlim Jung on 17/08/2017.
+ *
  */
 public class PolicyDeserializer extends StdDeserializer<Policy>{
 
@@ -45,7 +47,8 @@ public class PolicyDeserializer extends StdDeserializer<Policy>{
 
             tCond.setVariable(mapper.convertValue(node.get("variable"), String.class));
             tCond.setOperator(mapper.convertValue(node.get("operator"), String.class));
-            tCond.setValue(mapper.convertValue(node.get("value"), arrStringType));
+            tCond.setValue(mapper.convertValue(node.get("value"), String.class));
+//            tCond.setValue(mapper.convertValue(node.get("value"), arrStringType));
 
             tempConditions.add(tCond);
         }
@@ -53,19 +56,23 @@ public class PolicyDeserializer extends StdDeserializer<Policy>{
 
 //        ArrayList<Condition> tempConds = mapper.convertValue(jsonNode.get("conditions"), arrCondType);
 //        policy.setConditions(tempConds);
+
         policy.setMinCompliance(mapper.convertValue(jsonNode.get("minCompliance"), Double.class));
-        policy.setEnforce(mapper.convertValue(jsonNode.get("enforce"), Boolean.class));
+
+        String bool = mapper.convertValue(jsonNode.get("enforce"), String.class);
+        if(bool.equals("True") || bool.equals("true"))
+            policy.setEnforce(true);
+        else
+            policy.setEnforce(false);
 
         policy.setRole(jsonNode.get("role").asText());
-        Action tempAction = new Action();
-        tempAction.setActionName(jsonNode.get("action").get("actionName").asText());
-//        tempAction.setActionTarget(jsonNode.get("action").get("actionTarget").asText());
-//        tempAction.setGuideType(jsonNode.get("action").get("guideType").asText());
-//        tempAction.setOperator(jsonNode.get("action").get("operator").asText());
-        ArrayList<String> tempValues = mapper.convertValue(jsonNode.get("action").get("actionMethod"), arrStringType);
-        tempAction.setActionMethod(tempValues);
-        tempAction.setMethodValue(jsonNode.get("action").get("actionName").asInt());
-//        Action tempAction = mapper.convertValue(jsonNode.get("action"), Action.class);
+        Action tempAction = mapper.convertValue(jsonNode.get("action"), Action.class);
+//        Action tempAction = new Action();
+//        tempAction.setActionName(jsonNode.get("action").get("actionName").asText());
+//        ArrayList<String> tempValues = mapper.convertValue(jsonNode.get("action").get("actionMethod"), arrStringType);
+//        tempAction.setActionMethod(tempValues);
+//        tempAction.setMethodValue(jsonNode.get("action").get("actionName").asInt());
+
         policy.setAction(tempAction);
 
         return policy;

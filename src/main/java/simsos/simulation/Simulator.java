@@ -24,7 +24,7 @@ import static simsos.scenario.mci.Environment.stageZone;
  */
 public class Simulator {
     public static ArrayList<Snapshot> execute(World world, int endOfTime) throws IOException {
-        BufferedWriter out = new BufferedWriter(new FileWriter("Simul_result.txt"));    //
+//        BufferedWriter out = new BufferedWriter(new FileWriter("Simul_result.txt"));    //
         ArrayList<Snapshot> simulationLog = new ArrayList<Snapshot>();
 
         boolean stoppingCondition = false;
@@ -35,8 +35,6 @@ public class Simulator {
         simulationLog.add(world.getCurrentSnapshot(patientsList)); // Initial snapshot
 
         while (!stoppingCondition) {
-            System.out.println();
-            System.out.println();
             System.out.println("World Time: " + world.getTime());
 
             do {
@@ -50,9 +48,8 @@ public class Simulator {
                         actions.add(action);
                     }
                 }
-
                 Collections.shuffle(immediateActions);
-                progress(out, immediateActions);
+                progress(immediateActions);
             } while (immediateActions.size() > 0);
 
             Collections.shuffle(actions);
@@ -60,18 +57,18 @@ public class Simulator {
             ArrayList<Action> exoActions = world.generateExogenousActions();
             actions.addAll(exoActions);
 
-            progress(out, actions);
+            progress(actions);
 
             ArrayList<Action> msgActions = world.getMessageQueue();
-            progress(out, msgActions);
-
+            progress(msgActions);
             world.progress(1);
 
             // Verdict - evaluateProperties();
             if (world.getTime() >= endOfTime)
                 stoppingCondition = true;
 
-            System.out.println("STAGE ZONE STATUS: "+Arrays.toString(stageZone));
+            // CHECK
+//            System.out.println("STAGE ZONE STATUS: "+Arrays.toString(stageZone));
         }
 
         // Last snapshot only
@@ -88,6 +85,16 @@ public class Simulator {
                 out.newLine();  //
 //                System.out.println(actionSpec);
             }
+            action.execute();
+        }
+    }
+
+    private static void progress(ArrayList<Action> actions) throws IOException {
+        for (Action action : actions) {
+//            String actionSpec = action.getName();
+//            if(!actionSpec.equals("PTS Waiting") || !actionSpec.equals("Hospital waiting")){
+////                System.out.println(actionSpec);
+//            }
             action.execute();
         }
     }

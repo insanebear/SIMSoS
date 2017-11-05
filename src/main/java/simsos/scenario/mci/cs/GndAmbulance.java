@@ -115,14 +115,23 @@ public class GndAmbulance extends Agent{
     public Action step() {
         switch(status){
             case INACTIVE:
-                if(checkActive()){
-                    Random rd = new Random();
-                    location = new Location(rd.nextInt(patientMapSize.getLeft()), 0);
-                    numWaitPTS[location.getX()] += 1;
-                    this.status = Status.WAITING;
-                    this.currAction = Actions.WAIT;
-                }
-                return Action.getNullAction(1, "FF: INACTIVE");
+                return new Action(1) {
+                    @Override
+                    public void execute() {
+                        if(checkActive()){
+                            Random rd = new Random();
+                            location = new Location(rd.nextInt(patientMapSize.getLeft()), 0);
+                            numWaitPTS[location.getX()] += 1;
+                            status = Status.WAITING;
+                            currAction = Actions.WAIT;
+                        }
+                    }
+
+                    @Override
+                    public String getName() {
+                        return "GndAmulance Inactive";
+                    }
+                };
             case WAITING:
                 return new Action(1) {
                     @Override
@@ -164,12 +173,12 @@ public class GndAmbulance extends Agent{
 
 //                            System.out.println("Patient "+loadPatientId+" is ready to be transported.");
                             Patient patient = patientsList.get(loadPatientId);
-                            System.out.println("GND ambulance LOADED");
-                            System.out.println("Original Status: "+patient.getStatus());
+//                            System.out.println("GND ambulance LOADED");
+//                            System.out.println("Original Status: "+patient.getStatus());
                             patientsList.get(loadPatientId).changeStat(); // to LOADED
-                            System.out.println("Changed Status: "+patient.getStatus());
-                            System.out.println("Loaded patient: "+loadPatientId);
-                            System.out.println();
+//                            System.out.println("Changed Status: "+patient.getStatus());
+//                            System.out.println("Loaded patient: "+loadPatientId);
+//                            System.out.println();
                             status = Status.READY_TO_TRANSPORT;
                             currAction = Actions.READY_TRANSPORT;
 //                            System.out.println(getAffiliation()+" "+getName()+" "+getId()+"is "+getStatus()+". Start transporting.");
@@ -194,6 +203,7 @@ public class GndAmbulance extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
+//                        System.out.println("<<<Ambulance "+getId()+">>>");
                         //TODO review policy in severity
                         Patient patient = patientsList.get(loadPatientId);
 
@@ -203,24 +213,25 @@ public class GndAmbulance extends Agent{
                             else
                                 pRoomType = "General";
 
-                            System.out.println("Finding Hospital -- "+findingTrial+" th trial.");
+//                            System.out.println("Finding Hospital -- "+findingTrial+" th trial.");
                             destHospital = selectHospital(pRoomType, currPolicy);
-                            System.out.println("Patient ID: "+loadPatientId);
+//                            System.out.println("Patient ID: "+loadPatientId);
                             if(destHospital != null){
+//                                System.out.println("Destination Hospital: "+destHospital.getId());
                                 status = Status.TRANSPORTING;
                                 currAction = Actions.TRANSPORT;
                                 destHospital.reserveRoom(pRoomType);
                                 destination = destHospital.getLocation();
                                 reachTime = setReachTime();
-                                System.out.println("GND ambulance TRANSPORTING");
-                                System.out.println("Original Status: "+patient.getStatus());
+//                                System.out.println("GND ambulance TRANSPORTING");
+//                                System.out.println("Original Status: "+patient.getStatus());
                                 patient.changeStat(); // TRANSPORTING
-                                System.out.println("Changed Status: "+patient.getStatus());
-                                System.out.println();
+//                                System.out.println("Changed Status: "+patient.getStatus());
+//                                System.out.println();
                             }
                             else{
-                                System.out.println(loadPatientId+" did not get a destination hospital.");
-                                System.out.println();
+//                                System.out.println(loadPatientId+" did not get a destination hospital.");
+//                                System.out.println();
                                 findingTrial++;
                                 // First aid
                                 patient.recoverStrength(new Random().nextInt(15));
@@ -258,10 +269,10 @@ public class GndAmbulance extends Agent{
                     @Override
                     public void execute() {
                         Patient patient = patientsList.get(loadPatientId);
-                        System.out.println("GND ambulance SURGERY_WAIT");
-                        System.out.println("Original Status: "+patient.getStatus());
+//                        System.out.println("GND ambulance SURGERY_WAIT");
+//                        System.out.println("Original Status: "+patient.getStatus());
                         patient.changeStat(); // to SURGERY_WAIT
-                        System.out.println("Changed Status: "+patient.getStatus());
+//                        System.out.println("Changed Status: "+patient.getStatus());
 
                         destHospital.enterHospital(pRoomType, loadPatientId);
 
@@ -357,39 +368,57 @@ public class GndAmbulance extends Agent{
         Random rd = new Random();
         int resIdx = -1;
         boolean decision = makeDecision();
-
         if(availHospitals.size()==0){
-            System.out.println("No available hospital now.");
+//            System.out.println("No available hospital now.");
             return null;    // no available hospital now.
         }
         if(policy != null && decision){
-            ArrayList<String> policyActionMethod = policy.getAction().getActionMethod();
-            if(policyActionMethod.size()>0){
-                for(String s : policyActionMethod){
-                    switch (s){
-                        case "Random":
-                            availHospitals = randomSelect(availHospitals);
-                            break;
-                        case "Distance":
-                            availHospitals = distanceSelect(availHospitals);
-                            break;
-                        case "Vacancy":
-                            availHospitals = vacancySelect(availHospitals);
-                            break;
-                        case "Rate":
-                            availHospitals = rateSelect(availHospitals);
-                            break;
-                    }
-                    if(availHospitals.size() == 1){
-                        System.out.println(s + "Select used. (Hospital)");
-                        break;
-                    }
-                }
-                if(availHospitals.size() > 1)
-                    resIdx = availHospitals.get(rd.nextInt(availHospitals.size()));
-                else if (availHospitals.size() == 1)
-                    resIdx = availHospitals.get(0);
+            String actionMethod = policy.getAction().getActionMethod();
+            switch (actionMethod){
+                case "Random":
+                    availHospitals = randomSelect(availHospitals);
+                    break;
+                case "Distance":
+                    availHospitals = distanceSelect(availHospitals);
+                    break;
+                case "Vacancy":
+                    availHospitals = vacancySelect(availHospitals);
+                    break;
+                case "Rate":
+                    availHospitals = rateSelect(availHospitals);
+                    break;
             }
+            if(availHospitals.size() > 1)
+                resIdx = availHospitals.get(rd.nextInt(availHospitals.size()));
+            else if (availHospitals.size() == 1)
+                resIdx = availHospitals.get(0);
+//            ArrayList<String> policyActionMethod = policy.getAction().getActionMethod();
+//            if(policyActionMethod.size()>0){
+//                for(String s : policyActionMethod){
+//                    switch (s){
+//                        case "Random":
+//                            availHospitals = randomSelect(availHospitals);
+//                            break;
+//                        case "Distance":
+//                            availHospitals = distanceSelect(availHospitals);
+//                            break;
+//                        case "Vacancy":
+//                            availHospitals = vacancySelect(availHospitals);
+//                            break;
+//                        case "Rate":
+//                            availHospitals = rateSelect(availHospitals);
+//                            break;
+//                    }
+//                    if(availHospitals.size() == 1){
+////                        System.out.println(s + "Select used. (Hospital)");
+//                        break;
+//                    }
+//                }
+//                if(availHospitals.size() > 1)
+//                    resIdx = availHospitals.get(rd.nextInt(availHospitals.size()));
+//                else if (availHospitals.size() == 1)
+//                    resIdx = availHospitals.get(0);
+//            }
         }else{
 //            if(!decision)
 //                System.out.println("Decide not to follow the policy.");
@@ -414,7 +443,7 @@ public class GndAmbulance extends Agent{
                         break;
                 }
                 if(availHospitals.size() == 1){
-                    System.out.println(s + "Select used. (Hospital)");
+//                    System.out.println(s + "Select used. (Hospital)");
                     break;
                 }
             }
@@ -541,16 +570,20 @@ public class GndAmbulance extends Agent{
                 for(Hospital h : hospitals) {
 //                    avail = h.getTotGeneral() - h.getGeneralRoom().size();
                     avail = h.getAvailGeneral();
-                    if (avail > 0 && h.isActive())
+                    if (avail > 0 && h.isActive()){
                         availHospitals.add(h.getId());
+                    }
                 }
+                break;
             case "Intensive":
                 for(Hospital h : hospitals) {
 //                    avail = h.getTotIntensive() - h.getIntensiveRoom().size();
                     avail = h.getAvailIntensive();
-                    if (avail > 0 && h.isActive())
+                    if (avail > 0 && h.isActive()){
                         availHospitals.add(h.getId());
+                    }
                 }
+                break;
         }
         return availHospitals;
     }
@@ -587,36 +620,54 @@ public class GndAmbulance extends Agent{
         boolean decision = makeDecision();
         int resIdx = -1;
 
-
-
         if(policy != null && decision){
-            ArrayList<String> policyActionMethod = policy.getAction().getActionMethod();
-            if(policyActionMethod.size()>0) {
-                for (String s : policyActionMethod) {
-                    switch (s) {
-                        case "Random":
-                            candPatients = randomLoad(candPatients);
-                            break;
-                        case "Distance":
-                            candPatients = distanceLoad(candPatients);
-                            break;
-                        case "Severity":
-                            candPatients = severityLoad(candPatients);
-                            break;
-                        case "InjuryType":
-                            candPatients = injuryTypeLoad(candPatients);
-                            break;
-                    }
-                    if (candPatients.size() == 1){
-                        System.out.println(s + "Load used. (Patient)");
-                        break;
-                    }
-                }
-                if (candPatients.size() != 1)
-                    resIdx = candPatients.get(rd.nextInt(candPatients.size()));
-                else
-                    resIdx = candPatients.get(0);
+            String actionMethod = policy.getAction().getActionMethod();
+            switch (actionMethod) {
+                case "Random":
+                    candPatients = randomLoad(candPatients);
+                    break;
+                case "Distance":
+                    candPatients = distanceLoad(candPatients);
+                    break;
+                case "Severity":
+                    candPatients = severityLoad(candPatients);
+                    break;
+                case "InjuryType":
+                    candPatients = injuryTypeLoad(candPatients);
+                    break;
             }
+            if (candPatients.size() != 1)
+                resIdx = candPatients.get(rd.nextInt(candPatients.size()));
+            else
+                resIdx = candPatients.get(0);
+
+//            ArrayList<String> policyActionMethod = policy.getAction().getActionMethod();
+//            if(policyActionMethod.size()>0) {
+//                for (String s : policyActionMethod) {
+//                    switch (s) {
+//                        case "Random":
+//                            candPatients = randomLoad(candPatients);
+//                            break;
+//                        case "Distance":
+//                            candPatients = distanceLoad(candPatients);
+//                            break;
+//                        case "Severity":
+//                            candPatients = severityLoad(candPatients);
+//                            break;
+//                        case "InjuryType":
+//                            candPatients = injuryTypeLoad(candPatients);
+//                            break;
+//                    }
+//                    if (candPatients.size() == 1){
+////                        System.out.println(s + "Load used. (Patient)");
+//                        break;
+//                    }
+//                }
+//                if (candPatients.size() != 1)
+//                    resIdx = candPatients.get(rd.nextInt(candPatients.size()));
+//                else
+//                    resIdx = candPatients.get(0);
+//            }
         } else {
 //            if(!decision)
 //                System.out.println("Decide not to follow the policy.");
@@ -641,7 +692,7 @@ public class GndAmbulance extends Agent{
                         break;
                 }
                 if(candPatients.size() == 1){
-                    System.out.println(s + "Load used. (Patient)");
+//                    System.out.println(s + "Load used. (Patient)");
                     break;
                 }
             }
@@ -716,7 +767,8 @@ public class GndAmbulance extends Agent{
         String policyActionMethod;
 
         if(policy != null && decision){
-            policyActionMethod = policy.getAction().getActionMethod().get(0);
+            policyActionMethod = policy.getAction().getActionMethod();
+//            policyActionMethod = policy.getAction().getActionMethod().get(0);
         } else {
 //            if(!decision)
 //                System.out.println("Decide not to follow the policy.");
@@ -841,7 +893,7 @@ public class GndAmbulance extends Agent{
             if(checkDeadPatient(patientId))
                 deadList.add(patientId);
         }
-        System.out.println("StageDEAD: "+deadList.size());
+//        System.out.println("StageDEAD: "+deadList.size());
         for (Integer patientId : deadList){
             spotPatientList.remove(spotPatientList.indexOf(patientId));
         }

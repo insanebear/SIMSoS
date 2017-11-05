@@ -48,25 +48,18 @@ public class Environment {
 
         setMapSize();
         building = new ArrayList<>();                           initBuilding(building);
-//        patientMap = new ArrayList[mciRadius+1][mciRadius+1];     initMap(patientMap);
-        //
         stageZone = new ArrayList[mciRadius+1];                 initStageZone();
         hospitalMap = new ArrayList[mciRadius+1][mciRadius+1];    initMap(hospitalMap);
-
-
 
         // generate patients
         patientsList = new ArrayList<>();
         PatientFactory patientFactory = new PatientFactory(totalCasualty);
         patientFactory.generatePatient(patientsList, building, mciRadius);
-
-        readPolicies();
     }
 
     private void initStageZone(){
-        for(int i=0; i<stageZone.length; i++){
+        for(int i=0; i<stageZone.length; i++)
             stageZone[i] = new ArrayList<>();
-        }
     }
 
     private void initMap(ArrayList<Integer>[][] map){
@@ -93,7 +86,6 @@ public class Environment {
         MCILevel = calcMCILevel(totalCasualty);
         damageFire = initDamageFire;
         damageCollapse = initDamageCollapse;
-        //NOTE patient는 리셋을 해야되나.?;; --> SoS만 유지되면 될 것.
     }
 
     // update environment
@@ -137,23 +129,8 @@ public class Environment {
             return 5;
     }
 
-    // Policy related methods
-    private void readPolicies() {
-        SimpleModule module = new SimpleModule();
-        ObjectMapper mapper = new ObjectMapper();
-
-        module.addDeserializer(Policy.class, new PolicyDeserializer(mapper));
-        mapper.registerModule(module);
-        CollectionType collectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Policy.class);
-
-        try {
-            policies = mapper.readValue(new File("src/main/json/policies/previousPolicy.json"), collectionType);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     // TODO conflict handling
+    // check policy
     public static Policy checkActionPolicy(String role, String actionName, CallBack callBack){
         //TODO Policy Conflict Handling (with assumption)
         /* "activePolicy" ArrayList stores valid policies that satisfy current condition.*/
@@ -161,20 +138,20 @@ public class Environment {
         switch (role){
             // Find an appropriate policy on current action name and role.
             case "RESCUE":
-                activePolicies = evalPolicyCond(policies, callBack);
+                activePolicies = evalPolicyCond("Action",policies, callBack);
                 for(Policy p : activePolicies){
                     if(p.getRole().equals("RESCUE") && p.getAction().getActionName().equals(actionName))
                         return p;
                 }
             case "TRANSPORT":
-                activePolicies = evalPolicyCond(policies, callBack);
+                activePolicies = evalPolicyCond("Action", policies, callBack);
                 for(Policy p : activePolicies){
                     if(p.getRole().equals("TRANSPORT") && p.getAction().getActionName().equals(actionName))
                         return p;
                 }
                 break;
             case "TREATMENT":
-                activePolicies = evalPolicyCond(policies, callBack);
+                activePolicies = evalPolicyCond("Action", policies, callBack);
                 for(Policy p : activePolicies){
                     if(p.getRole().equals("TREATMENT") && p.getAction().getActionName().equals(actionName))
                         return p;
@@ -212,36 +189,56 @@ public class Environment {
         return activeByRole;
     }
 
-    private static ArrayList<Policy> evalPolicyCond(ArrayList<Policy> policies, CallBack callBack){
+    private static ArrayList<Policy> evalPolicyCond(String policyType, ArrayList<Policy> policies, CallBack callBack){
         //NOTE 1. Check condition comparing with environment.
         //NOTE 2. Condition contains CS variables. (compares not only common environment but CS environment using callback)
         ArrayList<Policy> activePolicies = new ArrayList<>();
+        ArrayList<Policy> candidPolicies = new ArrayList<>();
         boolean isValid = true;
 
-        for(Policy p : policies){
-            ArrayList<Condition> conditions = p.getConditions();
+        for(Policy policy : policies){
+            if(policy.getPolicyType().equals("Action"))
+                candidPolicies.add(policy);
+            else if(policy.getPolicyType().equals("Compliance"))
+                candidPolicies.add(policy);
+        }
+        for(Policy policy : candidPolicies){
+            ArrayList<Condition> conditions = policy.getConditions();
             for(Condition condition : conditions){
                 if(condition.getVariable().equals("MCILevel")){
                     String operator = condition.getOperator();
-                    int value = Integer.parseInt(condition.getValue().get(0));
+                    int value = Integer.parseInt(condition.getValue());
+//                    int value = Integer.parseInt(condition.getValue().get(0));
                     isValid = compareValueByOp(MCILevel, value, operator);
                 }else if(condition.getVariable().equals("DamageType")){
-                    ArrayList<String> damageTypes = condition.getValue();
-                    for(String damageType : damageTypes){
-                        if((damageType.equals("Fire") && damageFire>0)
-                                || (damageType.equals("Collapse") && damageCollapse>0))
-                            isValid = true;
-                        else
-                            isValid = false;
-                        if(!isValid)
-                            break;
-                    }
+                    String damageType = condition.getValue();
+                    if((damageType.equals("Fire") && damageFire>0)
+                            || (damageType.equals("Collapse") && damageCollapse>0))
+                        isValid = true;
+                    else
+                        isValid = false;
+                    if(!isValid)
+                        break;
+//                    ArrayList<String> damageTypes = condition.getValue();
+//                    for(String damageType : damageTypes){
+//                        if((damageType.equals("Fire") && damageFire>0)
+//                                || (damageType.equals("Collapse") && damageCollapse>0))
+//                            isValid = true;
+//                        else
+//                            isValid = false;
+//                        if(!isValid)
+//                            break;
+//                    }
+
+
                 }else if(condition.getVariable().equals("Story")){
-                    int value = Integer.parseInt(condition.getValue().get(0));
+                    int value = Integer.parseInt(condition.getValue());
+//                    int value = Integer.parseInt(condition.getValue().get(0));
                     if(callBack.checkCSStat("Story", value))
                         isValid = true;
                 }else if(condition.getVariable().equals("Time")){
-                    int value = Integer.parseInt(condition.getValue().get(0));
+                    int value = Integer.parseInt(condition.getValue());
+//                    int value = Integer.parseInt(condition.getValue().get(0));
                     if(callBack.checkCSStat("Time", value))
                         isValid = true;
                 }
@@ -249,7 +246,7 @@ public class Environment {
                     break;
             }
             if(isValid)
-                activePolicies.add(p);
+                activePolicies.add(policy);
         }
         return activePolicies;
     }
@@ -257,26 +254,43 @@ public class Environment {
     private static ArrayList<Policy> evalPolicyCond(ArrayList<Policy> policies){
         //NOTE condition 부분과 environment가 맞는지 확인.
         ArrayList<Policy> activePolicies = new ArrayList<>();
+        ArrayList<Policy> candidPolicies = new ArrayList<>();
         boolean isValid = true;
 
-        for(Policy p : policies){
+        for(Policy policy : policies){
+            if(policy.getPolicyType().equals("Action"))
+                candidPolicies.add(policy);
+            else if(policy.getPolicyType().equals("Compliance"))
+                candidPolicies.add(policy);
+        }
+        for(Policy p : candidPolicies){
             ArrayList<Condition> conditions = p.getConditions();
             for(Condition condition : conditions){
                 if(condition.getVariable().equals("MCILevel")){
                     String operator = condition.getOperator();
-                    int value = Integer.parseInt(condition.getValue().get(0));
+                    int value = Integer.parseInt(condition.getValue());
+//                    int value = Integer.parseInt(condition.getValue().get(0));
                     isValid = compareValueByOp(MCILevel, value, operator);
                 }else if(condition.getVariable().equals("DamageType")) {
-                    ArrayList<String> damageTypes = condition.getValue();
-                    for (String damageType : damageTypes) {
-                        if ((damageType.equals("Fire") && damageFire > 0)
-                                || (damageType.equals("Collapse") && damageCollapse > 0))
-                            isValid = true;
-                        else
-                            isValid = false;
-                        if (!isValid)
-                            break;
-                    }
+                    String damageType = condition.getValue();
+
+                    if ((damageType.equals("Fire") && damageFire > 0)
+                            || (damageType.equals("Collapse") && damageCollapse > 0))
+                        isValid = true;
+                    else
+                        isValid = false;
+                    if (!isValid)
+                        break;
+//                    ArrayList<String> damageTypes = condition.getValue();
+//                    for (String damageType : damageTypes) {
+//                        if ((damageType.equals("Fire") && damageFire > 0)
+//                                || (damageType.equals("Collapse") && damageCollapse > 0))
+//                            isValid = true;
+//                        else
+//                            isValid = false;
+//                        if (!isValid)
+//                            break;
+//                    }
                 }
                 if(!isValid)
                     break;
@@ -311,11 +325,9 @@ public class Environment {
         return false;
     }
 
-
-
-    // getters and setters for environment information
+    // getters and setters
     public int getInitCasualty() {
-        return this.initCasualty;
+        return initCasualty;
     }
 
     public void setInitCasualty(int initCasualty) {
@@ -338,14 +350,6 @@ public class Environment {
         this.initDamageCollapse = initDamageCollapse;
     }
 
-    public int getMciRadius() {
-        return mciRadius;
-    }
-
-    public void setMciRadius(int mciRadius) {
-        this.mciRadius = mciRadius;
-    }
-
     public int getBuildingHeight() {
         return buildingHeight;
     }
@@ -354,4 +358,27 @@ public class Environment {
         this.buildingHeight = buildingHeight;
     }
 
+    public int getMciRadius() {
+        return mciRadius;
+    }
+
+    public void setMciRadius(int mciRadius) {
+        this.mciRadius = mciRadius;
+    }
+
+    public static int getTotalCasualty() {
+        return totalCasualty;
+    }
+
+    public static void setTotalCasualty(int totalCasualty) {
+        Environment.totalCasualty = totalCasualty;
+    }
+
+    public static int getMCILevel() {
+        return MCILevel;
+    }
+
+    public static void setMCILevel(int MCILevel) {
+        Environment.MCILevel = MCILevel;
+    }
 }
