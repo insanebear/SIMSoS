@@ -8,12 +8,48 @@
   "treatmentCompliance": 0.6,
   "enforceRate": 0.3,
 
-  "meanCrew": 70,
-  "varCrew":5,
-  "meanGeneral":100,
-  "varGeneral": 10,
-  "meanIntensive": 50,
-  "varIntensive": 20,
-  "meanOperating": 30,
-  "varOperating": 10
+  "crew": 70,
+  "general":100,
+  "intensive": 50,
+  "operating": 30,
+  "hospitalLocations": [
+    {
+      "x": 2,
+      "y": 4
+    }, {
+      "x": 5,
+      "y": 4
+    }, {
+      "x": 2,
+      "y": 6
+    },
+    {
+      "x": 2,
+      "y": 4
+    },
+    {
+      "x": 3,
+      "y": 4
+    },
+    {
+      "x": 10,
+      "y": 9
+    },
+    {
+      "x": 2,
+      "y": 4
+    },
+    {
+      "x": 2,
+      "y": 3
+    },
+    {
+      "x": 6,
+      "y": 7
+    },
+    {
+      "x": 2,
+      "y": 4
+    }
+  ]
 }

@@ -6,13 +6,12 @@ import com.fasterxml.jackson.databind.type.CollectionType;
 import mci.Main;
 import simsos.scenario.SoSInfrastructure;
 import simsos.scenario.mci.Environment;
+import simsos.scenario.InfraDeserializer;
 import simsos.scenario.mci.MCIScenario;
 import simsos.scenario.mci.Patient;
 import simsos.scenario.mci.policy.*;
 import simsos.simulation.Simulator;
-import simsos.simulation.component.PropertyValue;
 import simsos.simulation.component.Scenario;
-import simsos.simulation.component.Snapshot;
 import simsos.simulation.component.World;
 
 import java.io.BufferedWriter;
@@ -21,7 +20,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 
 import static simsos.scenario.mci.Environment.patientsList;
 
@@ -53,6 +51,7 @@ public class SIMSoS {
         ObjectMapper mapper = new ObjectMapper();
 
         module.addDeserializer(Policy.class, new PolicyDeserializer(mapper));
+        module.addDeserializer(SoSInfrastructure.class, new InfraDeserializer(mapper));
         mapper.registerModule(module);
 
         CollectionType pCollectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Policy.class);
@@ -60,6 +59,8 @@ public class SIMSoS {
         Environment.policies = mapper.readValue(new File(args[0]), pCollectionType);
         // Read SoS properties for simulation
         infrastructure = mapper.readValue(new File("./json/SoSProperties.json"), SoSInfrastructure.class);
+
+
 
         Scenario scenario = new MCIScenario(infrastructure);
         World world = scenario.getWorld();

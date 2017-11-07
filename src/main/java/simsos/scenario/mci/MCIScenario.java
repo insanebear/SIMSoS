@@ -27,14 +27,10 @@ public class MCIScenario extends Scenario {
     private int totalPTS;
     private int totalH;
 
-    private int meanCrew;
-    private int varCrew;
-    private int meanGeneral;
-    private int varGeneral;
-    private int meanIntensive;
-    private int varIntensive;
-    private int meanOperating;
-    private int varOperating;
+    private int crew;
+    private int general;
+    private int intensive;
+    private int operating;
 
     private SoSInfrastructure infrastructure;
 
@@ -73,10 +69,10 @@ public class MCIScenario extends Scenario {
 
         // Hospital
         for(int i=0; i<this.totalH; i++){
-            int generalRoom = getRandomValue(varGeneral, meanGeneral);
-            int intensiveRoom = getRandomValue(varIntensive, meanIntensive);
-            int operatingRoom = getRandomValue(varOperating, meanOperating);
-            int medicalCrew = getRandomValue(varCrew, meanCrew);
+            int generalRoom = getGeneral();
+            int intensiveRoom = getIntensive();
+            int operatingRoom = getOperating();
+            int medicalCrew = getCrew();
 
             int locX = ThreadLocalRandom.current().nextInt(4, hospitalMapSize.getRight());
             int locY = rd.nextInt(hospitalMapSize.getRight());
@@ -112,14 +108,10 @@ public class MCIScenario extends Scenario {
         this.totalPTS = infrastructure.getNumPTSCenter();
         this.totalH = infrastructure.getNumHospital();
 
-        this.meanCrew = infrastructure.getMeanCrew();
-        this.varCrew = infrastructure.getVarCrew();
-        this.meanGeneral = infrastructure.getMeanGeneral();
-        this.varGeneral = infrastructure.getVarGeneral();
-        this.meanIntensive = infrastructure.getMeanIntensive();
-        this.varIntensive = infrastructure.getVarIntensive();
-        this.meanOperating = infrastructure.getMeanOperating();
-        this.varOperating = infrastructure.getVarOperating();
+        this.crew = infrastructure.getCrew();
+        this.general = infrastructure.getGeneral();
+        this.intensive = infrastructure.getIntensive();
+        this.operating = infrastructure.getOperating();
     }
 
     public double getEnforceRate() {
@@ -153,5 +145,21 @@ public class MCIScenario extends Scenario {
         Random random = new Random();
         Double rate = (double) random.nextFloat();
         return  rate < enforceRate;
+    }
+
+    public int getCrew() {
+        return crew;
+    }
+
+    public int getGeneral() {
+        return general;
+    }
+
+    public int getIntensive() {
+        return intensive;
+    }
+
+    public int getOperating() {
+        return operating;
     }
 }

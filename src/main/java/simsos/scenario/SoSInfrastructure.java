@@ -1,5 +1,6 @@
 package simsos.scenario;
 
+import simsos.scenario.mci.Location;
 import simsos.scenario.mci.cs.Information;
 
 import java.util.ArrayList;
@@ -19,15 +20,12 @@ public class SoSInfrastructure {
     private int numPTSCenter;
     private int numHospital;
 
-    private int meanCrew;
-    private int varCrew;
-    private int meanGeneral;
-    private int varGeneral;
-    private int meanIntensive;
-    private int varIntensive;
-    private int meanOperating;
-    private int varOperating;
+    private int crew;
+    private int general;
+    private int intensive;
+    private int operating;
 
+    private ArrayList<Location> hospitalLocations;
     private ArrayList<Information> csInformation;
 
     public double getRescueCompliance() {
@@ -82,69 +80,36 @@ public class SoSInfrastructure {
         this.numHospital = numHospital;
     }
 
-
-    public int getMeanCrew() {
-        return meanCrew;
+    public int getCrew() {
+        return crew;
     }
 
-    public void setMeanCrew(int meanCrew) {
-        this.meanCrew = meanCrew;
+    public void setCrew(int crew) {
+        this.crew = crew;
     }
 
-    public int getVarCrew() {
-        return varCrew;
+    public int getGeneral() {
+        return general;
     }
 
-    public void setVarCrew(int varCrew) {
-        this.varCrew = varCrew;
+    public void setGeneral(int general) {
+        this.general = general;
     }
 
-    public int getMeanGeneral() {
-        return meanGeneral;
+    public int getIntensive() {
+        return intensive;
     }
 
-    public void setMeanGeneral(int meanGeneral) {
-        this.meanGeneral = meanGeneral;
+    public void setIntensive(int intensive) {
+        this.intensive = intensive;
     }
 
-    public int getVarGeneral() {
-        return varGeneral;
+    public int getOperating() {
+        return operating;
     }
 
-    public void setVarGeneral(int varGeneral) {
-        this.varGeneral = varGeneral;
-    }
-
-    public int getMeanIntensive() {
-        return meanIntensive;
-    }
-
-    public void setMeanIntensive(int meanIntensive) {
-        this.meanIntensive = meanIntensive;
-    }
-
-    public int getVarIntensive() {
-        return varIntensive;
-    }
-
-    public void setVarIntensive(int varIntensive) {
-        this.varIntensive = varIntensive;
-    }
-
-    public int getMeanOperating() {
-        return meanOperating;
-    }
-
-    public void setMeanOperating(int meanOperating) {
-        this.meanOperating = meanOperating;
-    }
-
-    public int getVarOperating() {
-        return varOperating;
-    }
-
-    public void setVarOperating(int varOperating) {
-        this.varOperating = varOperating;
+    public void setOperating(int operating) {
+        this.operating = operating;
     }
 
     public void putCsInformation(Information information){
@@ -157,5 +122,13 @@ public class SoSInfrastructure {
 
     public void setEnforceRate(double enforceRate) {
         this.enforceRate = enforceRate;
+    }
+
+    public ArrayList<Location> getHospitalLocations() {
+        return hospitalLocations;
+    }
+
+    public void setHospitalLocations(ArrayList<Location> hospitalLocations) {
+        this.hospitalLocations = hospitalLocations;
     }
 }
