@@ -340,7 +340,7 @@ public class GndAmbulance extends Agent{
 
     @Override
     public boolean makeDecision() {
-        return new Random().nextFloat() < compliance;
+        return enforced || new Random().nextFloat() < compliance;
     }
 
     @Override

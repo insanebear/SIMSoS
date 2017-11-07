@@ -9,12 +9,11 @@ import java.util.ArrayList;
  */
 public class SoSInfrastructure {
 
-    //TODO role-compliance mapping?
     //NOTE Compliance descriptions based on mean values
     private double rescueCompliance; // indicates how much CS will follow policies
     private double transportCompliance;
     private double treatmentCompliance;
-    private boolean enforced=false;
+    private double enforceRate;
 
     private int numFireDepartment;
     private int numPTSCenter;
@@ -53,14 +52,6 @@ public class SoSInfrastructure {
 
     public void setTreatmentCompliance(double treatmentCompliance) {
         this.treatmentCompliance = treatmentCompliance;
-    }
-
-    public boolean isEnforced() {
-        return enforced;
-    }
-
-    public void setEnforced(boolean enforced) {
-        this.enforced = enforced;
     }
 
     public SoSInfrastructure() {
@@ -160,4 +151,11 @@ public class SoSInfrastructure {
         this.csInformation.add(information);
     }
 
+    public double getEnforceRate() {
+        return enforceRate;
+    }
+
+    public void setEnforceRate(double enforceRate) {
+        this.enforceRate = enforceRate;
+    }
 }

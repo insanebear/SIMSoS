@@ -102,19 +102,6 @@ public class Environment {
         MCILevel = calcMCILevel(totalCasualty);
     }
 
-    public void rearrangeStageZone(){
-        // exclude dead patients in stageZone
-        for(int i=0; i<stageZone.length; i++){
-            ArrayList<Integer> stageSpot = stageZone[i];
-            for(int idx=0; i<stageSpot.size(); i++){
-                int patientId = stageSpot.get(idx);
-                Patient patient = patientsList.get(patientId);
-                if(patient.isDead())
-                    stageSpot.remove(idx);
-            }
-        }
-    }
-
     // manipulate methods
     private static int calcMCILevel(int totalCasualty){
         if(totalCasualty<10)
@@ -129,10 +116,8 @@ public class Environment {
             return 5;
     }
 
-    // TODO conflict handling
     // check policy
     public static Policy checkActionPolicy(String role, String actionName, CallBack callBack){
-        //TODO Policy Conflict Handling (with assumption)
         /* "activePolicy" ArrayList stores valid policies that satisfy current condition.*/
         ArrayList<Policy> activePolicies;
         switch (role){
@@ -162,13 +147,11 @@ public class Environment {
     }
 
     public static ArrayList<Policy> checkCompliancePolicy(String role){
-        //TODO Policy Conflict Handling (with assumption)
         /* "activePolicy" ArrayList stores valid policies that satisfy current condition.*/
         ArrayList<Policy> activePolicies = evalPolicyCond(policies);
         ArrayList<Policy> activeByRole = new ArrayList<>();
         switch (role){
             case "RESCUE":
-
                 for(Policy p : activePolicies){
                     if(p.getRole().equals("RESCUE"))
                         activeByRole.add(p);
@@ -229,8 +212,6 @@ public class Environment {
 //                        if(!isValid)
 //                            break;
 //                    }
-
-
                 }else if(condition.getVariable().equals("Story")){
                     int value = Integer.parseInt(condition.getValue());
 //                    int value = Integer.parseInt(condition.getValue().get(0));

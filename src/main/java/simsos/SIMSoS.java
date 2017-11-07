@@ -56,10 +56,9 @@ public class SIMSoS {
         mapper.registerModule(module);
 
         CollectionType pCollectionType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Policy.class);
-        // CHECK
-//        Environment.policies = mapper.readValue(new File("src/main/json/policies/previousPolicy.json"), pCollectionType);
-//        infrastructure = mapper.readValue(new File("src/main/json/scenario/SoSProperties.json"), SoSInfrastructure.class);
+        // Read policy from an input parameter
         Environment.policies = mapper.readValue(new File(args[0]), pCollectionType);
+        // Read SoS properties for simulation
         infrastructure = mapper.readValue(new File("./json/SoSProperties.json"), SoSInfrastructure.class);
 
         Scenario scenario = new MCIScenario(infrastructure);

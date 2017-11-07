@@ -24,7 +24,6 @@ import static simsos.scenario.mci.Environment.stageZone;
  */
 public class Simulator {
     public static ArrayList<Snapshot> execute(World world, int endOfTime) throws IOException {
-//        BufferedWriter out = new BufferedWriter(new FileWriter("Simul_result.txt"));    //
         ArrayList<Snapshot> simulationLog = new ArrayList<Snapshot>();
 
         boolean stoppingCondition = false;
@@ -66,11 +65,7 @@ public class Simulator {
             // Verdict - evaluateProperties();
             if (world.getTime() >= endOfTime)
                 stoppingCondition = true;
-
-            // CHECK
-//            System.out.println("STAGE ZONE STATUS: "+Arrays.toString(stageZone));
         }
-
         // Last snapshot only
         simulationLog.add(world.getCurrentSnapshot(patientsList));
 

@@ -21,7 +21,7 @@ public class MCIScenario extends Scenario {
     private double mResCompliance;
     private double mTransCompliance;
     private double mTreatCompliance;
-    private boolean enforced;
+    private double enforceRate;
 
     private int totalFD;
     private int totalPTS;
@@ -50,11 +50,11 @@ public class MCIScenario extends Scenario {
 
         // Fire Department
         for(int i=0; i<this.totalFD; i++){
-            FireDepartment fd = new FireDepartment(this.world, i, "Fire Department", this.mResCompliance, this.isEnforced());
+            FireDepartment fd = new FireDepartment(this.world, i, "Fire Department", this.mResCompliance, isEnforced(getEnforceRate()));
             manager.setFireDepartments(fd);
 
             for(int j=0; j<fd.getAllocFighters(); j++){
-                FireFighter ff = new FireFighter(null, j, "Fire Fighter", "FD"+i, getRandomCompliance(mResCompliance), this.isEnforced());
+                FireFighter ff = new FireFighter(null, j, "Fire Fighter", "FD"+i, getRandomCompliance(mResCompliance), isEnforced(getEnforceRate()));
                 this.world.addAgent(ff);
                 fd.setWorkFighterList(j, ff);
             }
@@ -62,10 +62,10 @@ public class MCIScenario extends Scenario {
 
         // PTS Center
         for(int i=0; i<this.totalPTS; i++){
-            PTSCenter pts = new PTSCenter(this.world, i, "PTS Center", this.mTransCompliance, this.isEnforced());
+            PTSCenter pts = new PTSCenter(this.world, i, "PTS Center", this.mTransCompliance, isEnforced(getEnforceRate()));
             manager.setPtsCenters(pts);
             for(int j=0; j<pts.getAllocGndAmbul(); j++){
-                GndAmbulance gndAmbul = new GndAmbulance(null, j, "Gnd Ambulance", "PTS"+i , getRandomCompliance(mTransCompliance), this.isEnforced());
+                GndAmbulance gndAmbul = new GndAmbulance(null, j, "Gnd Ambulance", "PTS"+i , getRandomCompliance(mTransCompliance), isEnforced(getEnforceRate()));
                 this.world.addAgent(gndAmbul);
                 pts.setWorkGndAmbuls(j, gndAmbul);
             }
@@ -82,7 +82,7 @@ public class MCIScenario extends Scenario {
             int locY = rd.nextInt(hospitalMapSize.getRight());
 
             Hospital hospital = new Hospital(this.world, i, "Hospital", generalRoom,
-                    intensiveRoom, operatingRoom, new Location(locX, locY), medicalCrew, getRandomCompliance(mTreatCompliance), this.isEnforced());
+                    intensiveRoom, operatingRoom, new Location(locX, locY), medicalCrew, getRandomCompliance(mTreatCompliance), isEnforced(getEnforceRate()));
 
             // information setting for reset
             Information info = new Information();
@@ -106,7 +106,7 @@ public class MCIScenario extends Scenario {
         this.mResCompliance = infrastructure.getRescueCompliance();
         this.mTransCompliance = infrastructure.getTransportCompliance();
         this.mTreatCompliance = infrastructure.getTreatmentCompliance();
-        this.enforced = infrastructure.isEnforced();
+        this.enforceRate = infrastructure.getEnforceRate();
 
         this.totalFD = infrastructure.getNumFireDepartment();
         this.totalPTS = infrastructure.getNumPTSCenter();
@@ -122,8 +122,8 @@ public class MCIScenario extends Scenario {
         this.varOperating = infrastructure.getVarOperating();
     }
 
-    public boolean isEnforced() {
-        return enforced;
+    public double getEnforceRate() {
+        return enforceRate;
     }
 
     private int getRandomValue(int variance, int mean){
@@ -147,5 +147,11 @@ public class MCIScenario extends Scenario {
         }while(result < min || result > max);
 
         return result;
+    }
+
+    private boolean isEnforced(double enforceRate){
+        Random random = new Random();
+        Double rate = (double) random.nextFloat();
+        return  rate < enforceRate;
     }
 }

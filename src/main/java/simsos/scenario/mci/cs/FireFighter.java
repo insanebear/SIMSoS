@@ -261,7 +261,7 @@ public class FireFighter extends Agent{
 
     @Override
     public boolean makeDecision() {
-        return new Random().nextFloat() < compliance;
+        return enforced || new Random().nextFloat() < compliance;
     }
 
     @Override
@@ -417,11 +417,6 @@ public class FireFighter extends Agent{
                     candPatients = injuryTypeSelect(candPatients);
                     break;
             }
-//            if(candPatients.size() == 1) {
-////                        System.out.println(s + "Select used. (Patient)");
-//                break;
-//            }
-
 //            ArrayList<String> policyActionMethod = policy.getAction().getActionMethod();
 //            if(policyActionMethod.size()>0) {
 //                for (String s : policyActionMethod) {
@@ -444,18 +439,12 @@ public class FireFighter extends Agent{
 //                        break;
 //                    }
 //                }
-//                if (candPatients.size() != 1)
-//                    resIdx = candPatients.get(rd.nextInt(candPatients.size()));
-//                else
-//                    resIdx = candPatients.get(0);
+                if (candPatients.size() != 1)
+                    resIdx = candPatients.get(rd.nextInt(candPatients.size()));
+                else
+                    resIdx = candPatients.get(0);
 //            }
         } else {
-//            if(!decision)
-//                System.out.println("Decide not to follow the policy.");
-//            else
-//                System.out.println("Not fitted condition or No policy");
-//            System.out.println("Do the randomly select method.");
-
             Collections.shuffle(selectMethodList);
             for(String s: selectMethodList){
                 switch (s){
@@ -550,15 +539,9 @@ public class FireFighter extends Agent{
 //            policyActionMethod = policy.getAction().getActionMethod().get(0);
             actionMethod = policy.getAction().getActionMethod();
         } else {
-//            if(!decision)
-//                System.out.println("Decide not to follow the policy.");
-//            else
-//                System.out.println("Not fitted condition.");
-//            System.out.println("Do the randomly select method.");
             Collections.shuffle(stageMethodList);
             actionMethod = stageMethodList.get(0);
         }
-//        System.out.println(policyActionMethod + "Stage used. (Patient)");
         if(actionMethod.equals("Random")){
             destIdx = rd.nextInt(stageZone.length);
         }else if(actionMethod.equals("MeanRandom")){
@@ -619,7 +602,6 @@ public class FireFighter extends Agent{
             if(checkDeadPatient(patientId))
                 deadList.add(patientId);
         }
-//        System.out.println("RescueDEAD: "+deadList.size());
         for (Integer patientId : deadList){
             spotPatientList.remove(spotPatientList.indexOf(patientId));
         }
