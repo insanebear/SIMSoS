@@ -118,16 +118,6 @@ public class MCIScenario extends Scenario {
         return enforceRate;
     }
 
-    private int getRandomValue(int variance, int mean){
-        Random rd = new Random();
-        int min = (int)Math.round(mean*0.3);
-        int max = (int)Math.round(mean*0.7);
-        int result = (int)Math.round(rd.nextGaussian()* variance + mean);
-        while(result < min || result > max)
-            result = (int)Math.round(rd.nextGaussian()* variance + mean);
-        return result;
-    }
-
     public double getRandomCompliance(double mCompliance) {
         Random rd = new Random();
         double min = mCompliance;
@@ -135,9 +125,9 @@ public class MCIScenario extends Scenario {
         double result;
 
         do{
-            result = Math.round(rd.nextDouble()*10d)/10d;
-        }while(result < min || result > max);
-
+            Double randomNum = rd.nextGaussian()*0.1+0.6;
+            result = (double)Math.round(randomNum*10)/10;
+        }while(result < min || result >= max);
         return result;
     }
 
