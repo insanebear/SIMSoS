@@ -60,12 +60,9 @@ public class SIMSoS {
         // Read SoS properties for simulation
         infrastructure = mapper.readValue(new File("./json/SoSProperties.json"), SoSInfrastructure.class);
 
-
-
         Scenario scenario = new MCIScenario(infrastructure);
         World world = scenario.getWorld();
         ArrayList<Double> simResults = new ArrayList<>();
-//        printAllPatientStatus();
 
         // NOTE simulation repeat 50-time
         for(int nSimulation = 0; nSimulation<50; nSimulation++){
@@ -107,8 +104,8 @@ public class SIMSoS {
         System.out.println("Dead patient: "+ deadPatient);
 
         double average = (double)alivePatient/totalCasualties*100;
-
-//        printAllPatientStatus();
+        System.out.println("Saved percentage: "+average);
+        printAllPatientStatus();
         return Math.round(average*100d) / 100d;
     }
 

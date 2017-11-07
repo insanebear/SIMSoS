@@ -26,12 +26,10 @@ public class PatientFactory {
 
         for(int i=0; i<totalCasualty; i++){
             Patient.InjuryType injuryType = injuryList[rd.nextInt(injuryList.length)];
-            int strength = 299;
+            int strength = 399;
             while(!checkValidStrength(strength)){
                 strength = setStrengthByType(injuryType);
             }
-
-
             int story = rd.nextInt(building.size());
             int x = -1;
             int y = -1;
@@ -78,7 +76,6 @@ public class PatientFactory {
     }
 
     private boolean checkValidStrength(int strength){
-        //NOTE injury type에 따라서 제한선을 둘까. 고민.
         if(strength<160 && strength>=0)
             return true;
         else
