@@ -1,11 +1,9 @@
 package simsos.scenario;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
@@ -49,9 +47,9 @@ public class InfraDeserializer extends StdDeserializer<SoSInfrastructure> {
         infrastructure.setHospitalLocations(locations);
 
         infrastructure.setTypeSoS(mapper.convertValue(jsonNode.get("typeSoS"), String.class));
-        infrastructure.setNumFireDepartment(mapper.convertValue(jsonNode.get("numFireDepartment"), Integer.class));
-        infrastructure.setNumPTSCenter(mapper.convertValue(jsonNode.get("numPTSCenter"), Integer.class));
-        infrastructure.setNumHospital(mapper.convertValue(jsonNode.get("numHospital"), Integer.class));
+        infrastructure.setTotFireFighters(mapper.convertValue(jsonNode.get("totFireFighters"), Integer.class));
+        infrastructure.setNumPTSCenter(mapper.convertValue(jsonNode.get("totGndAmbulances"), Integer.class));
+        infrastructure.setTotHospital(mapper.convertValue(jsonNode.get("totHospital"), Integer.class));
 
         infrastructure.setMinCompliance(mapper.convertValue(jsonNode.get("minCompliance"), Double.class));
         infrastructure.setMaxCompliance(mapper.convertValue(jsonNode.get("maxCompliance"), Double.class));

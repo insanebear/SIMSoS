@@ -21,8 +21,8 @@ public class MCIWorld extends World {
     }
     @Override
     public void reset() {
-        super.reset();
         environment.resetEnvironment();
+        super.reset();
     }
 
     @Override
@@ -49,7 +49,6 @@ public class MCIWorld extends World {
     private void setEnvironment(){
         ObjectMapper mapper = new ObjectMapper();
         try {
-            //CHECK
 //            environment = mapper.readValue(new File("src/main/json/scenario/envProperties.json"), Environment.class);
             environment = mapper.readValue(new File("./json/envProperties.json"), Environment.class);
             environment.initEnvironment();

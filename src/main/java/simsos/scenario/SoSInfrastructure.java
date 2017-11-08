@@ -19,9 +19,9 @@ public class SoSInfrastructure {
     private double treatmentCompliance;
     private double enforceRate;
 
-    private int numFireDepartment;
-    private int numPTSCenter;
-    private int numHospital;
+    private int totFireFighters;
+    private int totGndAmbulances;
+    private int totHospital;
 
     private int crew;
     private int general;
@@ -83,28 +83,28 @@ public class SoSInfrastructure {
         this.csInformation = new ArrayList<>();
     }
 
-    public int getNumFireDepartment() {
-        return numFireDepartment;
+    public int getTotFireFighters() {
+        return totFireFighters;
     }
 
-    public void setNumFireDepartment(int numFireDepartment) {
-        this.numFireDepartment = numFireDepartment;
+    public void setTotFireFighters(int totFireFighters) {
+        this.totFireFighters = totFireFighters;
     }
 
     public int getNumPTSCenter() {
-        return numPTSCenter;
+        return totGndAmbulances;
     }
 
     public void setNumPTSCenter(int numPTSCenter) {
-        this.numPTSCenter = numPTSCenter;
+        this.totGndAmbulances = numPTSCenter;
     }
 
-    public int getNumHospital() {
-        return numHospital;
+    public int getTotHospital() {
+        return totHospital;
     }
 
-    public void setNumHospital(int numHospital) {
-        this.numHospital = numHospital;
+    public void setTotHospital(int totHospital) {
+        this.totHospital = totHospital;
     }
 
     public int getCrew() {

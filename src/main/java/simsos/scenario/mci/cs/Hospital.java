@@ -98,18 +98,6 @@ public class Hospital extends Agent {
         this.releaseCompliance = randomCompliance();
         this.enforced = enforced;
 
-        patientsInHospital = new ArrayList<>();
-        generalRoom = new ArrayList<>();
-        intensiveRoom = new ArrayList<>();
-        operatingRoom = new ArrayList<>();
-
-        this.status = Status.WAITING;
-        this.currAction = Actions.WAIT;
-        this.currPolicy = null;
-
-//        System.out.println(getName()+" "+getId()+" is at "+location.getX()+", "+location.getY());
-//        System.out.println("General: "+totGeneral+", Intensive: "+totIntensive+", Operating: "+totOperating+", Crew: "+medicalCrew);
-
         this.reset();
     }
 
@@ -176,7 +164,13 @@ public class Hospital extends Agent {
 
     @Override
     public void reset() {
-
+        this.status = Status.WAITING;
+        this.currAction = Actions.WAIT;
+        this.currPolicy = null;
+        patientsInHospital = new ArrayList<>();
+        generalRoom = new ArrayList<>();
+        intensiveRoom = new ArrayList<>();
+        operatingRoom = new ArrayList<>();
     }
 
     @Override
@@ -784,14 +778,18 @@ public class Hospital extends Agent {
 
     private double randomCompliance(){
         Random rd = new Random();
-        double min = this.compliance*0.3;
-        double max = 1-min;
-        double tempCompliance = 0;
-        while(tempCompliance < min || tempCompliance > max){
-            tempCompliance = Math.round(rd.nextGaussian()*3 + this.compliance*10);
-            tempCompliance = tempCompliance/10;
-        }
-        return tempCompliance;
+        double min = 0.1;
+        double max = 1.0;
+        double result;
+
+        if(enforced)
+            return 1;
+        do{
+            Double randomNum = rd.nextGaussian()*0.1+this.compliance;
+            result = (double)Math.round(randomNum*10)/10;
+        }while(result < min || result >= max);
+
+        return result;
     }
 
     private boolean checkActive(){

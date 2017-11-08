@@ -74,41 +74,23 @@ public class GndAmbulance extends Agent{
 
     public GndAmbulance(World world, int gAmbId, String name, String affiliation, double compliance, boolean enforced) {
         super(world);
-        Random rd = new Random();
         this.name = name;
         this.affiliation = affiliation;
         this.role = "TRANSPORT";
-
-        if(checkActive()){
-            this.status = Status.WAITING;
-            this.currAction = Actions.WAIT;
-        }else{
-            this.status = Status.INACTIVE;
-            this.currAction = Actions.NONE;
-        }
-        this.findingTrial = 0;
         this.gAmbId = gAmbId;
-        this.location = new Location(rd.nextInt(patientMapSize.getLeft()), 0);
-        this.originLocation = new Location(this.location.getX(), this.location.getY());
-        this.loadPatientId = -1;
-        this.status = Status.WAITING;
-        this.currAction = Actions.WAIT;
-
         this.compliance = compliance;
+        this.enforced = enforced;
         this.loadCompliance = randomCompliance();
         this.deliverCompliance = randomCompliance();
         this.returnCompliance = randomCompliance();
         this.waitCompliance = randomCompliance();
-        this.enforced = enforced;
 
         loadMethodList = new ArrayList<>();
         deliverMethodList = new ArrayList<>();
         returnMethodList = new ArrayList<>();
         makeActionMethodList();
 
-        this.reachTime = setReachTime();
-        this.defaultWait = 1; //TODO review the policy which can manage waiting time.
-        setWaitTime(defaultWait);
+        this.reset();
     }
 
     @Override
@@ -320,7 +302,21 @@ public class GndAmbulance extends Agent{
 
     @Override
     public void reset() {
-
+        Random rd = new Random();
+        if(checkActive()){
+            this.status = Status.WAITING;
+            this.currAction = Actions.WAIT;
+        }else{
+            this.status = Status.INACTIVE;
+            this.currAction = Actions.NONE;
+        }
+        this.findingTrial = 0;
+        this.location = new Location(rd.nextInt(patientMapSize.getLeft()), 0);
+        this.originLocation = new Location(this.location.getX(), this.location.getY());
+        this.loadPatientId = -1;
+        this.reachTime = setReachTime();
+        this.defaultWait = 1; //TODO review the policy which can manage waiting time.
+        setWaitTime(defaultWait);
     }
 
     @Override
@@ -770,12 +766,6 @@ public class GndAmbulance extends Agent{
             policyActionMethod = policy.getAction().getActionMethod();
 //            policyActionMethod = policy.getAction().getActionMethod().get(0);
         } else {
-//            if(!decision)
-//                System.out.println("Decide not to follow the policy.");
-//            else
-//                System.out.println("Not fitted condition or No policy");
-//            System.out.println("Do the randomly select method.");
-
             Collections.shuffle(returnMethodList);
             policyActionMethod = returnMethodList.get(0);
         }
@@ -840,14 +830,18 @@ public class GndAmbulance extends Agent{
 
     private double randomCompliance(){
         Random rd = new Random();
-        double min = this.compliance*0.3;
-        double max = 1-min;
-        double tempCompliance = 0;
-        while(tempCompliance < min || tempCompliance > max){
-            tempCompliance = Math.round(rd.nextGaussian()*3 + this.compliance*10);
-            tempCompliance = tempCompliance/10;
-        }
-        return tempCompliance;
+        double min = 0.1;
+        double max = 1.0;
+        double result;
+
+        if(enforced)
+            return 1;
+        do{
+            Double randomNum = rd.nextGaussian()*0.1+this.compliance;
+            result = (double)Math.round(randomNum*10)/10;
+        }while(result < min || result >= max);
+
+        return result;
     }
 
     private boolean checkActive(){

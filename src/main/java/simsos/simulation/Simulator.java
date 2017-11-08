@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 
+import static simsos.SIMSoS.printAllPatientStatus;
 import static simsos.scenario.mci.Environment.patientsList;
 import static simsos.scenario.mci.Environment.stageZone;
 
@@ -29,13 +30,13 @@ public class Simulator {
         boolean stoppingCondition = false;
         ArrayList<Action> actions = new ArrayList<>();
         ArrayList<Action> immediateActions = new ArrayList<>();
+        // Env reset..
 
         world.reset();
         simulationLog.add(world.getCurrentSnapshot(patientsList)); // Initial snapshot
-
+        printAllPatientStatus();
         while (!stoppingCondition) {
             System.out.println("World Time: " + world.getTime());
-
             do {
                 immediateActions.clear();
                 actions.clear();

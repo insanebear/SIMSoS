@@ -5,10 +5,8 @@ import simsos.scenario.mci.cs.*;
 import simsos.simulation.component.Scenario;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-
-import static simsos.scenario.mci.Environment.hospitalMapSize;
 
 /**
  * Created by mgjin on 2017-06-28.
@@ -26,19 +24,20 @@ public class MCIScenario extends Scenario {
     private double mTreatCompliance;
     private double enforceRate;
 
-    private int totalFD;
-    private int totalPTS;
+    private int totFireFighters;
+    private int totAmbulance;
     private int totalH;
 
     private int crew;
     private int general;
     private int intensive;
     private int operating;
+    private ArrayList<Location> hospitalLocations;
 
     private SoSInfrastructure infrastructure;
 
     public MCIScenario(SoSInfrastructure infrastructure) throws IOException {
-        Random rd = new Random();
+//        Random rd = new Random();
         this.world = new MCIWorld();
         this.infrastructure = infrastructure;
         setInfrastructure();
@@ -47,27 +46,16 @@ public class MCIScenario extends Scenario {
         SoSManager manager = new SoSManager(this.world, "SoSManager");
         this.world.addAgent(manager);
 
-        // Fire Department
-        for(int i=0; i<this.totalFD; i++){
-            FireDepartment fd = new FireDepartment(this.world, i, "Fire Department", this.mResCompliance, isEnforced(getEnforceRate()));
-            manager.setFireDepartments(fd);
-
-            for(int j=0; j<fd.getAllocFighters(); j++){
-                FireFighter ff = new FireFighter(null, j, "Fire Fighter", "FD"+i, makeCSCompliance(mResCompliance), isEnforced(getEnforceRate()));
-                this.world.addAgent(ff);
-                fd.setWorkFighterList(j, ff);
-            }
+        // Fire Fighter
+        for(int i = 0; i<this.totFireFighters; i++){
+            FireFighter ff = new FireFighter(null, i, "Fire Fighter", "FD", makeCSCompliance(mResCompliance), isEnforced(getEnforceRate()));
+            this.world.addAgent(ff);
         }
 
-        // PTS Center
-        for(int i=0; i<this.totalPTS; i++){
-            PTSCenter pts = new PTSCenter(this.world, i, "PTS Center", this.mTransCompliance, isEnforced(getEnforceRate()));
-            manager.setPtsCenters(pts);
-            for(int j=0; j<pts.getAllocGndAmbul(); j++){
-                GndAmbulance gndAmbul = new GndAmbulance(null, j, "Gnd Ambulance", "PTS"+i , makeCSCompliance(mTransCompliance), isEnforced(getEnforceRate()));
-                this.world.addAgent(gndAmbul);
-                pts.setWorkGndAmbuls(j, gndAmbul);
-            }
+        // PTS Ambulance
+        for(int i = 0; i<this.totAmbulance; i++){
+            GndAmbulance gndAmbul = new GndAmbulance(null, i, "Gnd Ambulance", "PTS", makeCSCompliance(mTransCompliance), isEnforced(getEnforceRate()));
+            this.world.addAgent(gndAmbul);
         }
 
         // Hospital
@@ -77,11 +65,11 @@ public class MCIScenario extends Scenario {
             int operatingRoom = getOperating();
             int medicalCrew = getCrew();
 
-            int locX = ThreadLocalRandom.current().nextInt(4, hospitalMapSize.getRight());
-            int locY = rd.nextInt(hospitalMapSize.getRight());
+//            int locX = ThreadLocalRandom.current().nextInt(4, hospitalMapSize.getRight());
+//            int locY = rd.nextInt(hospitalMapSize.getRight());
 
             Hospital hospital = new Hospital(this.world, i, "Hospital", generalRoom,
-                    intensiveRoom, operatingRoom, new Location(locX, locY), medicalCrew, makeCSCompliance(mTreatCompliance), isEnforced(getEnforceRate()));
+                    intensiveRoom, operatingRoom, getHospitalLocations().get(i), medicalCrew, makeCSCompliance(mTreatCompliance), isEnforced(getEnforceRate()));
 
             // information setting for reset
             Information info = new Information();
@@ -97,8 +85,7 @@ public class MCIScenario extends Scenario {
             this.world.addAgent(hospital); // hospital acts by itself
             manager.setHospitals(hospital);
         }
-
-        this.checker = null;
+//        this.checker = null;
     }
 
     public void setInfrastructure() {
@@ -110,14 +97,15 @@ public class MCIScenario extends Scenario {
         this.mTreatCompliance = infrastructure.getTreatmentCompliance();
         this.enforceRate = infrastructure.getEnforceRate();
 
-        this.totalFD = infrastructure.getNumFireDepartment();
-        this.totalPTS = infrastructure.getNumPTSCenter();
-        this.totalH = infrastructure.getNumHospital();
+        this.totFireFighters = infrastructure.getTotFireFighters();
+        this.totAmbulance = infrastructure.getNumPTSCenter();
+        this.totalH = infrastructure.getTotHospital();
 
         this.crew = infrastructure.getCrew();
         this.general = infrastructure.getGeneral();
         this.intensive = infrastructure.getIntensive();
         this.operating = infrastructure.getOperating();
+        this.hospitalLocations = infrastructure.getHospitalLocations();
     }
 
     public double getEnforceRate() {
@@ -178,5 +166,9 @@ public class MCIScenario extends Scenario {
 
     public double getMaxCompliance() {
         return maxCompliance;
+    }
+
+    public ArrayList<Location> getHospitalLocations() {
+        return hospitalLocations;
     }
 }

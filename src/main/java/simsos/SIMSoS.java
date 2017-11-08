@@ -65,7 +65,7 @@ public class SIMSoS {
         ArrayList<Double> simResults = new ArrayList<>();
 
         // NOTE simulation repeat 50-time
-        for(int nSimulation = 0; nSimulation<50; nSimulation++){
+        for(int nSim = 0; nSim<50; nSim++){
             Simulator.execute(world, 100);
             simResults.add(calcGoalAchievement());
         }
@@ -75,7 +75,6 @@ public class SIMSoS {
         BufferedWriter out = new BufferedWriter(new FileWriter("Sim_Result.txt"));
         out.write(achievement);
         out.close();
-
     }
 
     public static void printAllPatientStatus(){
@@ -113,9 +112,10 @@ public class SIMSoS {
         double sumResult = 0.0;
         System.out.println("Achievements");
         for(Double res : simResults) {
-            System.out.println(res);
+            System.out.print(res+", ");
             sumResult += res;
         }
+        System.out.println();
         double average = sumResult / simResults.size();
         System.out.println("Average achievement of 50 simulations: "+ average);
         return Math.round(average*100d) / 100d;

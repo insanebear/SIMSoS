@@ -76,10 +76,7 @@ public class PatientFactory {
     }
 
     private boolean checkValidStrength(int strength){
-        if(strength<160 && strength>=0)
-            return true;
-        else
-            return false;
+        return (strength<160 && strength>=0);
     }
 
 }

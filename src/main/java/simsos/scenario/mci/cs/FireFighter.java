@@ -67,18 +67,6 @@ public class FireFighter extends Agent{
         this.role = "RESCUE";
         this.fighterId = fighterId;
         this.enforced = enforced;
-        this.location = new Location(0, 0);
-        this.story = 0;
-        this.rescuedPatientId = -1;     // no patient rescued
-
-        if(checkActive()){
-            this.status = Status.SEARCHING;
-            this.currAction = Actions.SEARCH;
-        }else{
-            this.status = Status.INACTIVE;
-            this.currAction = Actions.NONE;
-        }
-
         this.compliance = compliance;
         this.selectCompliance = randomCompliance();
         this.stageCompliance = randomCompliance();
@@ -87,9 +75,7 @@ public class FireFighter extends Agent{
         stageMethodList = new ArrayList<>();
         makeActionMethodList();
 
-        this.destCoordinate = new Location(0, 0);
-        setDestination();
-        this.reachTime = setReachTime();
+        this.reset();
     }
 
     @Override
@@ -241,7 +227,20 @@ public class FireFighter extends Agent{
 
     @Override
     public void reset() {
-
+        if(checkActive()){
+            this.status = Status.SEARCHING;
+            this.currAction = Actions.SEARCH;
+        }else{
+            this.status = Status.INACTIVE;
+            this.currAction = Actions.NONE;
+        }
+        this.currPolicy = null;
+        this.story = 0;
+        this.location = new Location(0, 0);
+        this.rescuedPatientId = -1;
+        this.destCoordinate = new Location(0, 0);
+        setDestination();
+        this.reachTime = setReachTime();
     }
 
     @Override
@@ -586,14 +585,18 @@ public class FireFighter extends Agent{
 
     private double randomCompliance(){
         Random rd = new Random();
-        double min = this.compliance*0.3;
-        double max = 1-min;
-        double tempCompliance = 0;
-        while(tempCompliance < min || tempCompliance > max){
-            tempCompliance = Math.round(rd.nextGaussian()*3 + this.compliance*10);
-            tempCompliance = tempCompliance/10;
-        }
-        return tempCompliance;
+        double min = 0.1;
+        double max = 1.0;
+        double result;
+
+        if(enforced)
+            return 1;
+        do{
+            Double randomNum = rd.nextGaussian()*0.1+this.compliance;
+            result = (double)Math.round(randomNum*10)/10;
+        }while(result < min || result >= max);
+
+        return result;
     }
 
     private void excludeDeadPatient(ArrayList<Integer> spotPatientList){

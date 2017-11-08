@@ -82,10 +82,7 @@ public class Environment {
 
     // reset environment
     public void resetEnvironment(){
-        totalCasualty = initCasualty;
-        MCILevel = calcMCILevel(totalCasualty);
-        damageFire = initDamageFire;
-        damageCollapse = initDamageCollapse;
+        initEnvironment();
     }
 
     // update environment
