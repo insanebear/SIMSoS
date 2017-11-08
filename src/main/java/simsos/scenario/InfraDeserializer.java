@@ -48,10 +48,13 @@ public class InfraDeserializer extends StdDeserializer<SoSInfrastructure> {
         }
         infrastructure.setHospitalLocations(locations);
 
+        infrastructure.setTypeSoS(mapper.convertValue(jsonNode.get("typeSoS"), String.class));
         infrastructure.setNumFireDepartment(mapper.convertValue(jsonNode.get("numFireDepartment"), Integer.class));
         infrastructure.setNumPTSCenter(mapper.convertValue(jsonNode.get("numPTSCenter"), Integer.class));
         infrastructure.setNumHospital(mapper.convertValue(jsonNode.get("numHospital"), Integer.class));
 
+        infrastructure.setMinCompliance(mapper.convertValue(jsonNode.get("minCompliance"), Double.class));
+        infrastructure.setMaxCompliance(mapper.convertValue(jsonNode.get("maxCompliance"), Double.class));
         infrastructure.setRescueCompliance(mapper.convertValue(jsonNode.get("rescueCompliance"), Double.class));
         infrastructure.setTransportCompliance(mapper.convertValue(jsonNode.get("transportCompliance"), Double.class));
         infrastructure.setTreatmentCompliance(mapper.convertValue(jsonNode.get("treatmentCompliance"), Double.class));

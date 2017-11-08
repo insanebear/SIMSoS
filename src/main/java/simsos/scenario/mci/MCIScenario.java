@@ -18,6 +18,9 @@ import static simsos.scenario.mci.Environment.hospitalMapSize;
 public class MCIScenario extends Scenario {
 
     // indicates how much CS will follow policies
+    private String typeSoS;
+    private double minCompliance;
+    private double maxCompliance;
     private double mResCompliance;
     private double mTransCompliance;
     private double mTreatCompliance;
@@ -50,7 +53,7 @@ public class MCIScenario extends Scenario {
             manager.setFireDepartments(fd);
 
             for(int j=0; j<fd.getAllocFighters(); j++){
-                FireFighter ff = new FireFighter(null, j, "Fire Fighter", "FD"+i, getRandomCompliance(mResCompliance), isEnforced(getEnforceRate()));
+                FireFighter ff = new FireFighter(null, j, "Fire Fighter", "FD"+i, makeCSCompliance(mResCompliance), isEnforced(getEnforceRate()));
                 this.world.addAgent(ff);
                 fd.setWorkFighterList(j, ff);
             }
@@ -61,7 +64,7 @@ public class MCIScenario extends Scenario {
             PTSCenter pts = new PTSCenter(this.world, i, "PTS Center", this.mTransCompliance, isEnforced(getEnforceRate()));
             manager.setPtsCenters(pts);
             for(int j=0; j<pts.getAllocGndAmbul(); j++){
-                GndAmbulance gndAmbul = new GndAmbulance(null, j, "Gnd Ambulance", "PTS"+i , getRandomCompliance(mTransCompliance), isEnforced(getEnforceRate()));
+                GndAmbulance gndAmbul = new GndAmbulance(null, j, "Gnd Ambulance", "PTS"+i , makeCSCompliance(mTransCompliance), isEnforced(getEnforceRate()));
                 this.world.addAgent(gndAmbul);
                 pts.setWorkGndAmbuls(j, gndAmbul);
             }
@@ -78,7 +81,7 @@ public class MCIScenario extends Scenario {
             int locY = rd.nextInt(hospitalMapSize.getRight());
 
             Hospital hospital = new Hospital(this.world, i, "Hospital", generalRoom,
-                    intensiveRoom, operatingRoom, new Location(locX, locY), medicalCrew, getRandomCompliance(mTreatCompliance), isEnforced(getEnforceRate()));
+                    intensiveRoom, operatingRoom, new Location(locX, locY), medicalCrew, makeCSCompliance(mTreatCompliance), isEnforced(getEnforceRate()));
 
             // information setting for reset
             Information info = new Information();
@@ -99,6 +102,9 @@ public class MCIScenario extends Scenario {
     }
 
     public void setInfrastructure() {
+        this.typeSoS = infrastructure.getTypeSoS();
+        this.minCompliance = infrastructure.getMinCompliance();
+        this.maxCompliance = infrastructure.getMaxCompliance();
         this.mResCompliance = infrastructure.getRescueCompliance();
         this.mTransCompliance = infrastructure.getTransportCompliance();
         this.mTreatCompliance = infrastructure.getTreatmentCompliance();
@@ -118,16 +124,25 @@ public class MCIScenario extends Scenario {
         return enforceRate;
     }
 
-    public double getRandomCompliance(double mCompliance) {
+    public double makeCSCompliance(double mCompliance) {
         Random rd = new Random();
-        double min = mCompliance;
-        double max = 0.9;
+        double min = getMinCompliance();
+        double max = getMaxCompliance();
+        double avg = mCompliance;
         double result;
 
+        switch (getTypeSoS()){
+            case "D":   // directed
+                return 1;
+            case "D+A": // directed + acknowledge
+                max = 1;
+                break;
+        }
         do{
-            Double randomNum = rd.nextGaussian()*0.1+0.6;
+            Double randomNum = rd.nextGaussian()*0.1+avg;
             result = (double)Math.round(randomNum*10)/10;
         }while(result < min || result >= max);
+
         return result;
     }
 
@@ -151,5 +166,17 @@ public class MCIScenario extends Scenario {
 
     public int getOperating() {
         return operating;
+    }
+
+    public String getTypeSoS() {
+        return typeSoS;
+    }
+
+    public double getMinCompliance() {
+        return minCompliance;
+    }
+
+    public double getMaxCompliance() {
+        return maxCompliance;
     }
 }

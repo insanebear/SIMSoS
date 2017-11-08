@@ -1,8 +1,11 @@
 {
-  "numFireDepartment": 10,
-  "numPTSCenter": 8,
-  "numHospital": 10,
+  "typeSoS": "D",
+  "numFireDepartment": 2,
+  "numPTSCenter": 2,
+  "numHospital": 3,
 
+  "minCompliance": 0.1,
+  "maxCompliance": 0.9,
   "rescueCompliance": 0.3,
   "transportCompliance": 0.5,
   "treatmentCompliance": 0.6,

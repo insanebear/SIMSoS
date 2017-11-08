@@ -111,8 +111,11 @@ public class SIMSoS {
 
     public static double calcMeanAchievement(ArrayList<Double> simResults){
         double sumResult = 0.0;
-        for(Double res : simResults)
-            sumResult+=res;
+        System.out.println("Achievements");
+        for(Double res : simResults) {
+            System.out.println(res);
+            sumResult += res;
+        }
         double average = sumResult / simResults.size();
         System.out.println("Average achievement of 50 simulations: "+ average);
         return Math.round(average*100d) / 100d;

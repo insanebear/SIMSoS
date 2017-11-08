@@ -11,6 +11,9 @@ import java.util.ArrayList;
 public class SoSInfrastructure {
 
     //NOTE Compliance descriptions based on mean values
+    private String typeSoS;
+    private double minCompliance;
+    private double maxCompliance;
     private double rescueCompliance; // indicates how much CS will follow policies
     private double transportCompliance;
     private double treatmentCompliance;
@@ -27,6 +30,30 @@ public class SoSInfrastructure {
 
     private ArrayList<Location> hospitalLocations;
     private ArrayList<Information> csInformation;
+
+    public String getTypeSoS() {
+        return typeSoS;
+    }
+
+    public void setTypeSoS(String typeSoS) {
+        this.typeSoS = typeSoS;
+    }
+
+    public double getMinCompliance() {
+        return minCompliance;
+    }
+
+    public void setMinCompliance(double minCompliance) {
+        this.minCompliance = minCompliance;
+    }
+
+    public double getMaxCompliance() {
+        return maxCompliance;
+    }
+
+    public void setMaxCompliance(double maxCompliance) {
+        this.maxCompliance = maxCompliance;
+    }
 
     public double getRescueCompliance() {
         return rescueCompliance;
