@@ -413,66 +413,42 @@ public class Hospital extends Agent {
             for(Integer patientId : toBeOperated){
                 Patient patient = patientsList.get(patientId);
                 movePatientRoom("Operating", patientId);
-                if(patient.getPrevRoomName().equals("General"))         // maintain the bed number
+                if(patient.getPrevRoomName().equals("General")) {       // maintain the bed number
                     removePatient(patientId, generalRoom);
-                else if(patient.getPrevRoomName().equals("Intensive"))  // maintain the bed number
+                    availGeneral++;
+                } else if(patient.getPrevRoomName().equals("Intensive")) { // maintain the bed number
                     removePatient(patientId, intensiveRoom);
+                    availIntensive++;
+                }
             }
         }
-
+        ArrayList<Integer> toBeRemovedPatient = new ArrayList<>();
         // operate patients in operating room
         for(Integer patientId : operatingRoom){
             Patient patient = patientsList.get(patientId);
 
             // move patients who are finished operation
-            if(patient.getOperateTime()==0 || patient.getStrength()>=270)
+//            if(patient.getOperateTime()==0 || patient.getStrength()>=270)
+            if(patient.getOperateTime()==0) {
                 patient.setOperated(true);
 
-            if(patient.isOperated()){
-                patient.changeStat(); // to RECOVERY
-                // After surgery,
-                if(patient.getPrevRoomName().equals("Intensive")){
-                    if(patient.getSeverity()<7 && availGeneral>0){
-                        movePatientRoom("General", patientId);
-                        availIntensive++;
-                        removePatient(patientId, intensiveRoom);
-                    } else { // else, go back to original bed.
-                        patient.setPrevRoomName(patient.getRoomName());
-                        patient.setRoomName("Intensive");
-                    }
-                }else if(patient.getPrevRoomName().equals("General")){
-                    if(patient.getSeverity()>6 && availIntensive>0){
-                        movePatientRoom("Intensive", patientId);
-                        availGeneral++;
-                        removePatient(patientId, generalRoom);
-                    } else {// else, go back to original bed.
-                        patient.setPrevRoomName(patient.getRoomName());
-                        patient.setRoomName("General");
-                    }
-                }
-                removePatient(patientId, operatingRoom);
-                availOperating++;
-                break;
-            }
-
-            // new operation
-            if(successSurgery){
-                if(patient.getSeverity() >= 7)
-//                    strength = ThreadLocalRandom.current().nextInt(20, 40);
-                    recoverStrength = ThreadLocalRandom.current().nextInt(60, 80);
-                else if(patient.getSeverity() >= 4)
-//                    strength = ThreadLocalRandom.current().nextInt(30, 50);
-                    recoverStrength = ThreadLocalRandom.current().nextInt(70, 100);
+                Random rd = new Random ();
+                if(rd.nextDouble() <= 0.1*patient.getSeverity())
+                    patient.recoverStrength(-patient.getStrength());
                 else
-//                    strength = ThreadLocalRandom.current().nextInt(50, 70);
-                    recoverStrength = ThreadLocalRandom.current().nextInt(100, 120);
+                    patient.recoverStrength(299-patient.getStrength());
+
+                patient.changeStat(); // to CURED or DEAD
+                toBeRemovedPatient.add(patientId);
+//                removePatient(patientId, operatingRoom);
+                availOperating++;
             } else {
-                recoverStrength = ThreadLocalRandom.current().nextInt(-20, -1);
-                if(new Random().nextBoolean())
-                    patient.increaseOperateTime();
+                patient.decreaseOperateTime();
             }
-            patient.recoverStrength(recoverStrength);
-            patient.decreaseOperateTime();
+        }
+
+        for(int i=0; i<toBeRemovedPatient.size(); i++){
+            removePatient(toBeRemovedPatient.get(i), operatingRoom);
         }
     }
 
@@ -549,13 +525,13 @@ public class Hospital extends Agent {
         Random rd = new Random();
         for (Integer patientId : toBeOperated){
             Patient patient = patientsList.get(patientId);
-            int time=1;
-            if(patient.getSeverity() >= 7)
-                time = rd.nextInt(3)+2; // 2, 3, 4
-            else if(patient.getSeverity() >= 4)
-                time = rd.nextInt(2)+1; // 1, 2
-            else if(patient.getSeverity() == 3)
-                time = 1;
+            int time = 5;
+//            if(patient.getSeverity() >= 7)
+//                time = rd.nextInt(3)+2; // 2, 3, 4
+//            else if(patient.getSeverity() >= 4)
+//                time = rd.nextInt(2)+1; // 1, 2
+//            else if(patient.getSeverity() == 3)
+//                time = 1;
             patient.setOperateTime(time);
         }
     }

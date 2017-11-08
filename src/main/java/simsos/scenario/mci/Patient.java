@@ -10,7 +10,7 @@ import java.util.Random;
 public class Patient {
     public enum Status {
         RESCUE_WAIT, RESCUED, TRANSPORT_WAIT, LOADED, TRANSPORTING,
-        SURGERY_WAIT, SURGERY, RECOVERY, CURED, DEAD
+        SURGERY_WAIT, SURGERY, CURED, DEAD
     }
 
     public enum InjuryType {
@@ -27,9 +27,9 @@ public class Patient {
     private int story;
     private Location location;      // within MCI radius
     private Status status;
-    public final int FRAC_DEC_RATE = 1;
-    public final int BURN_DEC_RATE = 6;
-    public final int BLEED_DEC_RATE = 8;
+    public final int FRAC_DEC_RATE = 0;
+    public final int BURN_DEC_RATE = 3;
+    public final int BLEED_DEC_RATE = 5;
 
     // Hospital information
     private int hospital;
@@ -87,7 +87,7 @@ public class Patient {
                     this.status = Status.SURGERY;
                     break;
                 case SURGERY:
-                    this.status = Status.RECOVERY;
+                    this.status = Status.CURED;
                     break;
 //                case RECOVERY:
 //                    status = Status.CURED;
@@ -164,13 +164,13 @@ public class Patient {
                         strength -= BLEED_DEC_RATE;
                 }
                 break;
-            case RECOVERY:
-                rd = new Random();
-                int selfCure = rd.nextInt(4);
-                boolean upStrength = rd.nextBoolean();
-                if(upStrength)
-                    strength += selfCure;
-                break;
+//            case RECOVERY:
+//                rd = new Random();
+//                int selfCure = rd.nextInt(4);
+//                boolean upStrength = rd.nextBoolean();
+//                if(upStrength)
+//                    strength += selfCure;
+//                break;
         }
         // TODO upper bound는 병원의 releasedㅔ 관련해서 변경될 수도 있음
         if(this.strength <= 0 || this.strength >= 270){
@@ -184,7 +184,6 @@ public class Patient {
     }
 
     // Treat and wait time
-
     public int getTreatPeriod() {
         return treatPeriod;
     }

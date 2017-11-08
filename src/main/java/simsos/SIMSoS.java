@@ -66,7 +66,7 @@ public class SIMSoS {
 
         // NOTE simulation repeat 50-time
         for(int nSim = 0; nSim<50; nSim++){
-            Simulator.execute(world, 100);
+            Simulator.execute(world, 300);
             simResults.add(calcGoalAchievement());
         }
         double totalResult = calcMeanAchievement(simResults);
@@ -94,8 +94,7 @@ public class SIMSoS {
         for(Patient p: patientsList){
             if(p.getStatus() == Patient.Status.DEAD)
                 deadPatient++;
-            if(p.getStatus() == Patient.Status.CURED
-                    || p.getStatus() == Patient.Status.RECOVERY)
+            if(p.getStatus() == Patient.Status.CURED)
                 alivePatient++;
         }
         System.out.println("Total casualties: "+ totalCasualties);

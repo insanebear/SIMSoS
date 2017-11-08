@@ -26,7 +26,7 @@ public class PatientFactory {
 
         for(int i=0; i<totalCasualty; i++){
             Patient.InjuryType injuryType = injuryList[rd.nextInt(injuryList.length)];
-            int strength = 399;
+            int strength = 299;
             while(!checkValidStrength(strength)){
                 strength = setStrengthByType(injuryType);
             }
