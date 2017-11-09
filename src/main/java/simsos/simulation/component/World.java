@@ -33,7 +33,7 @@ public abstract class World {
         this.messageQueue.clear();
 
         this.time = 0;
-    }
+}
 
     public void progress(int time) {
         this.time += time;

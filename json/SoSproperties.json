@@ -1,8 +1,8 @@
 {
   "typeSoS": "D",
-  "totFireFighters": 100,
-  "totGndAmbulances": 50,
-  "totHospital": 3,
+  "totFireFighters": 10,
+  "totGndAmbulances": 5,
+  "totHospital": 1,
 
   "minCompliance": 0.1,
   "maxCompliance": 0.9,

@@ -16,8 +16,6 @@ public class SoSManager extends Agent {
     private String name;
     private int id;
 
-    ArrayList<FireDepartment> fireDepartments;
-    ArrayList<PTSCenter> ptsCenters;
     public static ArrayList<Hospital> hospitals;
     public static int[] numWaitPTS = new int[stageZone.length];
 
@@ -26,8 +24,6 @@ public class SoSManager extends Agent {
 
         this.name = name;
 
-        fireDepartments = new ArrayList<>();
-        ptsCenters = new ArrayList<>();
         hospitals = new ArrayList<>();
 
         this.reset();
@@ -42,6 +38,7 @@ public class SoSManager extends Agent {
     @Override
     public void reset() {
 //        this.rescueRequestQueue = new HashMap<String, RescueProcess>();
+        numWaitPTS = new int[stageZone.length];
     }
 
     @Override
@@ -67,14 +64,6 @@ public class SoSManager extends Agent {
     @Override
     public HashMap<String, Object> getProperties() {
         return new HashMap<String, Object>();
-    }
-
-    public void setFireDepartments(FireDepartment fd){
-        fireDepartments.add(fd);
-    }
-
-    public void setPtsCenters(PTSCenter pts){
-        ptsCenters.add(pts);
     }
 
     public void setHospitals(Hospital hospital){

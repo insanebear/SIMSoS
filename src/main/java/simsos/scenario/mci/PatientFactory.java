@@ -26,10 +26,11 @@ public class PatientFactory {
 
         for(int i=0; i<totalCasualty; i++){
             Patient.InjuryType injuryType = injuryList[rd.nextInt(injuryList.length)];
-            int strength = 299;
+            int strength = Patient.TOT_STRENGTH;
             while(!checkValidStrength(strength)){
                 strength = setStrengthByType(injuryType);
             }
+//            int strength = 0;
             int story = rd.nextInt(building.size());
             int x = -1;
             int y = -1;
@@ -48,7 +49,7 @@ public class PatientFactory {
         }
     }
     public int setStrengthByType(Patient.InjuryType injuryType){
-        // total strength: 300 (0~299)
+        // total strength: 500 (0~499)
         // Fractured: relatively slight injury
         // Bleeding, Burn: burn is much more serious than bleeding in terms of mean strength
 
@@ -57,13 +58,13 @@ public class PatientFactory {
 
         switch (injuryType){
             case FRACTURED:
-                strength = (int)Math.round(rd.nextGaussian()*18 + 220);
+                strength = (int)Math.round(rd.nextGaussian()*18 + Patient.TOT_STRENGTH*0.75);
                 break;
             case BLEEDING:
-                strength = (int)Math.round(rd.nextGaussian()*20 + 200);
+                strength = (int)Math.round(rd.nextGaussian()*20 + Patient.TOT_STRENGTH*0.5);
                 break;
             case BURN:
-                strength = (int)Math.round(rd.nextGaussian()*15 + 160);
+                strength = (int)Math.round(rd.nextGaussian()*15 + Patient.TOT_STRENGTH*0.4);
         }
         return strength;
     }
@@ -76,7 +77,7 @@ public class PatientFactory {
     }
 
     private boolean checkValidStrength(int strength){
-        return (strength<160 && strength>=0);
+        return (strength<Patient.TOT_STRENGTH*0.75 && strength>=Patient.TOT_STRENGTH*0.3);
     }
 
 }

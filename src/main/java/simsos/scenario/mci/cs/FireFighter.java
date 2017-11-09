@@ -492,16 +492,18 @@ public class FireFighter extends Agent{
         Collections.sort(candPatients, new Comparator<Integer>() {
             @Override
             public int compare(Integer idx1, Integer idx2) { // sort descending order
-                return patientsList.get(idx2).getSeverity()-patientsList.get(idx1).getSeverity();
+                return patientsList.get(idx2).getStrength()-patientsList.get(idx1).getStrength();
             }
         });
+//
+//        int stdSeverity = patientsList.get(candPatients.get(0)).getSeverity(); // highest severity
+//
+//        for(Integer idx : candPatients)
+//            if(patientsList.get(idx).getSeverity() == stdSeverity)
+//                tempList.add(idx);
 
-        int stdSeverity = patientsList.get(candPatients.get(0)).getSeverity(); // highest severity
-
-        for(Integer idx : candPatients)
-            if(patientsList.get(idx).getSeverity() == stdSeverity)
-                tempList.add(idx);
-
+//        return tempList;
+        tempList.add(candPatients.get(candPatients.size()-1));
         return tempList;
     }
 

@@ -38,21 +38,20 @@ public class GndAmbulance extends Agent{
     private Status status;
     private Actions currAction;
     private Policy currPolicy;
-    private int findingTrial;
 
     private int loadPatientId;
     private ArrayList<Integer> spotPatientList;
 
-    private double compliance; // indicates how much CS will follow policies
-    private double loadCompliance;
-    private double deliverCompliance;
-    private double returnCompliance;
-    private double waitCompliance;
-    private boolean enforced;
+    private final double compliance; // indicates how much CS will follow policies
+    private final double loadCompliance;
+    private final double deliverCompliance;
+    private final double returnCompliance;
+    private final double waitCompliance;
+    private final boolean enforced;
 
-    private ArrayList<String> loadMethodList;
-    private ArrayList<String> deliverMethodList;
-    private ArrayList<String> returnMethodList;
+    private final ArrayList<String> loadMethodList;
+    private final ArrayList<String> deliverMethodList;
+    private final ArrayList<String> returnMethodList;
 
     private Hospital destHospital;
     private Location destination; // for transporting
@@ -185,8 +184,6 @@ public class GndAmbulance extends Agent{
                 return new Action(1) {
                     @Override
                     public void execute() {
-//                        System.out.println("<<<Ambulance "+getId()+">>>");
-                        //TODO review policy in severity
                         Patient patient = patientsList.get(loadPatientId);
 
                         if(!patient.isDead()){  // Loaded patient is not dead
@@ -194,12 +191,8 @@ public class GndAmbulance extends Agent{
                                 pRoomType = "Intensive";
                             else
                                 pRoomType = "General";
-
-//                            System.out.println("Finding Hospital -- "+findingTrial+" th trial.");
                             destHospital = selectHospital(pRoomType, currPolicy);
-//                            System.out.println("Patient ID: "+loadPatientId);
                             if(destHospital != null){
-//                                System.out.println("Destination Hospital: "+destHospital.getId());
                                 status = Status.TRANSPORTING;
                                 currAction = Actions.TRANSPORT;
                                 destHospital.reserveRoom(pRoomType);
@@ -214,7 +207,6 @@ public class GndAmbulance extends Agent{
                             else{
 //                                System.out.println(loadPatientId+" did not get a destination hospital.");
 //                                System.out.println();
-                                findingTrial++;
                                 // First aid
                                 patient.recoverStrength(new Random().nextInt(15));
                             }
@@ -286,7 +278,6 @@ public class GndAmbulance extends Agent{
                                 status = Status.INACTIVE;
                                 currAction = Actions.NONE;
                             }
-
                         }else
                             reachTime--;
                     }
@@ -303,16 +294,18 @@ public class GndAmbulance extends Agent{
     @Override
     public void reset() {
         Random rd = new Random();
+        this.location = new Location(rd.nextInt(patientMapSize.getLeft()), 0);
+        this.originLocation = new Location(this.location.getX(), this.location.getY());
+
         if(checkActive()){
             this.status = Status.WAITING;
             this.currAction = Actions.WAIT;
+            numWaitPTS[location.getX()] += 1;
         }else{
             this.status = Status.INACTIVE;
             this.currAction = Actions.NONE;
+            this.location = null;
         }
-        this.findingTrial = 0;
-        this.location = new Location(rd.nextInt(patientMapSize.getLeft()), 0);
-        this.originLocation = new Location(this.location.getX(), this.location.getY());
         this.loadPatientId = -1;
         this.reachTime = setReachTime();
         this.defaultWait = 1; //TODO review the policy which can manage waiting time.

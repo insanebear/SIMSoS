@@ -65,13 +65,15 @@ public class Policy {
     }
 
 
-    public void printConditions(){
-        for (Condition condition : conditions)
-            System.out.println(condition.getVariable()+condition.getOperator()+condition.getValue());
-    }
+    public void printPolicy(){
+        String condStr = "";
+        for(Condition condition : conditions){
+            String tempStr = condition.getVariable()+condition.getOperator()+condition.getValue()+" ";
+            condStr+=tempStr;
+        }
 
-//    public void printAction(){
-//        System.out.println(action.getActionName()+" "+action.getActionTarget()+action.getGuideType()+" "
-//                +action.getOperator()+action.getActionMethod());
-//    }
+        System.out.println(policyType+" "+condStr+" "+role+" "+
+        action.getActionName()+" "+action.getActionMethod()+" "+action.getMethodValue()+" "+
+        minCompliance+" "+enforce);
+    }
 }

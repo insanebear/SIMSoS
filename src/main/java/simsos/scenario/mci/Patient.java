@@ -8,6 +8,8 @@ import java.util.Random;
  *
  */
 public class Patient {
+    public final static int TOT_STRENGTH = 499;
+
     public enum Status {
         RESCUE_WAIT, RESCUED, TRANSPORT_WAIT, LOADED, TRANSPORTING,
         SURGERY_WAIT, SURGERY, CURED, DEAD
@@ -18,7 +20,7 @@ public class Patient {
     }
     // basic information
     private int patientId;
-    private int strength;       // 0~299 (200) 0: dead
+    private int strength;       // 0~499 (500) 0: dead
     private int severity;       // 0~9 (10)
     private InjuryType injuryType;
     private boolean dead;
@@ -64,11 +66,12 @@ public class Patient {
         if (strength <= 0) {
             this.status = Status.DEAD;
             this.dead = true;
-        }else if(strength >= 270){
+        }else if(strength >= TOT_STRENGTH * 0.85){ // 170
             this.status = Status.CURED;
         }else{
             switch (status) {
                 case RESCUE_WAIT:
+//                    this.status = Status.CURED;
                     this.status = Status.RESCUED;
                     break;
                 case RESCUED:
@@ -98,33 +101,33 @@ public class Patient {
 
     // Strength and Severity
     public int calcSeverity() {
-        if (strength >= 1 && strength < 30)
+        if (strength >= 1 && strength < TOT_STRENGTH * 0.1)
             return 9;
-        else if (strength >= 30 && strength < 60)
+        else if (strength >= TOT_STRENGTH * 0.1 && strength < TOT_STRENGTH * 0.2)
             return 8;
-        else if (strength >= 60 && strength < 90)
+        else if (strength >= TOT_STRENGTH * 0.2 && strength < TOT_STRENGTH * 0.3)
             return 7;
-        else if (strength >= 90 && strength < 120)
+        else if (strength >= TOT_STRENGTH * 0.3 && strength < TOT_STRENGTH * 0.4)
             return 6;
-        else if (strength >= 120 && strength < 150)
+        else if (strength >= TOT_STRENGTH * 0.4 && strength < TOT_STRENGTH * 0.5)
             return 5;
-        else if (strength >= 150 && strength < 180)
+        else if (strength >= TOT_STRENGTH * 0.5 && strength < TOT_STRENGTH * 0.6)
             return 4;
-        else if (strength >= 180 && strength < 210)
+        else if (strength >= TOT_STRENGTH * 0.6 && strength < TOT_STRENGTH * 0.7)
             return 3;
-        else if (strength >= 210 && strength < 240)
+        else if (strength >= TOT_STRENGTH * 0.7 && strength < TOT_STRENGTH * 0.8)
             return 2;
-        else if (strength >= 240 && strength < 270)
+        else if (strength >= TOT_STRENGTH * 0.8 && strength < TOT_STRENGTH * 0.9)
             return 1;
-        else if (strength >=270)
+        else if (strength >= TOT_STRENGTH * 0.9)
             return 0;
         else
             return -1;  // DEAD
     }
 
     public void recoverStrength(int strength) {
-        if(this.strength+strength > 299)
-            this.strength = 299;
+        if(this.strength+strength > TOT_STRENGTH)
+            this.strength = TOT_STRENGTH;
         else
             this.strength += strength;
     }
@@ -173,12 +176,12 @@ public class Patient {
 //                break;
         }
         // TODO upper bound는 병원의 releasedㅔ 관련해서 변경될 수도 있음
-        if(this.strength <= 0 || this.strength >= 270){
+        if(this.strength <= 0 || this.strength >= TOT_STRENGTH*0.85){
             changeStat();
             if(this.strength <0)
                 this.strength = 0;
-            else if (this.strength > 299)
-                this.strength =299;
+            else if (this.strength > TOT_STRENGTH)
+                this.strength =TOT_STRENGTH;
         }
         this.severity = calcSeverity();
     }
