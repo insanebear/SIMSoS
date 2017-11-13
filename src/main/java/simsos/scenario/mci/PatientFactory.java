@@ -23,21 +23,19 @@ public class PatientFactory {
 
     public void generatePatient(ArrayList<Patient> patientsList, ArrayList<Floor> building, int radius){
         Random rd = new Random();
-
         for(int i=0; i<totalCasualty; i++){
             Patient.InjuryType injuryType = injuryList[rd.nextInt(injuryList.length)];
             int strength = Patient.TOT_STRENGTH;
             while(!checkValidStrength(strength)){
                 strength = setStrengthByType(injuryType);
             }
-//            int strength = 0;
             int story = rd.nextInt(building.size());
             int x = -1;
             int y = -1;
 
             while(!checkValidLocation(x, y)){
-                x = (int)Math.round(rd.nextGaussian()*1.5 + radius/2);
-                y = (int)Math.round(rd.nextGaussian()*1.5 + radius/2);
+                x = (int)Math.round(rd.nextGaussian()*1.25 + radius/2);
+                y = (int)Math.round(rd.nextGaussian()*1.25 + radius/2);
             }
 
             Location location = new Location(x, y);
@@ -52,10 +50,8 @@ public class PatientFactory {
         // total strength: 500 (0~499)
         // Fractured: relatively slight injury
         // Bleeding, Burn: burn is much more serious than bleeding in terms of mean strength
-
         Random rd = new Random();
         int strength=0;
-
         switch (injuryType){
             case FRACTURED:
                 strength = (int)Math.round(rd.nextGaussian()*18 + Patient.TOT_STRENGTH*0.75);

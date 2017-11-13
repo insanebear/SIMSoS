@@ -23,12 +23,17 @@ public class Patient {
     private int strength;       // 0~499 (500) 0: dead
     private int severity;       // 0~9 (10)
     private InjuryType injuryType;
+    private boolean rescued;
+    private boolean transported;
+    private boolean operated;
+    private boolean released;
     private boolean dead;
 
     // MCI zone information
     private int story;
     private Location location;      // within MCI radius
     private Status status;
+    private int holdupTime;         // from the start to the rescued tim
     public final int FRAC_DEC_RATE = 0;
     public final int BURN_DEC_RATE = 3;
     public final int BLEED_DEC_RATE = 5;
@@ -40,22 +45,28 @@ public class Patient {
     private boolean isTreated;
     private int treatPeriod;
     private int waitPeriod;
-    private boolean isOperated;
+
     private int operateTime;
     private int stayTime;
-    private boolean released = false;
+
 
     public Patient(int patientId, int strength, InjuryType injuryType, int story, Location location) {
         this.patientId = patientId;
         this.strength = strength;
         this.severity = calcSeverity();
         this.injuryType = injuryType;
+        this.rescued = false;
+        this.transported = false;
+        this.operated = false;
+        this.released = false;
         this.dead = false;
         this.story = story;
         this.location = location;
         this.status = Status.RESCUE_WAIT;
+        this.prevRoomName = "";
+        this.roomName = "None";
+        this.holdupTime = 0;
         this.isTreated = false;
-        this.isOperated = false;
         this.stayTime = 0;
         this.roomName = "";
         this.hospital = -1;
@@ -71,7 +82,7 @@ public class Patient {
         }else{
             switch (status) {
                 case RESCUE_WAIT:
-//                    this.status = Status.CURED;
+                    rescued = true;
                     this.status = Status.RESCUED;
                     break;
                 case RESCUED:
@@ -84,6 +95,7 @@ public class Patient {
                     this.status = Status.TRANSPORTING;
                     break;
                 case TRANSPORTING:
+                    this.transported = true;
                     this.status = Status.SURGERY_WAIT;
                     break;
                 case SURGERY_WAIT:
@@ -92,9 +104,6 @@ public class Patient {
                 case SURGERY:
                     this.status = Status.CURED;
                     break;
-//                case RECOVERY:
-//                    status = Status.CURED;
-//                    break;
             }
         }
     }
@@ -133,11 +142,11 @@ public class Patient {
     }
 
     public void updateStrength(){
+        Random rd = new Random();
         switch (this.status) {
             // decrease strength
             case RESCUE_WAIT:
             case RESCUED:
-            case TRANSPORT_WAIT:
                 if (injuryType == InjuryType.FRACTURED)
                     strength -= FRAC_DEC_RATE;
                 else if (injuryType == InjuryType.BURN)
@@ -145,9 +154,19 @@ public class Patient {
                 else
                     strength -= BLEED_DEC_RATE;
                 break;
+            case TRANSPORT_WAIT:
+                if(rd.nextFloat() < 0.4){
+                    if (injuryType == InjuryType.FRACTURED)
+                        strength -= FRAC_DEC_RATE;
+                    else if (injuryType == InjuryType.BURN)
+                        strength -= BURN_DEC_RATE;
+                    else
+                        strength -= BLEED_DEC_RATE;
+                } else
+                    recoverStrength(3);     // thanks to paramedics
+                break;
             case LOADED:
             case TRANSPORTING:
-                Random rd = new Random();
                 if(rd.nextBoolean()){
                     int firstAid = 1;
                     if (injuryType == InjuryType.FRACTURED)
@@ -167,16 +186,8 @@ public class Patient {
                         strength -= BLEED_DEC_RATE;
                 }
                 break;
-//            case RECOVERY:
-//                rd = new Random();
-//                int selfCure = rd.nextInt(4);
-//                boolean upStrength = rd.nextBoolean();
-//                if(upStrength)
-//                    strength += selfCure;
-//                break;
         }
-        // TODO upper bound는 병원의 releasedㅔ 관련해서 변경될 수도 있음
-        if(this.strength <= 0 || this.strength >= TOT_STRENGTH*0.85){
+        if(this.strength<=0 || this.strength>=TOT_STRENGTH*0.85){
             changeStat();
             if(this.strength <0)
                 this.strength = 0;
@@ -236,6 +247,26 @@ public class Patient {
         return patientId;
     }
 
+    public boolean isRescued() {
+        return rescued;
+    }
+
+    public void setRescued(boolean rescued) {
+        this.rescued = rescued;
+    }
+
+    public boolean isTransported() {
+        return transported;
+    }
+
+    public void setTransported(boolean transported) {
+        this.transported = transported;
+    }
+
+    public void setDead(boolean dead) {
+        this.dead = dead;
+    }
+
     public boolean isDead() {
         return dead;
     }
@@ -264,6 +295,14 @@ public class Patient {
         return injuryType;
     }
 
+    public int getHoldupTime() {
+        return holdupTime;
+    }
+
+    public void updateHoldupTime() {
+        if(!isRescued())
+            this.holdupTime++;
+    }
 
     // Hospital information
     public int getStory() {
@@ -299,11 +338,11 @@ public class Patient {
     }
 
     public boolean isOperated() {
-        return isOperated;
+        return operated;
     }
 
     public void setOperated(boolean isOperated) {
-        this.isOperated = isOperated;
+        this.operated = isOperated;
     }
 
     public boolean isReleased() {
@@ -335,7 +374,7 @@ public class Patient {
 
     public void printPatientStatus(){
         System.out.println("|| Patient   "+patientId+"   | "+dead+"     | "+strength+"      | "+ severity+"     | "
-                +hospital+"       | "+isOperated+"       | "+roomName+"      | "+stayTime+"      | "+status.toString()+"      | "+released+" ||");
+                +hospital+"       | "+ operated +"       | "+roomName+"      | "+stayTime+"      | "+status.toString()+"      | "+released+" ||");
     }
 
 

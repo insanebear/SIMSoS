@@ -72,7 +72,7 @@ public class Policy {
             condStr+=tempStr;
         }
 
-        System.out.println(policyType+" "+condStr+" "+role+" "+
+        System.out.println(policyType+" type policy, "+condStr+role+" "+
         action.getActionName()+" "+action.getActionMethod()+" "+action.getMethodValue()+" "+
         minCompliance+" "+enforce);
     }

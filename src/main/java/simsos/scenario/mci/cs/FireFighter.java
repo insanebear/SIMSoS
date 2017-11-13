@@ -30,6 +30,7 @@ public class FireFighter extends Agent{
     private String name;
     private String role;
     private boolean active;
+    private String csType;
 
     // current properties
     private Status status;
@@ -71,6 +72,10 @@ public class FireFighter extends Agent{
         this.selectCompliance = randomCompliance();
         this.stageCompliance = randomCompliance();
 
+        if(this.enforced)
+            this.csType = "D";
+        else
+            this.csType = "A";
         selectMethodList = new ArrayList<>();
         stageMethodList = new ArrayList<>();
         makeActionMethodList();
@@ -96,6 +101,7 @@ public class FireFighter extends Agent{
                         return "FF inactive";
                     }
                 };
+
             case SEARCHING:
                 return new Action(1) {
                     @Override
@@ -125,7 +131,7 @@ public class FireFighter extends Agent{
                         if (checkPatientExistence(spotPatientList)) {
                             if(spotPatientList.size()>1){
                                 //NOTE RESCUE_ select Policy
-                                currPolicy = checkActionPolicy(role, currAction.toString(), callBack);
+                                currPolicy = checkActionPolicy(role, csType, "Select", callBack);
                                 rescuedPatientId = selectPatient(spotPatientList, currPolicy);
                                 removePatient(rescuedPatientId, spotPatientList);
                             }else{
@@ -173,7 +179,7 @@ public class FireFighter extends Agent{
                             Patient patient = patientsList.get(rescuedPatientId);
                             if(!patient.isDead()){
                                 //Note RESCUE_ stage policy
-                                currPolicy = checkActionPolicy(role, currAction.toString(), callBack);
+                                currPolicy = checkActionPolicy(role, csType,"Stage", callBack);
                                 int stageSpot = stagePatient(currPolicy);
 
                                 // Stage a patient at a spot.
@@ -368,7 +374,6 @@ public class FireFighter extends Agent{
     private boolean checkActive(){
         ArrayList<Policy> compliancePolicies = checkCompliancePolicy(role);
         this.active = true;
-
         if(compliancePolicies.size() != 0){ // policy exists
             for(Policy policy : compliancePolicies){
                 String actionName = policy.getAction().getActionName();
@@ -393,8 +398,6 @@ public class FireFighter extends Agent{
     /*----Select Patient (Select)----*/
     @SuppressWarnings("unchecked")
     private int selectPatient(ArrayList<Integer> patientList, Policy policy){
-        //NOTE 한 위치에서 여러가지 방법으로(알맞는 방법으로 구해야할 환자의 index 를 골라서 return
-
         ArrayList<Integer> candPatients = (ArrayList<Integer>) patientList.clone();
         Random rd = new Random();
         boolean decision = makeDecision();
@@ -403,9 +406,9 @@ public class FireFighter extends Agent{
         if(policy != null && decision){
             String actionMethod = policy.getAction().getActionMethod();
             switch (actionMethod) {
-                case "Random":
-                    candPatients = randomSelect(candPatients);
-                    break;
+//                case "Random":
+//                    candPatients = randomSelect(candPatients);
+//                    break;
                 case "Distance":
                     candPatients = distanceSelect(candPatients);
                     break;
@@ -416,59 +419,37 @@ public class FireFighter extends Agent{
                     candPatients = injuryTypeSelect(candPatients);
                     break;
             }
-//            ArrayList<String> policyActionMethod = policy.getAction().getActionMethod();
-//            if(policyActionMethod.size()>0) {
-//                for (String s : policyActionMethod) {
-//                    switch (s) {
-//                        case "Random":
-//                            candPatients = randomSelect(candPatients);
-//                            break;
-//                        case "Distance":
-//                            candPatients = distanceSelect(candPatients);
-//                            break;
-//                        case "Severity":
-//                            candPatients = severitySelect(candPatients);
-//                            break;
-//                        case "InjuryType":
-//                            candPatients = injuryTypeSelect(candPatients);
-//                            break;
-//                    }
-//                    if(candPatients.size() == 1) {
-////                        System.out.println(s + "Select used. (Patient)");
-//                        break;
-//                    }
-//                }
                 if (candPatients.size() != 1)
                     resIdx = candPatients.get(rd.nextInt(candPatients.size()));
                 else
                     resIdx = candPatients.get(0);
-//            }
         } else {
-            Collections.shuffle(selectMethodList);
-            for(String s: selectMethodList){
-                switch (s){
-                    case "Random":
-                        candPatients = randomSelect(candPatients);
-                        break;
-                    case "Distance":
-                        candPatients = distanceSelect(candPatients);
-                        break;
-                    case "Severity":
-                        candPatients = severitySelect(candPatients);
-                        break;
-                    case "InjuryType":
-                        candPatients = injuryTypeSelect(candPatients);
-                        break;
-                }
-                if(candPatients.size() == 1){
-//                    System.out.println(s + "Select used. (Patient)");
-                    break;
-                }
-            }
-            if(candPatients.size()!=1)
-                resIdx = candPatients.get(rd.nextInt(candPatients.size()));
-            else
-                resIdx = candPatients.get(0);
+            candPatients = randomSelect(candPatients);
+//            Collections.shuffle(selectMethodList);
+//            for(String s: selectMethodList){
+//                switch (s){
+//                    case "Random":
+//                        candPatients = randomSelect(candPatients);
+//                        break;
+//                    case "Distance":
+//                        candPatients = distanceSelect(candPatients);
+//                        break;
+//                    case "Severity":
+//                        candPatients = severitySelect(candPatients);
+//                        break;
+//                    case "InjuryType":
+//                        candPatients = injuryTypeSelect(candPatients);
+//                        break;
+//                }
+//                if(candPatients.size() == 1){
+//                    break;
+//                }
+//            }
+//            if(candPatients.size()!=1)
+//                resIdx = candPatients.get(rd.nextInt(candPatients.size()));
+//            else
+//                resIdx = candPatients.get(0);
+            resIdx = candPatients.get(0);
         }
         return resIdx;
     }
@@ -488,22 +469,15 @@ public class FireFighter extends Agent{
 
     private ArrayList<Integer>  severitySelect(ArrayList<Integer> candPatients){
         ArrayList<Integer> tempList = new ArrayList<>();
-
         Collections.sort(candPatients, new Comparator<Integer>() {
             @Override
             public int compare(Integer idx1, Integer idx2) { // sort descending order
                 return patientsList.get(idx2).getStrength()-patientsList.get(idx1).getStrength();
             }
         });
-//
-//        int stdSeverity = patientsList.get(candPatients.get(0)).getSeverity(); // highest severity
-//
-//        for(Integer idx : candPatients)
-//            if(patientsList.get(idx).getSeverity() == stdSeverity)
-//                tempList.add(idx);
 
-//        return tempList;
-        tempList.add(candPatients.get(candPatients.size()-1));
+        int selectedId = candPatients.get(candPatients.size()-1);
+        tempList.add(selectedId);
         return tempList;
     }
 
@@ -525,7 +499,15 @@ public class FireFighter extends Agent{
             if(patientsList.get(idx).strengthDecreasingRate() == stdRate)
                 tempList.add(idx);
         }
-
+        Collections.sort(tempList, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer idx1, Integer idx2) { // sort descending order
+                return patientsList.get(idx1).getStrength() - patientsList.get(idx2).getStrength();
+            }
+        });
+        int returnIndex = tempList.get(0);
+        tempList.clear();
+        tempList.add(returnIndex);
         return tempList;
     }
 
@@ -541,8 +523,10 @@ public class FireFighter extends Agent{
             actionMethod = policy.getAction().getActionMethod();
         } else {
             Collections.shuffle(stageMethodList);
-            actionMethod = stageMethodList.get(0);
+//            actionMethod = stageMethodList.get(0);
+            actionMethod = "Random";
         }
+
         if(actionMethod.equals("Random")){
             destIdx = rd.nextInt(stageZone.length);
         }else if(actionMethod.equals("MeanRandom")){

@@ -23,7 +23,7 @@ import static simsos.scenario.mci.Environment.patientsList;
  * Edited by Youlim Jung on 2017-07-25.
  */
 public class Hospital extends Agent {
-    private enum Status {WAITING, TREATING, INACTIVE}
+    private enum Status {WAITING, TREATING}
     private enum Actions {WAIT, TREAT, OPERATE, RELEASE}
     private String name;
     private String role;
@@ -31,6 +31,7 @@ public class Hospital extends Agent {
     private Location location;
     private int medicalCrew;
     private boolean active;
+    private String csType;
 
     private double compliance; // indicates how much CS will follow policies
     private double treatCompliance;
@@ -89,6 +90,9 @@ public class Hospital extends Agent {
         this.availIntensive = this.totIntensive;
         this.availOperating = this.totOperating;
 
+        this.needSurgeryGeneral = 0;
+        this.needSurgeryIntensive = 0;
+
         this.location = location;
         this.medicalCrew = medicalCrew;
 
@@ -97,6 +101,11 @@ public class Hospital extends Agent {
         this.operateCompliance = randomCompliance();
         this.releaseCompliance = randomCompliance();
         this.enforced = enforced;
+
+        if(this.enforced)
+            this.csType = "D";
+        else
+            this.csType = "A";
 
         this.reset();
     }
@@ -131,7 +140,6 @@ public class Hospital extends Agent {
                     @Override
                     public void execute() {
                         active = checkActive();
-//                        System.out.println("[Hospital "+hospitalId+"]");
 
                         // release patients
                         releasePatients();
@@ -143,9 +151,7 @@ public class Hospital extends Agent {
                         operatePatients();
 
                         // update information
-//                        System.out.println("General");
                         increaseStayTime(generalRoom);
-//                        System.out.println("Intensive");
                         increaseStayTime(intensiveRoom);
                         calcNeedSurgeryPatients();
                         updatePatientPeriod();
@@ -227,9 +233,8 @@ public class Hospital extends Agent {
         // only called by ambulances to hospitalize patient.
         Patient patient = patientsList.get(patientId);
         patient.setHospital(hospitalId);
-        patient.setPrevRoomName("");
+        patient.setPrevRoomName(patient.getRoomName());
         patient.setRoomName(roomType);
-
         switch (roomType){
             case "General":
                 generalRoom.add(patientId);
@@ -283,7 +288,7 @@ public class Hospital extends Agent {
         }
 
         if(candPatients.size() >= availCrewGroup){
-            currPolicy = checkActionPolicy(role, currAction.toString(), callBack);
+            currPolicy = checkActionPolicy(role, csType, "Treat", callBack);
             treatPatients = selectTreatPatient(candPatients, availCrewGroup, currPolicy);
         }
         else
@@ -380,12 +385,10 @@ public class Hospital extends Agent {
     /**--- Operate ---**/
     private void operatePatients(){
         currAction = Actions.OPERATE;
-
-        boolean successSurgery = new Random().nextBoolean();
         ArrayList<Integer> toBeOperated;
 
         // select patients to be operated
-        currPolicy = checkActionPolicy(role, currAction.toString(), callBack);
+        currPolicy = checkActionPolicy(role, csType,"Operate", callBack);
         if(availOperating>0){
             toBeOperated = selectOperatePatient(availOperating, currPolicy);
             setOperateTime(toBeOperated);
@@ -402,6 +405,7 @@ public class Hospital extends Agent {
                 }
             }
         }
+
         ArrayList<Integer> toBeRemovedPatient = new ArrayList<>();
         // operate patients in operating room
         for(Integer patientId : operatingRoom){
@@ -411,10 +415,10 @@ public class Hospital extends Agent {
                 patient.setOperated(true);
 
                 Random rd = new Random ();
-                if(rd.nextDouble() <= 0.1*patient.getSeverity())
-                    patient.recoverStrength(-patient.getStrength());
+                if(rd.nextDouble() <= 0.0005*patient.getSeverity())
+                    patient.recoverStrength(-patient.getStrength());        // DIE
                 else
-                    patient.recoverStrength(Patient.TOT_STRENGTH-patient.getStrength());
+                    patient.recoverStrength(Patient.TOT_STRENGTH-patient.getStrength());    // Recovered
 
                 patient.changeStat(); // to CURED or DEAD
                 toBeRemovedPatient.add(patientId);
@@ -450,9 +454,9 @@ public class Hospital extends Agent {
         if(policy!=null && decision){
             String actionMethod = policy.getAction().getActionMethod();
             switch (actionMethod){
-                case "Random":
-                    Collections.shuffle(candidPatient);
-                    break;
+//                case "Random":
+//                    Collections.shuffle(candidPatient);
+//                    break;
                 case "ArriveTime":
                     Collections.sort(candidPatient, Comparator.comparing(item -> patientsInHospital.indexOf(item)));
                     break;
@@ -494,7 +498,7 @@ public class Hospital extends Agent {
         ArrayList<Integer> releaseList;
 
         // check policy
-        currPolicy = checkActionPolicy(role, currAction.toString(), callBack);
+        currPolicy = checkActionPolicy(role, csType,"Release", callBack);
         releaseList = findReleasePatient(generalRoom, currPolicy);
 
         for(int i=0; i<releaseList.size(); i++){

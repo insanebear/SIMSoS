@@ -1,12 +1,7 @@
 package simsos.scenario.mci;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.type.CollectionType;
 import simsos.scenario.mci.policy.*;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -90,6 +85,7 @@ public class Environment {
         // update patients' strength according to their status
         for(Patient patient : patientsList){
             patient.updateStrength();
+            patient.updateHoldupTime();
         }
     }
 
@@ -114,29 +110,62 @@ public class Environment {
     }
 
     // check policy
-    public static Policy checkActionPolicy(String role, String actionName, CallBack callBack){
+    public static Policy checkActionPolicy(String role, String csType, String actionName, CallBack callBack){
         /* "activePolicy" ArrayList stores valid policies that satisfy current condition.*/
         ArrayList<Policy> activePolicies;
         switch (role){
             // Find an appropriate policy on current action name and role.
             case "RESCUE":
-                activePolicies = evalPolicyCond("Action",policies, callBack);
+                activePolicies = evalPolicyCond("Action", policies, callBack);
                 for(Policy p : activePolicies){
-                    if(p.getRole().equals("RESCUE") && p.getAction().getActionName().equals(actionName))
-                        return p;
+                    if(csType.equals("D")){
+                        if(p.getRole().equals("RESCUE") && p.getAction().getActionName().equals(actionName)
+                                && p.isEnforce()) {
+//                            System.out.println("Enforced POLICY GOT!");
+                            return p;
+                        }
+                    }else{
+                        if(p.getRole().equals("RESCUE") && p.getAction().getActionName().equals(actionName)
+                                && !p.isEnforce()) {
+//                            System.out.println("Not Enforced POLICY GOT!");
+                            return p;
+                        }
+                    }
                 }
             case "TRANSPORT":
                 activePolicies = evalPolicyCond("Action", policies, callBack);
                 for(Policy p : activePolicies){
-                    if(p.getRole().equals("TRANSPORT") && p.getAction().getActionName().equals(actionName))
-                        return p;
+                    if(csType.equals("D")){
+                        if(p.getRole().equals("TRANSPORT") && p.getAction().getActionName().equals(actionName)
+                                && p.isEnforce()) {
+//                            System.out.println("Enforced POLICY GOT!");
+                            return p;
+                        }
+                    }else{
+                        if(p.getRole().equals("TRANSPORT") && p.getAction().getActionName().equals(actionName)
+                                && !p.isEnforce()) {
+//                            System.out.println("Not Enforced POLICY GOT!");
+                            return p;
+                        }
+                    }
                 }
                 break;
             case "TREATMENT":
                 activePolicies = evalPolicyCond("Action", policies, callBack);
                 for(Policy p : activePolicies){
-                    if(p.getRole().equals("TREATMENT") && p.getAction().getActionName().equals(actionName))
-                        return p;
+                    if(csType.equals("D")){
+                        if(p.getRole().equals("TREATMENT") && p.getAction().getActionName().equals(actionName)
+                                && p.isEnforce()) {
+//                            System.out.println("Enforced POLICY GOT!");
+                            return p;
+                        }
+                    }else{
+                        if(p.getRole().equals("TREATMENT") && p.getAction().getActionName().equals(actionName)
+                                && !p.isEnforce()) {
+//                            System.out.println("Not Enforced POLICY GOT!");
+                            return p;
+                        }
+                    }
                 }
                 break;
         }
@@ -247,7 +276,6 @@ public class Environment {
                 if(condition.getVariable().equals("MCILevel")){
                     String operator = condition.getOperator();
                     int value = Integer.parseInt(condition.getValue());
-//                    int value = Integer.parseInt(condition.getValue().get(0));
                     isValid = compareValueByOp(MCILevel, value, operator);
                 }else if(condition.getVariable().equals("DamageType")) {
                     String damageType = condition.getValue();
@@ -259,16 +287,6 @@ public class Environment {
                         isValid = false;
                     if (!isValid)
                         break;
-//                    ArrayList<String> damageTypes = condition.getValue();
-//                    for (String damageType : damageTypes) {
-//                        if ((damageType.equals("Fire") && damageFire > 0)
-//                                || (damageType.equals("Collapse") && damageCollapse > 0))
-//                            isValid = true;
-//                        else
-//                            isValid = false;
-//                        if (!isValid)
-//                            break;
-//                    }
                 }
                 if(!isValid)
                     break;

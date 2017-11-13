@@ -9,7 +9,6 @@ import java.util.ArrayList;
  */
 public class Action {
     private String actionName;
-//    private ArrayList<String> actionMethod;
     private String actionMethod;
     private int methodValue;
 
@@ -20,14 +19,6 @@ public class Action {
     public void setActionName(String actionName) {
         this.actionName = actionName;
     }
-
-//    public ArrayList<String> getActionMethod() {
-//        return actionMethod;
-//    }
-//
-//    public void setActionMethod(ArrayList<String> actionMethod) {
-//        this.actionMethod = actionMethod;
-//    }
 
     public int getMethodValue() {
         return methodValue;

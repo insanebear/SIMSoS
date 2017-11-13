@@ -34,9 +34,11 @@ public class Simulator {
 
         world.reset();
         simulationLog.add(world.getCurrentSnapshot(patientsList)); // Initial snapshot
-        printAllPatientStatus();
+//        printAllPatientStatus();
         while (!stoppingCondition) {
-            System.out.println("World Time: " + world.getTime());
+            if (world.getTime() == 0)
+                System.out.println(">> Simulation Start.");
+//            System.out.println("World Time: " + world.getTime());
             do {
                 immediateActions.clear();
                 actions.clear();
@@ -63,9 +65,13 @@ public class Simulator {
             progress(msgActions);
             world.progress(1);
 
+            // Snapshot
+//            simulationLog.add(world.getCurrentSnapshot(patientsList));
             // Verdict - evaluateProperties();
-            if (world.getTime() >= endOfTime)
+            if (world.getTime() >= endOfTime) {
                 stoppingCondition = true;
+                System.out.println(">> Simulation End.");
+            }
         }
         // Last snapshot only
         simulationLog.add(world.getCurrentSnapshot(patientsList));

@@ -1,18 +1,19 @@
 {
   "typeSoS": "D",
-  "totFireFighters": 10,
-  "totGndAmbulances": 5,
-  "totHospital": 1,
+  "totFireFighters": 200,
+  "totGndAmbulances": 150,
+  "totHospital": 9,
 
   "minCompliance": 0.1,
   "maxCompliance": 0.9,
+
   "rescueCompliance": 0.3,
   "transportCompliance": 0.5,
   "treatmentCompliance": 0.6,
   "enforceRate": 0.3,
 
   "crew": 70,
-  "general":100,
+  "general":200,
   "intensive": 50,
   "operating": 30,
   "hospitalLocations": [

@@ -65,9 +65,6 @@ public class MCIScenario extends Scenario {
             int operatingRoom = getOperating();
             int medicalCrew = getCrew();
 
-//            int locX = ThreadLocalRandom.current().nextInt(4, hospitalMapSize.getRight());
-//            int locY = rd.nextInt(hospitalMapSize.getRight());
-
             Hospital hospital = new Hospital(this.world, i, "Hospital", generalRoom,
                     intensiveRoom, operatingRoom, getHospitalLocations().get(i), medicalCrew, makeCSCompliance(mTreatCompliance), isEnforced(getEnforceRate()));
 
@@ -127,7 +124,7 @@ public class MCIScenario extends Scenario {
                 break;
         }
         do{
-            Double randomNum = rd.nextGaussian()*0.1+avg;
+            Double randomNum = rd.nextGaussian()*0.5+avg;
             result = (double)Math.round(randomNum*10)/10;
         }while(result < min || result >= max);
 
@@ -136,8 +133,13 @@ public class MCIScenario extends Scenario {
 
     private boolean isEnforced(double enforceRate){
         Random random = new Random();
-        Double rate = (double) random.nextFloat();
-        return  rate < enforceRate;
+        if(typeSoS.equals("D"))
+            return true;
+        else if(typeSoS.equals("D+A")){
+            Double rate = (double) random.nextFloat();  // not include 1.0
+            return  rate < enforceRate;
+        }
+        return false;
     }
 
     public int getCrew() {

@@ -21,23 +21,18 @@ public class SoSManager extends Agent {
 
     public SoSManager(World world, String name) {
         super(world);
-
         this.name = name;
-
         hospitals = new ArrayList<>();
-
         this.reset();
     }
 
     @Override
     public Action step() {
-
         return Action.getNullAction(1, this.getName() + ": null action");
     }
 
     @Override
     public void reset() {
-//        this.rescueRequestQueue = new HashMap<String, RescueProcess>();
         numWaitPTS = new int[stageZone.length];
     }
 
