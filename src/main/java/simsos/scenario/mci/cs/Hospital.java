@@ -116,18 +116,15 @@ public class Hospital extends Agent {
         // If true, accept patients
         // If false, not accept patients
 
-
         switch(status){
             case WAITING:
                 return new Action(1) {
                     @Override
                     public void execute() {
                         active = checkActive();
-//                        System.out.println("[Hospital "+hospitalId+"]");
                         if(generalRoom.size()>0 || intensiveRoom.size()>0 || operatingRoom.size()>0){
                             status = Status.TREATING;
                         }
-//                        System.out.println("Waiting...");
                     }
                     @Override
                     public String getName() {
@@ -140,7 +137,6 @@ public class Hospital extends Agent {
                     @Override
                     public void execute() {
                         active = checkActive();
-
                         // release patients
                         releasePatients();
                         // rearrange rooms
@@ -454,9 +450,6 @@ public class Hospital extends Agent {
         if(policy!=null && decision){
             String actionMethod = policy.getAction().getActionMethod();
             switch (actionMethod){
-//                case "Random":
-//                    Collections.shuffle(candidPatient);
-//                    break;
                 case "ArriveTime":
                     Collections.sort(candidPatient, Comparator.comparing(item -> patientsInHospital.indexOf(item)));
                     break;
@@ -465,6 +458,9 @@ public class Hospital extends Agent {
                     break;
                 case "InjuryType":
                     candidPatient = injuryTypeSelect(candidPatient);
+                    break;
+                case "Random":
+                    Collections.shuffle(candidPatient);
                     break;
             }
         }else

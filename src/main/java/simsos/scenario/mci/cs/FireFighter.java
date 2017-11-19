@@ -78,7 +78,6 @@ public class FireFighter extends Agent{
             this.csType = "A";
         selectMethodList = new ArrayList<>();
         stageMethodList = new ArrayList<>();
-        makeActionMethodList();
 
         this.reset();
     }
@@ -95,7 +94,6 @@ public class FireFighter extends Agent{
                             currAction = Actions.SEARCH;
                         }
                     }
-
                     @Override
                     public String getName() {
                         return "FF inactive";
@@ -285,18 +283,6 @@ public class FireFighter extends Agent{
             return false;
     }
 
-    private void makeActionMethodList(){
-        selectMethodList.add("Random");
-        selectMethodList.add("Distance");
-        selectMethodList.add("Severity");
-        selectMethodList.add("InjuryType");
-
-        stageMethodList.add("Random");
-        stageMethodList.add("MeanRandom");
-        stageMethodList.add("MCSlot");
-    }
-
-
     /**--------Destination--------**/
 
     public void setDestination(){
@@ -406,9 +392,6 @@ public class FireFighter extends Agent{
         if(policy != null && decision){
             String actionMethod = policy.getAction().getActionMethod();
             switch (actionMethod) {
-//                case "Random":
-//                    candPatients = randomSelect(candPatients);
-//                    break;
                 case "Distance":
                     candPatients = distanceSelect(candPatients);
                     break;
@@ -418,6 +401,9 @@ public class FireFighter extends Agent{
                 case "InjuryType":
                     candPatients = injuryTypeSelect(candPatients);
                     break;
+                case "Random":
+                    candPatients = randomSelect(candPatients);
+                    break;
             }
                 if (candPatients.size() != 1)
                     resIdx = candPatients.get(rd.nextInt(candPatients.size()));
@@ -425,30 +411,6 @@ public class FireFighter extends Agent{
                     resIdx = candPatients.get(0);
         } else {
             candPatients = randomSelect(candPatients);
-//            Collections.shuffle(selectMethodList);
-//            for(String s: selectMethodList){
-//                switch (s){
-//                    case "Random":
-//                        candPatients = randomSelect(candPatients);
-//                        break;
-//                    case "Distance":
-//                        candPatients = distanceSelect(candPatients);
-//                        break;
-//                    case "Severity":
-//                        candPatients = severitySelect(candPatients);
-//                        break;
-//                    case "InjuryType":
-//                        candPatients = injuryTypeSelect(candPatients);
-//                        break;
-//                }
-//                if(candPatients.size() == 1){
-//                    break;
-//                }
-//            }
-//            if(candPatients.size()!=1)
-//                resIdx = candPatients.get(rd.nextInt(candPatients.size()));
-//            else
-//                resIdx = candPatients.get(0);
             resIdx = candPatients.get(0);
         }
         return resIdx;
@@ -519,11 +481,9 @@ public class FireFighter extends Agent{
         String actionMethod;
 
         if(policy != null && decision){
-//            policyActionMethod = policy.getAction().getActionMethod().get(0);
             actionMethod = policy.getAction().getActionMethod();
         } else {
             Collections.shuffle(stageMethodList);
-//            actionMethod = stageMethodList.get(0);
             actionMethod = "Random";
         }
 
@@ -578,7 +538,7 @@ public class FireFighter extends Agent{
         if(enforced)
             return 1;
         do{
-            Double randomNum = rd.nextGaussian()*0.1+this.compliance;
+            Double randomNum = rd.nextGaussian()*0.1 + this.compliance;
             result = (double)Math.round(randomNum*10)/10;
         }while(result < min || result >= max);
 
@@ -600,5 +560,4 @@ public class FireFighter extends Agent{
         Patient patient = patientsList.get(patientId);
         return patient.isDead();
     }
-
 }

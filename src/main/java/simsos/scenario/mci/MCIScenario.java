@@ -19,7 +19,7 @@ public class MCIScenario extends Scenario {
     private String typeSoS;
     private double minCompliance;
     private double maxCompliance;
-    private double mResCompliance;
+    private double mResCompliance;      // minimum Rescue compliance
     private double mTransCompliance;
     private double mTreatCompliance;
     private double enforceRate;

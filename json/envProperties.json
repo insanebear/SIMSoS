@@ -1,6 +1,6 @@
 {
   "initCasualty": 1000,
-  "initDamageFire": 200,
+  "initDamageFire": 300,
   "initDamageCollapse": 200,
   "mciRadius": 10,
   "buildingHeight": 4

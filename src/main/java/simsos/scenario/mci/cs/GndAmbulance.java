@@ -340,6 +340,96 @@ public class GndAmbulance extends Agent{
         return status;
     }
 
+    /**----Select Patient (Load)----**/
+    @SuppressWarnings("unchecked")
+    private int loadPatient(ArrayList<Integer> patientList, Policy policy) {
+        ArrayList<Integer> candPatients = (ArrayList<Integer>) patientList.clone();
+        Random rd = new Random();
+        boolean decision = makeDecision();
+        int resIdx = -1;
+
+        if(policy != null && decision){
+            String actionMethod = policy.getAction().getActionMethod();
+            switch (actionMethod) {
+                case "Distance":
+                    candPatients = distanceLoad(candPatients);
+                    break;
+                case "Severity":
+                    candPatients = severityLoad(candPatients);
+                    break;
+                case "InjuryType":
+                    candPatients = injuryTypeLoad(candPatients);
+                    break;
+                case "Random":
+                    candPatients = randomLoad(candPatients);
+                    break;
+            }
+            if (candPatients.size() != 1)
+                resIdx = candPatients.get(rd.nextInt(candPatients.size()));
+            else
+                resIdx = candPatients.get(0);
+        } else {
+            candPatients = randomLoad(candPatients);
+            resIdx = candPatients.get(0);
+        }
+        removePatient(resIdx, patientList);
+        return resIdx;
+    }
+
+    private ArrayList<Integer> randomLoad(ArrayList<Integer> candPatients){
+        ArrayList<Integer> tempList = new ArrayList<>();
+        int candidIdx = new Random().nextInt(candPatients.size());
+        tempList.add(candPatients.get(candidIdx));
+        return tempList;
+    }
+
+    private ArrayList<Integer> distanceLoad(ArrayList<Integer> candPatients){
+        ArrayList<Integer> tempList = new ArrayList<>();
+        tempList.add(candPatients.get(0));
+        return tempList;
+    }
+
+    private ArrayList<Integer> severityLoad(ArrayList<Integer> candPatients){
+        ArrayList<Integer> tempList = new ArrayList<>();
+
+        Collections.sort(candPatients, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer idx1, Integer idx2) { // sort descending order
+                return patientsList.get(idx2).getSeverity()-patientsList.get(idx1).getSeverity();
+            }
+        });
+
+        int stdSeverity = patientsList.get(candPatients.get(0)).getSeverity(); // highest severity
+
+        for(Integer idx : candPatients)
+            if(patientsList.get(idx).getSeverity() == stdSeverity)
+                tempList.add(idx);
+
+        return tempList;
+    }
+
+    private ArrayList<Integer> injuryTypeLoad(ArrayList<Integer> candPatients){
+        //NOTE InjuryType Sorting means sorting by strength decreasing rate
+        ArrayList<Integer> tempList = new ArrayList<>();
+        int stdRate = 0;
+
+        Collections.sort(candPatients, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer idx1, Integer idx2) { // sort descending order
+                return patientsList.get(idx2).strengthDecreasingRate() - patientsList.get(idx1).strengthDecreasingRate();
+            }
+        });
+
+        stdRate = patientsList.get(candPatients.get(0)).strengthDecreasingRate(); // highest decreasing rate
+
+        for(Integer idx : candPatients){
+            if(patientsList.get(idx).strengthDecreasingRate() == stdRate)
+                tempList.add(idx);
+        }
+
+        return tempList;
+    }
+
     /**----Select Hospital (DeliverTo)----**/
     @SuppressWarnings("unchecked")
     private Hospital selectHospital(String pRoomType, Policy policy){
@@ -355,9 +445,6 @@ public class GndAmbulance extends Agent{
         if(policy != null && decision){
             String actionMethod = policy.getAction().getActionMethod();
             switch (actionMethod){
-//                case "Random":
-//                    availHospitals = randomSelect(availHospitals);
-//                    break;
                 case "Distance":
                     availHospitals = distanceSelect(availHospitals);
                     break;
@@ -367,6 +454,9 @@ public class GndAmbulance extends Agent{
                 case "Rate":
                     availHospitals = rateSelect(availHospitals);
                     break;
+                case "Random":
+                    availHospitals = randomSelect(availHospitals);
+                    break;
             }
             if(availHospitals.size() > 1)
                 resIdx = availHospitals.get(rd.nextInt(availHospitals.size()));
@@ -374,31 +464,6 @@ public class GndAmbulance extends Agent{
                 resIdx = availHospitals.get(0);
         }else{
             availHospitals = randomSelect(availHospitals);
-//            Collections.shuffle(deliverMethodList);
-//            for(String s : deliverMethodList){
-//                switch (s){
-//                    case "Random":
-//                        availHospitals = randomSelect(availHospitals);
-//                        break;
-//                    case "Distance":
-//                        availHospitals = distanceSelect(availHospitals);
-//                        break;
-//                    case "Vacancy":
-//                        availHospitals = vacancySelect(availHospitals);
-//                        break;
-//                    case "Rate":
-//                        availHospitals = rateSelect(availHospitals);
-//                        break;
-//                }
-//                if(availHospitals.size() == 1){
-////                    System.out.println(s + "Select used. (Hospital)");
-//                    break;
-//                }
-//            }
-//            if(availHospitals.size() > 1)
-//                resIdx = availHospitals.get(rd.nextInt(availHospitals.size()));
-//            else if (availHospitals.size() == 1)
-//                resIdx = availHospitals.get(0);
             resIdx = availHospitals.get(0);
         }
 
@@ -559,120 +624,6 @@ public class GndAmbulance extends Agent{
                 ));
     }
 
-    /**----Select Patient (Load)----**/
-    @SuppressWarnings("unchecked")
-    private int loadPatient(ArrayList<Integer> patientList, Policy policy) {
-        ArrayList<Integer> candPatients = (ArrayList<Integer>) patientList.clone();
-        Random rd = new Random();
-        boolean decision = makeDecision();
-        int resIdx = -1;
-
-        if(policy != null && decision){
-            String actionMethod = policy.getAction().getActionMethod();
-            switch (actionMethod) {
-//                case "Random":
-//                    candPatients = randomLoad(candPatients);
-//                    break;
-                case "Distance":
-                    candPatients = distanceLoad(candPatients);
-                    break;
-                case "Severity":
-                    candPatients = severityLoad(candPatients);
-                    break;
-                case "InjuryType":
-                    candPatients = injuryTypeLoad(candPatients);
-                    break;
-            }
-            if (candPatients.size() != 1)
-                resIdx = candPatients.get(rd.nextInt(candPatients.size()));
-            else
-                resIdx = candPatients.get(0);
-        } else {
-            candPatients = randomLoad(candPatients);
-//            Collections.shuffle(loadMethodList);
-//            for(String s: loadMethodList){
-//                switch (s){
-//                    case "Random":
-//                        candPatients = randomLoad(candPatients);
-//                        break;
-//                    case "Distance":
-//                        candPatients = distanceLoad(candPatients);
-//                        break;
-//                    case "Severity":
-//                        candPatients = severityLoad(candPatients);
-//                        break;
-//                    case "InjuryType":
-//                        candPatients = injuryTypeLoad(candPatients);
-//                        break;
-//                }
-//                if(candPatients.size() == 1){
-//                    break;
-//                }
-//            }
-//            if(candPatients.size()!=1)
-//                resIdx = candPatients.get(rd.nextInt(candPatients.size()));
-//            else
-//                resIdx = candPatients.get(0);
-            resIdx = candPatients.get(0);
-        }
-        removePatient(resIdx, patientList);
-        return resIdx;
-    }
-
-    private ArrayList<Integer> randomLoad(ArrayList<Integer> candPatients){
-        ArrayList<Integer> tempList = new ArrayList<>();
-        int candidIdx = new Random().nextInt(candPatients.size());
-        tempList.add(candPatients.get(candidIdx));
-        return tempList;
-    }
-
-    private ArrayList<Integer> distanceLoad(ArrayList<Integer> candPatients){
-        ArrayList<Integer> tempList = new ArrayList<>();
-        tempList.add(candPatients.get(0));
-        return tempList;
-    }
-
-    private ArrayList<Integer> severityLoad(ArrayList<Integer> candPatients){
-        ArrayList<Integer> tempList = new ArrayList<>();
-
-        Collections.sort(candPatients, new Comparator<Integer>() {
-            @Override
-            public int compare(Integer idx1, Integer idx2) { // sort descending order
-                return patientsList.get(idx2).getSeverity()-patientsList.get(idx1).getSeverity();
-            }
-        });
-
-        int stdSeverity = patientsList.get(candPatients.get(0)).getSeverity(); // highest severity
-
-        for(Integer idx : candPatients)
-            if(patientsList.get(idx).getSeverity() == stdSeverity)
-                tempList.add(idx);
-
-        return tempList;
-    }
-
-    private ArrayList<Integer> injuryTypeLoad(ArrayList<Integer> candPatients){
-        //NOTE InjuryType Sorting means sorting by strength decreasing rate
-        ArrayList<Integer> tempList = new ArrayList<>();
-        int stdRate = 0;
-
-        Collections.sort(candPatients, new Comparator<Integer>() {
-            @Override
-            public int compare(Integer idx1, Integer idx2) { // sort descending order
-                return patientsList.get(idx2).strengthDecreasingRate() - patientsList.get(idx1).strengthDecreasingRate();
-            }
-        });
-
-        stdRate = patientsList.get(candPatients.get(0)).strengthDecreasingRate(); // highest decreasing rate
-
-        for(Integer idx : candPatients){
-            if(patientsList.get(idx).strengthDecreasingRate() == stdRate)
-                tempList.add(idx);
-        }
-
-        return tempList;
-    }
-
     /**----Select Slot (ReturnTo)----**/
     private Location selectSlot(Policy policy){
         int resIdx = 0;
@@ -683,8 +634,6 @@ public class GndAmbulance extends Agent{
         if(policy!=null && decision){
             policyActionMethod = policy.getAction().getActionMethod();
         } else {
-//            Collections.shuffle(returnMethodList);
-//            policyActionMethod = returnMethodList.get(0);
             policyActionMethod = "Random";
         }
 
@@ -724,10 +673,6 @@ public class GndAmbulance extends Agent{
             sum += number;
         return Math.round(sum/totalSlot);
     }
-
-//    private int setReachTime(){
-//        return ThreadLocalRandom.current().nextInt(2, 5);
-//    }
 
     private int setReachTime(){
         // distance-relative time

@@ -231,7 +231,8 @@ public class SIMSoS {
                 result = numOperated;
                 break;
             case "HoldupTime":
-                avgHoldup = sumHoldupTime/numRescued;
+                if(sumHoldupTime != 0)
+                    avgHoldup = sumHoldupTime/numRescued;
                 return (int)avgHoldup;
             case "DieB4Rescued":
                 return dieBeforeRescued;
