@@ -3,6 +3,8 @@ package simsos.scenario.mci;
 import simsos.scenario.mci.policy.*;
 
 import java.util.ArrayList;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  *
@@ -87,6 +89,18 @@ public class Environment {
             patient.updateStrength();
             patient.updateHoldupTime();
         }
+    }
+
+    void updateEnvironment(){
+        // mitigate damage
+        if (damageFire > 0)
+            damageFire -= ThreadLocalRandom.current().nextInt(3, 15);
+            if (damageFire < 0)
+                damageFire = 0;
+        if (damageCollapse > 0)
+            damageCollapse -= ThreadLocalRandom.current().nextInt(1,10);
+            if (damageCollapse < 0)
+                damageCollapse = 0;
     }
 
     public static void updateCasualty(){
