@@ -2,6 +2,9 @@ package simsos.scenario.mci;
 
 import java.util.Random;
 
+import static simsos.scenario.mci.Environment.damageCollapse;
+import static simsos.scenario.mci.Environment.damageFire;
+
 /**
  *
  * Created by Youlim Jung on 17/07/2017.
@@ -147,12 +150,16 @@ public class Patient {
             // decrease strength
             case RESCUE_WAIT:
             case RESCUED:
+                int weight = 1;
+                if (damageFire>0 && damageCollapse>0)
+                    weight = 2;
+
                 if (injuryType == InjuryType.FRACTURED)
-                    strength -= FRAC_DEC_RATE;
+                    strength -= (FRAC_DEC_RATE*weight);
                 else if (injuryType == InjuryType.BURN)
-                    strength -= BURN_DEC_RATE;
+                    strength -= (BURN_DEC_RATE*weight);
                 else
-                    strength -= BLEED_DEC_RATE;
+                    strength -= (BLEED_DEC_RATE*weight);
                 break;
             case TRANSPORT_WAIT:
                 if(rd.nextFloat() < 0.4){
