@@ -11,7 +11,6 @@ import simsos.simulation.component.Message;
 import simsos.simulation.component.World;
 
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import static simsos.scenario.mci.Environment.*;
@@ -31,7 +30,6 @@ public class GndAmbulance extends Agent{
     private String affiliation;
     private String name;
     private String role;
-    private boolean active;
     private String csType;
 
     private Location location;
@@ -48,6 +46,8 @@ public class GndAmbulance extends Agent{
     private final double deliverCompliance;
     private final double returnCompliance;
     private final double waitCompliance;
+    private double policyGivenCompliance;
+    private boolean newCompFlag;
     private final boolean enforced;
 
     private final ArrayList<String> loadMethodList;
@@ -100,24 +100,6 @@ public class GndAmbulance extends Agent{
     @Override
     public Action step() {
         switch(status){
-            case INACTIVE:
-                return new Action(1) {
-                    @Override
-                    public void execute() {
-                        if(checkActive()){  // If it is active, let ready to start work!
-                            Random rd = new Random();
-                            location = new Location(rd.nextInt(patientMapSize.getLeft()), 0);
-                            numWaitPTS[location.getX()] += 1;
-                            status = Status.WAITING;
-                            currAction = Actions.WAIT;
-                        }
-                    }
-
-                    @Override
-                    public String getName() {
-                        return "GndAmbulance Inactive";
-                    }
-                };
             case WAITING:
                 return new Action(1) {
                     @Override
@@ -131,8 +113,18 @@ public class GndAmbulance extends Agent{
                             else
                                 waitTime--;
                         }else if(waitTime == 0){
+                            checkComplianceValue("Wait");
                             currPolicy = checkActionPolicy(role, csType,"Wait", callBack);
-                            if(currPolicy!=null && makeDecision()){
+
+                            boolean decision;
+
+                            if (newCompFlag)
+                                decision = makeDecision(policyGivenCompliance);
+                            else
+                                decision = makeDecision();
+
+
+                            if(currPolicy!=null && decision){
                                 int stayAmount = currPolicy.getAction().getMethodValue();
                                 setWaitTime(stayAmount);
                             }else
@@ -157,6 +149,7 @@ public class GndAmbulance extends Agent{
                         // exclude dead patients
                         excludeDeadPatient(spotPatientList);
                         if(spotPatientList.size()>0){ // double check if there is a patient
+                            checkComplianceValue("Load");
                             currPolicy = checkActionPolicy(role, csType,"Load", callBack);
                             loadPatientId = loadPatient(spotPatientList, currPolicy);
                             Patient patient = patientsList.get(loadPatientId);
@@ -190,6 +183,7 @@ public class GndAmbulance extends Agent{
                                 pRoomType = "Intensive";
                             else
                                 pRoomType = "General";
+                            checkComplianceValue("DeliverTo");
                             currPolicy = checkActionPolicy(role, csType, "DeliverTo", callBack);
                             destHospital = selectHospital(pRoomType, currPolicy);
                             if(destHospital != null){
@@ -245,6 +239,7 @@ public class GndAmbulance extends Agent{
                         currAction = Actions.RETURN;
                         loadPatientId = -1;
                         destHospital = null;
+                        checkComplianceValue("ReturnTo");
                         currPolicy = checkActionPolicy(role, csType, "ReturnTo", callBack);
                         destination = selectSlot(currPolicy);
                     }
@@ -259,16 +254,10 @@ public class GndAmbulance extends Agent{
                     @Override
                     public void execute() {
                         if(reachTime == 0){
-                            if(checkActive()){
-                                location = destination;
-                                numWaitPTS[location.getX()] += 1;
-                                status = Status.WAITING;
-                                currAction = Actions.WAIT;
-                            }else{
-                                location = null;
-                                status = Status.INACTIVE;
-                                currAction = Actions.NONE;
-                            }
+                            location = destination;
+                            numWaitPTS[location.getX()] += 1;
+                            status = Status.WAITING;
+                            currAction = Actions.WAIT;
                         }else
                             reachTime--;
                     }
@@ -288,19 +277,16 @@ public class GndAmbulance extends Agent{
         this.location = new Location(rd.nextInt(patientMapSize.getLeft()), 0);
         this.originLocation = new Location(this.location.getX(), this.location.getY());
 
-        if(checkActive()){
-            this.status = Status.WAITING;
-            this.currAction = Actions.WAIT;
-            numWaitPTS[location.getX()] += 1;
-        }else{
-            this.status = Status.INACTIVE;
-            this.currAction = Actions.NONE;
-            this.location = null;
-        }
+        this.status = Status.WAITING;
+        this.currAction = Actions.WAIT;
+        numWaitPTS[location.getX()] += 1;
+
         this.loadPatientId = -1;
 //        this.reachTime = setReachTime();
         this.defaultWait = 1; //TODO review the policy which can manage waiting time.
         setWaitTime(defaultWait);
+        this.newCompFlag = false;
+        this.policyGivenCompliance = 0.0;
     }
 
     @Override
@@ -321,6 +307,10 @@ public class GndAmbulance extends Agent{
     @Override
     public boolean makeDecision() {
         return enforced || new Random().nextFloat() < compliance;
+    }
+
+    public boolean makeDecision(double compValue) {
+        return enforced || new Random().nextFloat() < compValue;
     }
 
     @Override
@@ -345,8 +335,13 @@ public class GndAmbulance extends Agent{
     private int loadPatient(ArrayList<Integer> patientList, Policy policy) {
         ArrayList<Integer> candPatients = (ArrayList<Integer>) patientList.clone();
         Random rd = new Random();
-        boolean decision = makeDecision();
+        boolean decision;
         int resIdx = -1;
+
+        if (newCompFlag)
+            decision = makeDecision(policyGivenCompliance);
+        else
+            decision = makeDecision();
 
         if(policy != null && decision){
             String actionMethod = policy.getAction().getActionMethod();
@@ -437,11 +432,16 @@ public class GndAmbulance extends Agent{
         ArrayList<Integer> availHospitals = checkAvailHospitals(pRoomType, hospitals);
         Random rd = new Random();
         int resIdx = -1;
-        boolean decision = makeDecision();
+        boolean decision;
         if(availHospitals.size()==0){
-//            System.out.println("No available hospital now.");
             return null;    // no available hospital now.
         }
+
+        if (newCompFlag)
+            decision = makeDecision(policyGivenCompliance);
+        else
+            decision = makeDecision();
+
         if(policy != null && decision){
             String actionMethod = policy.getAction().getActionMethod();
             switch (actionMethod){
@@ -580,18 +580,16 @@ public class GndAmbulance extends Agent{
         switch (roomType){
             case "General":
                 for(Hospital h : hospitals) {
-//                    avail = h.getTotGeneral() - h.getGeneralRoom().size();
                     avail = h.getAvailGeneral();
-                    if (avail > 0 && h.isActive()){
+                    if (avail > 0){
                         availHospitals.add(h.getId());
                     }
                 }
                 break;
             case "Intensive":
                 for(Hospital h : hospitals) {
-//                    avail = h.getTotIntensive() - h.getIntensiveRoom().size();
                     avail = h.getAvailIntensive();
-                    if (avail > 0 && h.isActive()){
+                    if (avail > 0){
                         availHospitals.add(h.getId());
                     }
                 }
@@ -627,9 +625,14 @@ public class GndAmbulance extends Agent{
     /**----Select Slot (ReturnTo)----**/
     private Location selectSlot(Policy policy){
         int resIdx = 0;
-        boolean decision = makeDecision();
+        boolean decision;
         Random rd = new Random();
         String policyActionMethod;
+
+        if (newCompFlag)
+            decision = makeDecision(policyGivenCompliance);
+        else
+            decision = makeDecision();
 
         if(policy!=null && decision){
             policyActionMethod = policy.getAction().getActionMethod();
@@ -742,36 +745,47 @@ public class GndAmbulance extends Agent{
         return result;
     }
 
-    private boolean checkActive(){
+    private void checkComplianceValue(String currAction){
         ArrayList<Policy> compliancePolicies = checkCompliancePolicy(role);
-        this.active = true;
+        ArrayList<Policy> currCompliancePolicies = new ArrayList<>();
 
-        if(compliancePolicies.size() != 0){ // policy exists
-            for(Policy policy : compliancePolicies){
+        if(compliancePolicies.size() != 0) { // policy exists
+            for (Policy policy : compliancePolicies) {
                 String actionName = policy.getAction().getActionName();
-                switch (actionName){
-                    case "Load":
-                        if(loadCompliance < policy.getMinCompliance())
-                            this.active = false;
-                        break;
-                    case "DeliverTo":
-                        if(deliverCompliance < policy.getMinCompliance())
-                            this.active = false;
-                        break;
-                    case "ReturnTo":
-                        if(returnCompliance < policy.getMinCompliance())
-                            this.active = false;
-                        break;
-                    case "Wait":
-                        if(waitCompliance < policy.getMinCompliance())
-                            this.active = false;
-                        break;
-                }
-                if (!this.active)
-                    break;
+                if (currAction.equals(actionName))
+                    currCompliancePolicies.add(policy);
             }
+        }   // gather policies related to current action name
+
+        for (Policy policy : currCompliancePolicies) {
+            if (currAction.equals("Load"))
+                if (loadCompliance < policy.getMinCompliance() && makeDecision(loadCompliance)){
+                    this.policyGivenCompliance = policy.getMinCompliance();
+                    this.newCompFlag = true;
+                }else
+                    this.newCompFlag = false;
+            else if (currAction.equals("DeliverTo"))
+                if (deliverCompliance < policy.getMinCompliance() && makeDecision(deliverCompliance)){
+                    this.policyGivenCompliance = policy.getMinCompliance();
+                    this.newCompFlag = true;
+                }else
+                    this.newCompFlag = false;
+            else if (currAction.equals("ReturnTo"))
+                if (returnCompliance < policy.getMinCompliance() && makeDecision(returnCompliance)){                    this.newCompFlag = false;
+                    this.policyGivenCompliance = policy.getMinCompliance();
+                    this.newCompFlag = true;
+                }else
+                    this.newCompFlag = false;
+            else if (currAction.equals("Wait"))
+                if (waitCompliance < policy.getMinCompliance() && makeDecision(waitCompliance)){
+                    this.policyGivenCompliance = policy.getMinCompliance();
+                    this.newCompFlag = true;
+                }else
+                    this.newCompFlag = false;
+
+            if (!newCompFlag)
+                break;
         }
-        return this.active;
     }
 
     private boolean checkDeadPatient(int patientId){
@@ -785,7 +799,6 @@ public class GndAmbulance extends Agent{
             if(checkDeadPatient(patientId))
                 deadList.add(patientId);
         }
-//        System.out.println("StageDEAD: "+deadList.size());
         for (Integer patientId : deadList){
             spotPatientList.remove(spotPatientList.indexOf(patientId));
         }

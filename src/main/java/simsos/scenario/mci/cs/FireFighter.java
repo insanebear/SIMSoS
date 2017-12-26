@@ -29,7 +29,6 @@ public class FireFighter extends Agent{
     private String affiliation;
     private String name;
     private String role;
-    private boolean active;
     private String csType;
 
     // current properties
@@ -45,6 +44,8 @@ public class FireFighter extends Agent{
     private double compliance; // indicates how much CS will follow policies
     private double selectCompliance;
     private double stageCompliance;
+    private double policyGivenCompliance;
+    private boolean newCompFlag;
     private boolean enforced; // directed SoS or acknowledged SoS
     private ArrayList<String> selectMethodList;
     private ArrayList<String> stageMethodList;
@@ -85,21 +86,6 @@ public class FireFighter extends Agent{
     @Override
     public Action step() {
         switch (status) {
-            case INACTIVE:
-                return new Action(1){
-                    @Override
-                    public void execute() {
-                        if(checkActive()){
-                            status = Status.SEARCHING;
-                            currAction = Actions.SEARCH;
-                        }
-                    }
-                    @Override
-                    public String getName() {
-                        return "FF inactive";
-                    }
-                };
-
             case SEARCHING:
                 return new Action(1) {
                     @Override
@@ -129,6 +115,7 @@ public class FireFighter extends Agent{
                         if (checkPatientExistence(spotPatientList)) {
                             if(spotPatientList.size()>1){
                                 //NOTE RESCUE_ select Policy
+                                checkComplianceValue("Select");
                                 currPolicy = checkActionPolicy(role, csType, "Select", callBack);
                                 rescuedPatientId = selectPatient(spotPatientList, currPolicy);
                                 removePatient(rescuedPatientId, spotPatientList);
@@ -177,6 +164,7 @@ public class FireFighter extends Agent{
                             Patient patient = patientsList.get(rescuedPatientId);
                             if(!patient.isDead()){
                                 //Note RESCUE_ stage policy
+                                checkComplianceValue("Stage");
                                 currPolicy = checkActionPolicy(role, csType,"Stage", callBack);
                                 int stageSpot = stagePatient(currPolicy);
 
@@ -187,22 +175,17 @@ public class FireFighter extends Agent{
                             }
                             // initialize information
                             rescuedPatientId = -1;
-                            if(checkActive()){
-                                setDestination();
-                                if(destCoordinate == null){
-                                    status = Status.DONE;
-                                    currAction = Actions.NONE;
-                                }
-                                else {
-                                    reachTime = setReachTime();
-                                    status = Status.SEARCHING;
-                                    currAction = Actions.SEARCH;
-                                }
-                            } else {
-                                location = new Location(0, 0);
-                                status = Status.INACTIVE;
+                            setDestination();
+                            if(destCoordinate == null){
+                                status = Status.DONE;
                                 currAction = Actions.NONE;
                             }
+                            else {
+                                reachTime = setReachTime();
+                                status = Status.SEARCHING;
+                                currAction = Actions.SEARCH;
+                            }
+
                         } else {
                             reachTime--;
                         }
@@ -231,13 +214,8 @@ public class FireFighter extends Agent{
 
     @Override
     public void reset() {
-        if(checkActive()){
-            this.status = Status.SEARCHING;
-            this.currAction = Actions.SEARCH;
-        }else{
-            this.status = Status.INACTIVE;
-            this.currAction = Actions.NONE;
-        }
+        this.status = Status.SEARCHING;
+        this.currAction = Actions.SEARCH;
         this.currPolicy = null;
         this.story = 0;
         this.location = new Location(0, 0);
@@ -245,6 +223,8 @@ public class FireFighter extends Agent{
         this.destCoordinate = new Location(0, 0);
         setDestination();
         this.reachTime = setReachTime();
+        this.newCompFlag = false;
+        this.policyGivenCompliance = 0.0;
     }
 
     @Override
@@ -267,6 +247,9 @@ public class FireFighter extends Agent{
         return enforced || new Random().nextFloat() < compliance;
     }
 
+    public boolean makeDecision(double compValue) {
+        return enforced || new Random().nextFloat() < compValue;
+    }
     @Override
     public HashMap<String, Object> getProperties() {
         return new HashMap<String, Object>();
@@ -356,28 +339,36 @@ public class FireFighter extends Agent{
         return result;
     }
 
-    /**--------ActiveCheck--------**/
-    private boolean checkActive(){
+    /**--------Compliance Policy Check--------**/
+    private void checkComplianceValue(String currAction){
         ArrayList<Policy> compliancePolicies = checkCompliancePolicy(role);
-        this.active = true;
-        if(compliancePolicies.size() != 0){ // policy exists
-            for(Policy policy : compliancePolicies){
+        ArrayList<Policy> currCompliancePolicies = new ArrayList<>();
+
+        if(compliancePolicies.size() != 0) { // policy exists
+            for (Policy policy : compliancePolicies) {
                 String actionName = policy.getAction().getActionName();
-                switch (actionName){
-                    case "Select":
-                        if(selectCompliance < policy.getMinCompliance())
-                            this.active = false;
-                        break;
-                    case "Stage":
-                        if(stageCompliance < policy.getMinCompliance())
-                            this.active = false;
-                        break;
-                }
-                if (!this.active)
-                    break;
+                if (currAction.equals(actionName))
+                    currCompliancePolicies.add(policy);
             }
+        }   // gather policies related to current action name
+
+        for (Policy policy : currCompliancePolicies) {
+            if (currAction.equals("Select"))
+                if (selectCompliance < policy.getMinCompliance() && makeDecision(selectCompliance)) {
+                    this.policyGivenCompliance = policy.getMinCompliance();
+                    this.newCompFlag = true;
+                }else
+                    this.newCompFlag = false;
+            else if (currAction.equals("Stage"))
+                if (stageCompliance < policy.getMinCompliance() && makeDecision(stageCompliance)){
+                    this.policyGivenCompliance = policy.getMinCompliance();
+                    this.newCompFlag = true;
+                }else
+                    this.newCompFlag = false;
+
+            if (!newCompFlag)
+                break;
         }
-        return this.active;
     }
 
     /**--------Action--------**/
@@ -386,8 +377,13 @@ public class FireFighter extends Agent{
     private int selectPatient(ArrayList<Integer> patientList, Policy policy){
         ArrayList<Integer> candPatients = (ArrayList<Integer>) patientList.clone();
         Random rd = new Random();
-        boolean decision = makeDecision();
+        boolean decision;
         int resIdx = -1;
+
+        if (newCompFlag)
+            decision = makeDecision(policyGivenCompliance);
+        else
+            decision = makeDecision();
 
         if(policy != null && decision){
             String actionMethod = policy.getAction().getActionMethod();
@@ -476,9 +472,14 @@ public class FireFighter extends Agent{
     /*----Select Slot (Stage)----*/
     private int stagePatient(Policy policy){
         int destIdx=0;
-        boolean decision = makeDecision();
+        boolean decision;
         Random rd = new Random();
         String actionMethod;
+
+        if (newCompFlag)
+            decision = makeDecision(policyGivenCompliance);
+        else
+            decision = makeDecision();
 
         if(policy != null && decision){
             actionMethod = policy.getAction().getActionMethod();

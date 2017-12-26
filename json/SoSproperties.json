@@ -1,15 +1,15 @@
 {
-  "typeSoS": "D+A",
-  "totFireFighters": 180,
-  "totGndAmbulances": 80,
+  "typeSoS": "A",
+  "totFireFighters": 200,
+  "totGndAmbulances": 300,
   "totHospital": 4,
 
   "minCompliance": 0.1,
-  "maxCompliance": 0.7,
+  "maxCompliance": 0.9,
   "rescueCompliance": 0.3,
-  "transportCompliance": 0.5,
+  "transportCompliance": 0.4,
   "treatmentCompliance": 0.6,
-  "enforceRate": 0.3,
+  "enforceRate": 0.6,
 
   "crew": 100,
   "general":130,

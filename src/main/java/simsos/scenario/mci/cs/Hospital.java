@@ -10,7 +10,6 @@ import simsos.simulation.component.Message;
 import simsos.simulation.component.World;
 
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import static simsos.scenario.mci.Environment.checkActionPolicy;
@@ -37,6 +36,8 @@ public class Hospital extends Agent {
     private double treatCompliance;
     private double operateCompliance;
     private double releaseCompliance;
+    private double policyGivenCompliance;
+    private boolean newCompFlag;
     private boolean enforced;
 
     private int totGeneral;
@@ -121,7 +122,6 @@ public class Hospital extends Agent {
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        active = checkActive();
                         if(generalRoom.size()>0 || intensiveRoom.size()>0 || operatingRoom.size()>0){
                             status = Status.TREATING;
                         }
@@ -136,7 +136,6 @@ public class Hospital extends Agent {
                 return new Action(1) {
                     @Override
                     public void execute() {
-                        active = checkActive();
                         // release patients
                         releasePatients();
                         // rearrange rooms
@@ -173,6 +172,8 @@ public class Hospital extends Agent {
         generalRoom = new ArrayList<>();
         intensiveRoom = new ArrayList<>();
         operatingRoom = new ArrayList<>();
+        this.newCompFlag = false;
+        this.policyGivenCompliance = 0.0;
     }
 
     @Override
@@ -193,6 +194,10 @@ public class Hospital extends Agent {
     @Override
     public boolean makeDecision() {
         return enforced || new Random().nextFloat() < compliance;
+    }
+
+    public boolean makeDecision(double compValue) {
+        return enforced || new Random().nextFloat() < compValue;
     }
 
     @Override
@@ -284,6 +289,7 @@ public class Hospital extends Agent {
         }
 
         if(candPatients.size() >= availCrewGroup){
+            checkComplianceValue("Treat");
             currPolicy = checkActionPolicy(role, csType, "Treat", callBack);
             treatPatients = selectTreatPatient(candPatients, availCrewGroup, currPolicy);
         }
@@ -334,7 +340,13 @@ public class Hospital extends Agent {
     private ArrayList<Integer> selectTreatPatient(ArrayList<Integer> candidList, int selectNumber, Policy policy){
         ArrayList<Integer> tempList = (ArrayList<Integer>) candidList.clone();
         ArrayList<Integer> resultList = new ArrayList<>();
-        boolean decision = makeDecision();
+        boolean decision;
+
+        if (newCompFlag)
+            decision = makeDecision(policyGivenCompliance);
+        else
+            decision = makeDecision();
+
         if(policy!=null && decision){
             String actionMethod = policy.getAction().getActionMethod();
             switch (actionMethod){
@@ -384,6 +396,7 @@ public class Hospital extends Agent {
         ArrayList<Integer> toBeOperated;
 
         // select patients to be operated
+        checkComplianceValue("Operate");
         currPolicy = checkActionPolicy(role, csType,"Operate", callBack);
         if(availOperating>0){
             toBeOperated = selectOperatePatient(availOperating, currPolicy);
@@ -432,7 +445,7 @@ public class Hospital extends Agent {
     private ArrayList<Integer> selectOperatePatient(int selectNumber, Policy policy){
         ArrayList<Integer> candidPatient = new ArrayList<>();
         ArrayList<Integer> resultList = new ArrayList<>();;
-        boolean decision = makeDecision();
+        boolean decision;
         // sort out candidate patients for operation
         for(Integer patientId : generalRoom){
             Patient patient = patientsList.get(patientId);
@@ -445,6 +458,11 @@ public class Hospital extends Agent {
             if(!patient.isOperated())
                 candidPatient.add(patientId);
         };
+
+        if (newCompFlag)
+            decision = makeDecision(policyGivenCompliance);
+        else
+            decision = makeDecision();
 
         // select patients to be operated
         if(policy!=null && decision){
@@ -494,6 +512,7 @@ public class Hospital extends Agent {
         ArrayList<Integer> releaseList;
 
         // check policy
+        checkComplianceValue("Release");
         currPolicy = checkActionPolicy(role, csType,"Release", callBack);
         releaseList = findReleasePatient(generalRoom, currPolicy);
 
@@ -506,7 +525,13 @@ public class Hospital extends Agent {
     private ArrayList<Integer> findReleasePatient(ArrayList<Integer> candidList, Policy policy)
     {
         ArrayList<Integer> resultList = new ArrayList<>();
-        boolean decision = makeDecision();
+        boolean decision;
+
+        if (newCompFlag)
+            decision = makeDecision(policyGivenCompliance);
+        else
+            decision = makeDecision();
+
         if(policy!=null && decision){
             String actionMethod = policy.getAction().getActionMethod();
             switch (actionMethod) {
@@ -695,32 +720,40 @@ public class Hospital extends Agent {
         return result;
     }
 
-    private boolean checkActive(){
+    private void checkComplianceValue(String currAction){
         ArrayList<Policy> compliancePolicies = checkCompliancePolicy(role);
-        this.active = true;
+        ArrayList<Policy> currCompliancePolicies = new ArrayList<>();
 
-        if(compliancePolicies.size() != 0){ // policy exists
-            for(Policy policy : compliancePolicies){
+        if(compliancePolicies.size() != 0) { // policy exists
+            for (Policy policy : compliancePolicies) {
                 String actionName = policy.getAction().getActionName();
-                switch (actionName){
-                    case "Treat":
-                        if(treatCompliance < policy.getMinCompliance())
-                            this.active = false;
-                        break;
-                    case "Operate":
-                        if(operateCompliance < policy.getMinCompliance())
-                            this.active = false;
-                        break;
-                    case "Release":
-                        if(releaseCompliance < policy.getMinCompliance())
-                            this.active = false;
-                        break;
-                }
-                if (!this.active)
-                    break;
+                if (currAction.equals(actionName))
+                    currCompliancePolicies.add(policy);
             }
+        }   // gather policies related to current action name
+
+        for (Policy policy : currCompliancePolicies) {
+            if (currAction.equals("Treat"))
+                if (treatCompliance < policy.getMinCompliance() && makeDecision(treatCompliance)){
+                    this.policyGivenCompliance = policy.getMinCompliance();
+                    this.newCompFlag = true;
+                }else
+                    this.newCompFlag = false;
+                else if (currAction.equals("Operate"))
+                    if (operateCompliance < policy.getMinCompliance() && makeDecision(operateCompliance)){
+                        this.policyGivenCompliance = policy.getMinCompliance();
+                        this.newCompFlag = true;
+                    }else
+                        this.newCompFlag = false;
+                else if (currAction.equals("Release"))
+                    if (releaseCompliance < policy.getMinCompliance() && makeDecision(releaseCompliance)){
+                        this.policyGivenCompliance = policy.getMinCompliance();
+                        this.newCompFlag = true;
+                    }else
+                        this.newCompFlag = false;
+            if (!newCompFlag)
+                break;
         }
-        return this.active;
     }
 
     // Getters and Setters
